@@ -1,0 +1,40 @@
+import { Platform } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+
+const isWeb = Platform.OS === 'web';
+
+export const setToken = async (key: string, value: string) => {
+    if (isWeb) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn('LocalStorage failed:', e);
+        }
+    } else {
+        await SecureStore.setItemAsync(key, value);
+    }
+};
+
+export const getToken = async (key: string): Promise<string | null> => {
+    if (isWeb) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    } else {
+        return await SecureStore.getItemAsync(key);
+    }
+};
+
+export const deleteToken = async (key: string) => {
+    if (isWeb) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            console.warn('LocalStorage failed:', e);
+        }
+    } else {
+        await SecureStore.deleteItemAsync(key);
+    }
+};
