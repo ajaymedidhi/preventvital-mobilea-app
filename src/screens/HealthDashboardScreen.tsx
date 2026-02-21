@@ -47,12 +47,17 @@ const HealthDashboardScreen = () => {
 
     return (
         <View style={styles.container}>
-            {/* Header Gradient Background */}
+            {/* Absolute Background Gradient */}
             <LinearGradient
-                colors={['#8B5CF6', '#A855F7']}
+                colors={['#A78BFA', '#818CF8']}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.headerGradient, { paddingTop: insets.top, height: 260 }]}
+                end={{ x: 1, y: 1 }}
+                style={[styles.absoluteGradient, { height: 260 + insets.top }]}
+            />
+
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
             >
                 {/* Header Top Bar */}
                 <View style={styles.headerTop}>
@@ -73,9 +78,9 @@ const HealthDashboardScreen = () => {
                     </View>
                 </View>
 
-                {/* Wellness Score Card - Overlapping Header */}
+                {/* Wellness Score Card */}
                 <TouchableOpacity
-                    style={styles.wellnessCard}
+                    style={[styles.wellnessCard, { marginBottom: 24 }]}
                     onPress={() => navigation.navigate('WellnessScore')}
                     activeOpacity={0.9}
                 >
@@ -98,7 +103,7 @@ const HealthDashboardScreen = () => {
                         </View>
                     </View>
                     <View style={styles.scoreInfo}>
-                        <Text style={styles.scoreTitle}>Excellent Your Wellness Score</Text>
+                        <Text style={styles.scoreTitle}>Excellent Your Vital Score</Text>
                         <Text style={styles.scoreSubtitle}>Based on vitals and activity</Text>
                         <View style={styles.scoreStatus}>
                             <Ionicons name="heart" size={14} color="#EF4444" />
@@ -107,15 +112,6 @@ const HealthDashboardScreen = () => {
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
                 </TouchableOpacity>
-
-            </LinearGradient>
-
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-                style={{ marginTop: -140 }} // Pull up content to overlap
-            >
-                <View style={{ height: 150 }} />
 
                 {/* Alert Card */}
                 <View style={styles.alertCard}>
@@ -231,11 +227,17 @@ const SessionCard = ({ title, details, image }: any) => (
 );
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8FAFC' },
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-    headerGradient: {
-        paddingHorizontal: 20,
+    absoluteGradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
     },
     headerTop: {
         flexDirection: 'row',

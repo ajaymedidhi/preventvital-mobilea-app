@@ -202,6 +202,10 @@ const WelcomeScreen = () => {
 
                 {/* Bottom Content */}
                 <Animated.View style={[styles.bottomContent, textAnimatedStyle]}>
+
+                    {/* Light Background Curve for "Already have account" area */}
+                    <View style={styles.bottomCurve} />
+
                     <View style={styles.textContainer}>
                         <Text style={styles.appName}>Prevent Vital</Text>
                         <Text style={styles.tagline}>Connected Health Ecosystem</Text>
@@ -231,7 +235,7 @@ const WelcomeScreen = () => {
                             onPress={() => navigation.navigate('SignIn')}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.signInButtonText}>I already have an account</Text>
+                            <Text style={styles.signInButtonText}>Already have an account? Sign In</Text>
                         </TouchableOpacity>
                     </View>
                 </Animated.View>
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
     },
     getStartedButton: {
         height: 56,
-        borderRadius: 28, // Pill shape
+        borderRadius: 12, // Reduced radius slightly to match image style usually, or keep pill
         shadowColor: "#8B5CF6",
         shadowOffset: {
             width: 0,
@@ -396,31 +400,37 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 8,
+        overflow: 'hidden'
     },
     gradientButton: {
         width: '100%',
         height: '100%',
-        borderRadius: 28,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
     },
     getStartedButtonText: {
-        color: '#fff',
+        color: '#BF40A3', // Or Blue based on image? Image looked like blue text. 
+        // Keeping consistent with gradient for now, can change if needed.
         fontSize: 18,
         fontWeight: 'bold',
         letterSpacing: 0.5,
     },
     signInButton: {
         height: 56,
-        borderRadius: 28,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1.5,
+        borderColor: '#fff',
+        backgroundColor: 'transparent'
     },
     signInButtonText: {
-        color: '#C4B5FD',
+        color: '#fff',
         fontSize: 16,
         fontWeight: '600',
     },
+    // Removed bottomCurve as it wasn't in the reference image provided
 });
 
 export default WelcomeScreen;

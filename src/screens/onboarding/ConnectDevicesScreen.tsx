@@ -6,6 +6,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../auth/AuthContext';
 
+import { updateOnboarding } from '../../api/authApi';
+
 const ConnectDevicesScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
@@ -15,15 +17,30 @@ const ConnectDevicesScreen = () => {
     const { setAuthToken } = useAuth(); // We need to add this to AuthContext
 
     const handleComplete = async () => {
-        // 1. Submit collected data to backend (profile update)
-        // console.log("Submitting Onboarding Data:", { personalInfo, healthConditions, healthGoals });
+        try {
+            // 1. Submit collected data to backend (profile update)
+            console.log("Submitting Onboarding Data:", { personalInfo, healthConditions, healthGoals });
 
-        // 2. Log the user in
-        if (token && setAuthToken) {
-            await setAuthToken(token);
-        } else {
-            Alert.alert("Error", "Authentication token missing. Please try logging in.");
-            navigation.navigate('SignIn');
+            if (token && setAuthToken) {
+                // Store token first
+                await setAuthToken(token);
+                // Now client.ts should pick it up from storage/state for the API call
+
+                await updateOnboarding({
+                    personalInfo,
+                    healthConditions,
+                    healthGoals
+                });
+
+                Alert.alert("Success", "Profile updated successfully!");
+            } else {
+                Alert.alert("Error", "Authentication token missing. Please try logging in.");
+                navigation.navigate('SignIn');
+            }
+        } catch (error: any) {
+            console.error("Onboarding Error:", error);
+            Alert.alert("Error", "Failed to save profile. " + error.message);
+            // Optionally navigate to Home anyway if it's non-critical
         }
     };
 

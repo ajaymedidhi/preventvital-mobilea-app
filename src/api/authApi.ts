@@ -20,6 +20,15 @@ export const signup = async (userData: any): Promise<string> => {
     }
 };
 
+export const updateOnboarding = async (userData: any): Promise<void> => {
+    try {
+        await client.put('/api/users/profile/onboarding', userData);
+    } catch (error: any) {
+        console.error('Onboarding Update error:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to update profile');
+    }
+};
+
 // Deprecated: sendOtp/verifyOtp (Removed or kept for reference if needed, but switching to Email/Password)
 // If we strictly follow the new plan which implies Email/Password for the web backend:
 

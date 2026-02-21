@@ -45,6 +45,10 @@ import BottomTabNavigator from './BottomTabNavigator';
 import WellnessScoreScreen from '../screens/health/WellnessScoreScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
 import ProgramDetailsScreen from '../screens/programs/ProgramDetailsScreen';
+import MyProgramsScreen from '../screens/programs/MyProgramsScreen';
+import ProgramDayViewScreen from '../screens/programs/ProgramDayViewScreen';
+import SessionPlayerScreen from '../screens/programs/SessionPlayerScreen';
+import SubscriptionScreen from '../screens/subscription/SubscriptionScreen';
 
 function AppStack() {
     return (
@@ -53,6 +57,10 @@ function AppStack() {
             <Stack.Screen name="WellnessScore" component={WellnessScoreScreen} />
             <Stack.Screen name="ContactUs" component={ContactUsScreen} />
             <Stack.Screen name="ProgramDetails" component={ProgramDetailsScreen} />
+            <Stack.Screen name="MyPrograms" component={MyProgramsScreen} />
+            <Stack.Screen name="ProgramDayView" component={ProgramDayViewScreen} />
+            <Stack.Screen name="SessionPlayer" component={SessionPlayerScreen} />
+            <Stack.Screen name="Subscription" component={SubscriptionScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 }
