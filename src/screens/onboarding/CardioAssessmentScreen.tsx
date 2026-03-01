@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateAssessmentScore } from '../../api/authApi';
 
 const { width } = Dimensions.get('window');
@@ -22,6 +23,7 @@ const SECTIONS = [
 
 export default function CardioAssessmentScreen({ route }: any) {
     const navigation = useNavigation<any>();
+    const insets = useSafeAreaInsets();
     const [currentStep, setCurrentStep] = useState(0);
 
     const progressWidth = useSharedValue(0);
@@ -462,9 +464,9 @@ export default function CardioAssessmentScreen({ route }: any) {
                 end={{ x: 0, y: 1 }}
                 style={styles.background}
             />
-            <SafeAreaView style={styles.contentContainer}>
+            <SafeAreaView style={styles.contentContainer} edges={['bottom', 'left', 'right']}>
                 {/* Top Bar with Progress */}
-                <View style={styles.topBar}>
+                <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
                     <View style={styles.topBarInner}>
                         <Text style={styles.miniBrand}>🫀 CVITAL™</Text>
                         <View style={styles.progressWrap}>
