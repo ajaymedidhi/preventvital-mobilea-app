@@ -173,7 +173,7 @@ const HealthDashboardScreen = () => {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.vitalsScroll}>
                     <VitalCard
                         icon="heart-outline" color="#2563EB"
-                        value={data?.hr ? Math.round(data.hr.avg).toString() : '72'}
+                        value={data?.hr?.avg ? Math.round(data.hr.avg).toString() : '72'}
                         unit="bpm" label="Heart Rate"
                     />
                     <VitalCard
@@ -197,7 +197,7 @@ const HealthDashboardScreen = () => {
                         <View style={styles.stepsRow}>
                             <Text style={styles.stepsLabel}>Steps Today</Text>
                             <Text style={styles.stepsValue}>
-                                <Text style={styles.stepsCurrent}>{data?.s.toLocaleString() || '3,450'}</Text>
+                                <Text style={styles.stepsCurrent}>{data?.s ? data.s.toLocaleString() : '3,450'}</Text>
                                 <Text style={styles.stepsTarget}> / 10,000</Text>
                             </Text>
                         </View>
