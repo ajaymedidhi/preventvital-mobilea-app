@@ -10,7 +10,7 @@ const { width } = Dimensions.get('window');
 
 export default function AssessmentResultsScreen({ route }: any) {
     const navigation = useNavigation<any>();
-    const { setAuthToken } = useAuth();
+    const { setAuthToken, userToken, user: contextUser } = useAuth();
     const { token, user, formData, scoreData } = route.params || {};
 
     // If scoreData exists (passed from API), use it, else default for now
@@ -54,19 +54,39 @@ export default function AssessmentResultsScreen({ route }: any) {
     }));
 
     const handleGoToDashboard = async () => {
-        if (token && user) {
-            // Setting the auth token switches the AppNavigator to AppStack if coming from AuthStack
-            await setAuthToken(token, user);
+        // We need to update the global AuthContext so the Dashboard doesn't 
+        // think we still need to take the assessment and redirect us back here.
 
-            // Wait for AppStack to mount before navigating
-            setTimeout(() => {
+        const effectiveToken = token || userToken; // Route param or context
+        const effectiveUser = user || contextUser; // Route param or context
+
+        if (effectiveToken && effectiveUser) {
+            // Artificially inject the new health score into the user profile
+            const updatedProfile = {
+                ...(effectiveUser.profile || {}),
+                healthScore: results.cvitalScore
+            };
+            const updatedUser = { ...effectiveUser, profile: updatedProfile };
+
+            await setAuthToken(effectiveToken, updatedUser);
+
+            if (token && user) {
+                // If this was a first-time signup flow, wait for AppStack to mount
+                setTimeout(() => {
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Main' }],
+                    });
+                }, 100);
+            } else {
+                // Already in AppStack (taking assessment from Dashboard)
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Main' }],
                 });
-            }, 100);
+            }
         } else {
-            // Already in AppStack (e.g. taking assessment from Dashboard)
+            // Fallback
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Main' }],

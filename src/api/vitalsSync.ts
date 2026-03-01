@@ -34,7 +34,7 @@ export const syncVitals = async (): Promise<boolean> => {
         while (attempts < maxAttempts) {
             try {
                 // Real backend call
-                await client.post('/data', data);
+                await client.post('/api/vitals', data);
                 console.log('Vitals synced successfully!');
                 return true;
             } catch (err: any) {
@@ -57,16 +57,17 @@ export const syncVitals = async (): Promise<boolean> => {
 };
 
 export const getVitals = async (): Promise<NormalizedHealthData | null> => {
-    // Mock fetching from backend
-    // In real app, axios.get(API_URL)
-    console.log('Fetching Vitals from Backend...');
-    await new Promise(r => setTimeout(r, 500));
+    try {
+        console.log('Fetching Vitals from Backend...');
+        const response = await client.get('/api/vitals/latest');
 
-    // Return mock data for dashboard visualization since backend is not real
-    return {
-        s: 7500,
-        hr: { avg: 72, min: 60, max: 110 },
-        slp: { totalMinutes: 420 },
-        ts: new Date().toISOString()
-    };
+        if (response.data && response.data.status === 'success') {
+            return response.data.data.vitals;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Failed to fetch vitals from backend:', error);
+        return null; // Return null instead of mock data if the backend call fails or is empty
+    }
 };
