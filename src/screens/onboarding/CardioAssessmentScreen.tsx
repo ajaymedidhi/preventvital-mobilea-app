@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { calculateAssessmentScore } from '../../api/authApi';
+import { useAuth } from '../../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -24,6 +25,7 @@ const SECTIONS = [
 export default function CardioAssessmentScreen({ route }: any) {
     const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
+    const { userToken } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
 
     const progressWidth = useSharedValue(0);
@@ -152,19 +154,20 @@ export default function CardioAssessmentScreen({ route }: any) {
             setCurrentStep(curr => curr + 1);
         } else {
             // Calculate and show results
+            const effectiveToken = token || userToken;
             try {
-                if (token) {
-                    const scoreData = await calculateAssessmentScore(formData, token);
-                    navigation.navigate('AssessmentResults', { token, user, formData, scoreData });
+                if (effectiveToken) {
+                    const scoreData = await calculateAssessmentScore(formData, effectiveToken);
+                    navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData, scoreData });
                     console.log('Finished with API Score', scoreData);
                 } else {
                     // Fallback if token missing
-                    navigation.navigate('AssessmentResults', { token, user, formData });
+                    navigation.navigate('AssessmentResults', { token: null, user, formData });
                 }
             } catch (e) {
                 console.error(e);
                 // Navigate anyway with fallback dummy data to not block the user
-                navigation.navigate('AssessmentResults', { token, user, formData });
+                navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData });
             }
         }
     };

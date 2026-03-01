@@ -15,17 +15,17 @@ export default function AssessmentResultsScreen({ route }: any) {
 
     // If scoreData exists (passed from API), use it, else default for now
     const results = {
-        cvitalScore: scoreData?.cvitalScore || 82,
-        cvitalTier: scoreData?.cvitalTier || 'OPTIMAL',
+        cvitalScore: scoreData?.cvitalScore || 0,
+        cvitalTier: scoreData?.cvitalTier || 'PENDING',
         cvitalTierDetails: scoreData?.cvitalTierDetails || {
-            action: "Good cardiovascular health. Optimise lifestyle factors.",
-            color: "#4ade80",
-            label: "Good"
+            action: "Awaiting calculation",
+            color: "#aaa",
+            label: "Pending"
         },
-        ascvdRisk: scoreData?.ascvdRisk || 5.4,
-        vascularAge: scoreData?.vascularAge || 42,
-        patientName: user?.name || 'Your Name',
-        patientAge: formData?.age || 45,
+        ascvdRisk: scoreData?.ascvdRisk || 0,
+        vascularAge: scoreData?.vascularAge || 0,
+        patientName: user?.name || 'User',
+        patientAge: formData?.age || 0,
         patientSex: formData?.sex === 'female' ? 'Female' : 'Male',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     };
