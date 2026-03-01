@@ -11,6 +11,7 @@ const { width, height } = Dimensions.get('window');
 
 const SignUpScreen = () => {
     const navigation = useNavigation<any>();
+    const { setAuthToken } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -67,9 +68,12 @@ const SignUpScreen = () => {
 
         setLoading(true);
         try {
-            const token = await signup({ name, email, password });
-            Alert.alert('Success', 'Account created successfully!');
-            navigation.navigate('PersonalInformation', { token });
+            const { token, user } = await signup({ name, email, password });
+
+            // Set the token globally. This triggers AppNavigator to unmount AuthStack
+            // and mount either ConsentStack or AppStack depending on hasConsented.
+            await setAuthToken(token, user);
+
         } catch (error: any) {
             Alert.alert('Sign Up Failed', error.message || 'Something went wrong');
         } finally {

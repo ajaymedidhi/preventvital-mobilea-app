@@ -204,7 +204,6 @@ const WelcomeScreen = () => {
                 <Animated.View style={[styles.bottomContent, textAnimatedStyle]}>
 
                     {/* Light Background Curve for "Already have account" area */}
-                    <View style={styles.bottomCurve} />
 
                     <View style={styles.textContainer}>
                         <Text style={styles.appName}>Prevent Vital</Text>

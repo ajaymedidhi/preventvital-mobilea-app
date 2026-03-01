@@ -6,18 +6,38 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { fetchMySubscription } from '../../api/subscriptionApi';
 
 const UserProfileScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
-    const { signOut } = useAuth();
+    const { user, signOut } = useAuth();
+    const [currentSubscription, setCurrentSubscription] = React.useState<string | null>(null);
 
-    // Mock user data
-    const user = {
-        name: 'Rakesh Sharma',
-        email: 'Rakesh.shar@gmail.com',
-        initials: 'RS'
-    };
+    React.useEffect(() => {
+        const getSubscription = async () => {
+            const data = await fetchMySubscription();
+            if (data?.subscription?.plan) {
+                const planStr = data.subscription.plan;
+                setCurrentSubscription(planStr.charAt(0).toUpperCase() + planStr.slice(1));
+            } else {
+                setCurrentSubscription('Free');
+            }
+        };
+        if (user) {
+            getSubscription();
+        }
+    }, [user]);
+
+    // Fallback display values
+    const displayName = user?.profile?.firstName
+        ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim()
+        : (user?.name || 'User');
+    const displayEmail = user?.email || 'No Email';
+
+    const initials = displayName.split(' ')
+        .map((n: string) => n[0])
+        .join('').toUpperCase().substring(0, 2) || 'U';
 
     const handleSignOut = () => {
         Alert.alert(
@@ -54,11 +74,16 @@ const UserProfileScreen = () => {
 
                     <View style={styles.userInfoContainer}>
                         <View style={styles.avatarCircle}>
-                            <Text style={styles.avatarText}>{user.initials}</Text>
+                            <Text style={styles.avatarText}>{initials}</Text>
                         </View>
                         <View style={styles.userDetails}>
-                            <Text style={styles.userName}>{user.name}</Text>
-                            <Text style={styles.userEmail}>{user.email}</Text>
+                            <Text style={styles.userName}>{displayName}</Text>
+                            <Text style={styles.userEmail}>{displayEmail}</Text>
+                            {/* Subscription Badge */}
+                            <View style={styles.subscriptionBadge}>
+                                <Ionicons name="star" size={12} color={currentSubscription !== 'Free' ? "#EAB308" : "#94A3B8"} />
+                                <Text style={styles.subscriptionText}>Current: {currentSubscription || 'Loading...'}</Text>
+                            </View>
                         </View>
                     </View>
                 </LinearGradient>
@@ -69,6 +94,7 @@ const UserProfileScreen = () => {
                         icon="person-outline"
                         label="Personal Information"
                         iconColor="#3b82f6"
+                        onPress={() => (navigation as any).navigate('ProfileDetails')}
                     />
                     <MenuItem
                         icon="sync"
@@ -169,6 +195,22 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#E0E7FF', // Light blue-ish white
         fontWeight: '400',
+        marginBottom: 8,
+    },
+    subscriptionBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+    },
+    subscriptionText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#fff',
+        marginLeft: 4,
     },
     menuContainer: {
         paddingHorizontal: 20,

@@ -7,10 +7,8 @@ import { View, StyleSheet, Platform } from 'react-native';
 import HealthDashboardScreen from '../screens/HealthDashboardScreen';
 import ProgramsListScreen from '../screens/programs/ProgramsListScreen';
 import UserProfileScreen from '../screens/auth/UserProfileScreen';
-
-// Placeholder Screens
-const DevicesScreen = () => <View style={{ flex: 1, backgroundColor: '#fff' }} />;
-const ActivityScreen = () => <View style={{ flex: 1, backgroundColor: '#fff' }} />;
+import DevicesScreen from '../screens/devices/DevicesScreen';
+import ActivityScreen from '../screens/activity/ActivityScreen';
 
 const Tab = createBottomTabNavigator();
 

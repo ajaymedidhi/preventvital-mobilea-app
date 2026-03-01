@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const HealthConditionsScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { token, personalInfo } = route.params || {};
+    const { token, user, personalInfo } = route.params || {};
 
     const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
     const [otherCondition, setOtherCondition] = useState('');
@@ -40,7 +40,7 @@ const HealthConditionsScreen = () => {
     };
 
     const handleNext = () => {
-        navigation.navigate('HealthGoals', { token, personalInfo, healthConditions: { selected: selectedConditions, other: otherCondition } });
+        navigation.navigate('HealthGoals', { token, user, personalInfo, healthConditions: { selected: selectedConditions, other: otherCondition } });
     };
 
     return (

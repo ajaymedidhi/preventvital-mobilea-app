@@ -15,16 +15,38 @@ const { width } = Dimensions.get('window');
 const HealthDashboardScreen = () => {
     const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const [data, setData] = useState<NormalizedHealthData | null>(null);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
-        const vitals = await getVitals();
-        setData(vitals);
-        setLoading(false);
+        try {
+            const vitals = await getVitals();
+            setData(vitals);
+
+            // Check if user is a new signup without an assessment
+            // (e.g., wellness score is default or vitals are missing)
+            // If so, automatically open the Cardio Assessment onboarding
+            if (!vitals || Object.keys(vitals).length === 0 || !user?.profile?.healthScore) {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'CardioAssessment' }],
+                });
+            }
+        } catch (error) {
+            console.error("Error loading vitals:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good Morning';
+        if (hour < 18) return 'Good Afternoon';
+        return 'Good Evening';
     };
 
     useEffect(() => {
@@ -62,18 +84,33 @@ const HealthDashboardScreen = () => {
                 {/* Header Top Bar */}
                 <View style={styles.headerTop}>
                     <View>
-                        <Text style={styles.greeting}>Good Morning</Text>
-                        <Text style={styles.userName}>Rakesh Sharma</Text>
+                        <Text style={styles.greeting}>{getGreeting()}</Text>
+                        <Text style={styles.userName}>
+                            {user?.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : 'User'}
+                        </Text>
                     </View>
                     <View style={styles.headerActions}>
+                        <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)' }]} onPress={() => navigation.navigate('CardioAssessment')}>
+                            <Ionicons name="pulse" size={20} color="#fff" />
+                            <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold', marginLeft: 4 }}>Assess</Text>
+                        </TouchableOpacity>
                         <TouchableOpacity style={styles.iconButton}>
                             <Ionicons name="notifications-outline" size={24} color="#6366F1" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                            <Image
-                                source={{ uri: 'https://ui-avatars.com/api/?name=Rakesh+S&background=F3F4F6&color=333' }}
-                                style={styles.avatar}
-                            />
+                            {user?.profile?.firstName ? (
+                                <View style={[styles.avatar, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1E293B' }}>
+                                        {user.profile.firstName[0].toUpperCase()}
+                                        {user.profile.lastName ? user.profile.lastName[0].toUpperCase() : ''}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <Image
+                                    source={{ uri: 'https://ui-avatars.com/api/?name=User&background=F3F4F6&color=333' }}
+                                    style={styles.avatar}
+                                />
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>

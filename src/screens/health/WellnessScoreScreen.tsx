@@ -96,7 +96,7 @@ const WellnessScoreScreen = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={24} color="#1E293B" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Your Wellness Score</Text>
+                <Text style={styles.headerTitle}>Your Vital Score</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -108,7 +108,7 @@ const WellnessScoreScreen = () => {
 
                 <View style={styles.statusContainer}>
                     <Text style={styles.statusText}>
-                        <Text style={styles.statusExcellent}>Excellent</Text> Your Wellness Score
+                        <Text style={styles.statusExcellent}>Excellent</Text> Your Vital Score
                     </Text>
                     <Text style={styles.statusSub}>Based on vitals and activity</Text>
                 </View>

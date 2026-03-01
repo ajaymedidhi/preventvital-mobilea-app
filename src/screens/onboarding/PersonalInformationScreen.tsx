@@ -4,22 +4,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const PersonalInformationScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { token } = route.params || {};
+    const { token, user } = route.params || {};
 
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [gender, setGender] = useState(''); // Male, Female, Others, Prefer not to say
     const [dob, setDob] = useState('');
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateObj, setDateObj] = useState(new Date(2000, 0, 1)); // Default to 2000-01-01
     const [phone, setPhone] = useState('');
     const [height, setHeight] = useState('');
     const [weight, setWeight] = useState('');
 
     const handleNext = () => {
-        navigation.navigate('HealthConditions', { token, personalInfo: { firstName, lastName, gender, dob, phone, height, weight } });
+        navigation.navigate('HealthConditions', { token, user, personalInfo: { firstName, lastName, gender, dob, phone, height, weight } });
+    };
+
+    const onChangeDate = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setDateObj(selectedDate);
+            // Format as DD/MM/YYYY
+            const day = selectedDate.getDate().toString().padStart(2, '0');
+            const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = selectedDate.getFullYear();
+            setDob(`${day}/${month}/${year}`);
+        }
     };
 
     const GenderButton = ({ label }: { label: string }) => (
@@ -98,11 +113,23 @@ const PersonalInformationScreen = () => {
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Date Of Birth</Text>
-                        <View style={styles.inputWrapper}>
-                            <TextInput style={styles.input} placeholder="dd/mm/yyyy" value={dob} onChangeText={setDob} />
+                        <TouchableOpacity style={styles.inputWrapper} onPress={() => setShowDatePicker(true)}>
+                            <Text style={[styles.input, !dob && { color: '#64748B' }]}>
+                                {dob || "DD/MM/YYYY"}
+                            </Text>
                             <Ionicons name="calendar-outline" size={20} color="#64748B" />
-                        </View>
+                        </TouchableOpacity>
                     </View>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={dateObj}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={onChangeDate}
+                            maximumDate={new Date()}
+                        />
+                    )}
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Phone number</Text>

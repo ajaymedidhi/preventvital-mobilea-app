@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { getToken } from './storage';
+import { Platform } from 'react-native';
 
-const API_URL = 'https://prevent-vital-backend.onrender.com';
+const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001' : 'http://localhost:5001'; // Localhost dynamically
 
 const client = axios.create({
     baseURL: API_URL,

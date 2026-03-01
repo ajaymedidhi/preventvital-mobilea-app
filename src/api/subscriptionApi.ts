@@ -24,3 +24,13 @@ export const verifySubscription = async (paymentData: {
         throw new Error(error.response?.data?.message || 'Failed to verify subscription');
     }
 };
+
+export const fetchMySubscription = async (): Promise<any> => {
+    try {
+        const response = await client.get('/api/users/my-subscription');
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Fetch Subscription error:', error.response?.data || error.message);
+        return null; // Return null if no subscription exists
+    }
+};

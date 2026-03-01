@@ -9,26 +9,36 @@ const { width } = Dimensions.get('window');
 
 const FILTER_TAGS = ['All Programs', 'Diabetes', 'Hypertension', 'Cardiac', 'Respiratory'];
 
-const RECOMMENDED_PROGRAMS = [
-    {
-        id: '1',
-        title: 'Diabetes Management',
-        duration: '30 days',
-        sessions: '45 sessions',
-        rating: '4.8',
-        reviews: '1250',
-        image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80',
-    },
-    {
-        id: '2',
-        title: 'Hypertension Control',
-        duration: '30 days',
-        sessions: '45 sessions',
-        rating: '4.8',
-        reviews: '1250',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80',
+// Mock user health data used to drive recommendations
+const userHealthProfile = {
+    vitalScore: 78,
+    conditions: ['High Blood Pressure'],
+    goals: ['Cardiovascular Health']
+};
+
+const getRecommendations = () => {
+    // Dynamically select programs based on user's conditions or goals
+    const isHypertensive = userHealthProfile.conditions.includes('High Blood Pressure');
+    const wantsCardio = userHealthProfile.goals.includes('Cardiovascular Health');
+
+    let recommendations = [];
+    if (isHypertensive) {
+        recommendations.push(ALL_PROGRAMS.find(p => p.id === '2')); // Hypertension Control
     }
-];
+    if (wantsCardio) {
+        recommendations.push(ALL_PROGRAMS.find(p => p.id === '3')); // Cardiac Wellness
+    }
+
+    // Fallback if no specific matches
+    if (recommendations.length === 0) {
+        recommendations = [ALL_PROGRAMS[0], ALL_PROGRAMS[1]];
+    }
+
+    return {
+        programs: recommendations,
+        reason: isHypertensive ? "Based on your Hypertension risk" : "Recommended for your goals"
+    };
+};
 
 const ALL_PROGRAMS = [
     {
@@ -118,6 +128,8 @@ const ProgramsListScreen = () => {
     const [selectedTag, setSelectedTag] = useState('All Programs');
     const [searchQuery, setSearchQuery] = useState('');
 
+    const { programs: recommendedPrograms, reason: recommendationReason } = getRecommendations();
+
     const renderRecommendedItem = ({ item }: { item: any }) => (
         <TouchableOpacity
             style={styles.recommendedCard}
@@ -199,13 +211,16 @@ const ProgramsListScreen = () => {
 
                 <View style={styles.contentSection}>
                     <Text style={styles.sectionTitle}>Recommended For You</Text>
+                    <Text style={styles.recommendationSubtitle}>{recommendationReason}</Text>
                     <FlatList
-                        data={RECOMMENDED_PROGRAMS}
+                        data={recommendedPrograms}
                         renderItem={renderRecommendedItem}
-                        keyExtractor={item => item.id}
+                        keyExtractor={item => item?.id || Math.random().toString()}
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.recommendedList}
+                        snapToInterval={280 + 16} // card width + margin
+                        decelerationRate="fast"
                     />
 
                     <Text style={styles.sectionTitle}>All Programs</Text>
@@ -328,7 +343,14 @@ const styles = StyleSheet.create({
     contentSection: {
         paddingTop: 10,
     },
-    sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a', marginLeft: 20, marginBottom: 16 },
+    sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a', marginLeft: 20, marginBottom: 4 },
+    recommendationSubtitle: {
+        fontSize: 14,
+        color: '#6366F1',
+        fontWeight: '500',
+        paddingHorizontal: 20,
+        marginBottom: 16,
+    },
 
     recommendedList: { paddingHorizontal: 20, paddingBottom: 24 },
     recommendedCard: {

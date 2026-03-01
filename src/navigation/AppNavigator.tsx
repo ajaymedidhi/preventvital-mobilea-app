@@ -10,10 +10,8 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import OtpVerificationScreen from '../screens/auth/OtpVerificationScreen';
 import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
 
-import PersonalInformationScreen from '../screens/onboarding/PersonalInformationScreen';
-import HealthConditionsScreen from '../screens/onboarding/HealthConditionsScreen';
-import HealthGoalsScreen from '../screens/onboarding/HealthGoalsScreen';
-import ConnectDevicesScreen from '../screens/onboarding/ConnectDevicesScreen';
+import CardioAssessmentScreen from '../screens/onboarding/CardioAssessmentScreen';
+import AssessmentResultsScreen from '../screens/onboarding/AssessmentResultsScreen';
 
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,10 +29,8 @@ function AuthStack() {
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="SignIn" component={LoginScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
-            <Stack.Screen name="PersonalInformation" component={PersonalInformationScreen} />
-            <Stack.Screen name="HealthConditions" component={HealthConditionsScreen} />
-            <Stack.Screen name="HealthGoals" component={HealthGoalsScreen} />
-            <Stack.Screen name="ConnectDevices" component={ConnectDevicesScreen} />
+            <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
+            <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
             <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
         </Stack.Navigator>
@@ -49,6 +45,7 @@ import MyProgramsScreen from '../screens/programs/MyProgramsScreen';
 import ProgramDayViewScreen from '../screens/programs/ProgramDayViewScreen';
 import SessionPlayerScreen from '../screens/programs/SessionPlayerScreen';
 import SubscriptionScreen from '../screens/subscription/SubscriptionScreen';
+import ProfileDetailsScreen from '../screens/profile/ProfileDetailsScreen';
 
 function AppStack() {
     return (
@@ -61,6 +58,9 @@ function AppStack() {
             <Stack.Screen name="ProgramDayView" component={ProgramDayViewScreen} />
             <Stack.Screen name="SessionPlayer" component={SessionPlayerScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="ProfileDetails" component={ProfileDetailsScreen} />
+            <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
+            <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
         </Stack.Navigator>
     );
 }

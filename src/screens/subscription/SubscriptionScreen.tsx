@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { createSubscription, verifySubscription } from '../../api/subscriptionApi';
+import { createSubscription, verifySubscription, fetchMySubscription } from '../../api/subscriptionApi';
 import { useAuth } from '../../auth/AuthContext';
 
 const PLANS = [
@@ -64,10 +64,21 @@ const PLANS = [
 
 const SubscriptionScreen = () => {
     const navigation = useNavigation();
-    const { userToken } = useAuth(); // If needed for refetching user profile later
+    const { userToken, setAuthToken } = useAuth(); // If needed for refetching user profile later
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+    const [currentPlanId, setCurrentPlanId] = useState<string>('free'); // Default
+
+    React.useEffect(() => {
+        const fetchCurrent = async () => {
+            const data = await fetchMySubscription();
+            if (data?.subscription?.plan) {
+                setCurrentPlanId(data.subscription.plan.toLowerCase());
+            }
+        };
+        fetchCurrent();
+    }, []);
 
     const handleSubscribe = async (plan: any) => {
         if (plan.monthlyPrice === 0) {
@@ -127,7 +138,12 @@ const SubscriptionScreen = () => {
             };
 
             console.log("Verifying payment...", paymentData);
-            await verifySubscription(paymentData);
+            const response = await verifySubscription(paymentData);
+
+            // Update global user state with new subscription details
+            if (response?.user && userToken && setAuthToken) {
+                await setAuthToken(userToken, response.user);
+            }
 
             Alert.alert("Success", "Subscription active! Welcome to " + PLANS.find(p => p.id === planId)?.name);
             navigation.goBack(); // Or navigate to Home/Profile
@@ -168,62 +184,65 @@ const SubscriptionScreen = () => {
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                {PLANS.map((plan) => (
-                    <TouchableOpacity
-                        key={plan.id}
-                        style={[
-                            styles.planCard,
-                            { backgroundColor: plan.backgroundColor },
-                            plan.id === 'gold' && { borderColor: '#EAB308', borderWidth: 1 },
-                            plan.id === 'platinum' && { borderColor: '#38bdf8', borderWidth: 1 }
-                        ]}
-                        activeOpacity={0.9}
-                        onPress={() => handleSubscribe(plan)}
-                        disabled={loading}
-                    >
-                        <View style={styles.cardHeader}>
-                            <Text style={[styles.planName, { color: plan.headerColor }]}>{plan.name}</Text>
-                            <View style={styles.priceContainer}>
-                                <Text style={styles.priceValue}>
-                                    {isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                                </Text>
-                                <Text style={styles.pricePeriod}>
-                                    /{isAnnual ? 'yr' : 'mo'}
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.divider} />
-
-                        <View style={styles.featuresList}>
-                            {plan.features.map((feature, idx) => (
-                                <View key={idx} style={styles.featureItem}>
-                                    <Ionicons name="checkmark-circle" size={20} color="#16a34a" style={styles.checkIcon} />
-                                    <Text style={styles.featureText}>{feature}</Text>
+                {PLANS.map((plan) => {
+                    const isUserCurrentPlan = plan.id === currentPlanId;
+                    return (
+                        <TouchableOpacity
+                            key={plan.id}
+                            style={[
+                                styles.planCard,
+                                { backgroundColor: plan.backgroundColor },
+                                plan.id === 'gold' && { borderColor: '#EAB308', borderWidth: 1 },
+                                plan.id === 'platinum' && { borderColor: '#38bdf8', borderWidth: 1 }
+                            ]}
+                            activeOpacity={0.9}
+                            onPress={() => isUserCurrentPlan ? Alert.alert("Current Plan", "You are already on this plan.") : handleSubscribe(plan)}
+                            disabled={loading || isUserCurrentPlan}
+                        >
+                            <View style={styles.cardHeader}>
+                                <Text style={[styles.planName, { color: plan.headerColor }]}>{plan.name}</Text>
+                                <View style={styles.priceContainer}>
+                                    <Text style={styles.priceValue}>
+                                        {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                                    </Text>
+                                    <Text style={styles.pricePeriod}>
+                                        /{isAnnual ? 'yr' : 'mo'}
+                                    </Text>
                                 </View>
-                            ))}
-                        </View>
-
-                        {plan.buttonGradient ? (
-                            <LinearGradient
-                                colors={plan.buttonGradient as unknown as readonly [string, string, ...string[]]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.subscribeButton}
-                            >
-                                <Text style={styles.subscribeText}>{plan.buttonText}</Text>
-                            </LinearGradient>
-                        ) : (
-                            <View style={[styles.subscribeButton, { backgroundColor: plan.buttonColor }]}>
-                                {loading && processingPlanId === plan.id ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={styles.subscribeText}>{plan.buttonText}</Text>
-                                )}
                             </View>
-                        )}
-                    </TouchableOpacity>
-                ))}
+
+                            <View style={styles.divider} />
+
+                            <View style={styles.featuresList}>
+                                {plan.features.map((feature, idx) => (
+                                    <View key={idx} style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={20} color="#16a34a" style={styles.checkIcon} />
+                                        <Text style={styles.featureText}>{feature}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            {plan.buttonGradient ? (
+                                <LinearGradient
+                                    colors={plan.buttonGradient as unknown as readonly [string, string, ...string[]]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.subscribeButton}
+                                >
+                                    <Text style={styles.subscribeText}>{isUserCurrentPlan ? 'Current' : plan.buttonText}</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={[styles.subscribeButton, { backgroundColor: isUserCurrentPlan ? '#94A3B8' : plan.buttonColor }]}>
+                                    {loading && processingPlanId === plan.id ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={styles.subscribeText}>{isUserCurrentPlan ? 'Current' : plan.buttonText}</Text>
+                                    )}
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    );
+                })}
             </ScrollView>
         </SafeAreaView>
     );

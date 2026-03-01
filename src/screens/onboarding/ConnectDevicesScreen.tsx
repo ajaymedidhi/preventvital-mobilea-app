@@ -11,7 +11,7 @@ import { updateOnboarding } from '../../api/authApi';
 const ConnectDevicesScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const { token, personalInfo, healthConditions, healthGoals } = route.params || {};
+    const { token, user, personalInfo, healthConditions, healthGoals } = route.params || {};
 
     // In a real app, we might save profile data here using an API call with the token
     const { setAuthToken } = useAuth(); // We need to add this to AuthContext
@@ -23,7 +23,7 @@ const ConnectDevicesScreen = () => {
 
             if (token && setAuthToken) {
                 // Store token first
-                await setAuthToken(token);
+                await setAuthToken(token, user);
                 // Now client.ts should pick it up from storage/state for the API call
 
                 await updateOnboarding({
