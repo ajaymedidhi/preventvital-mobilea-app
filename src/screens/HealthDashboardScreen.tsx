@@ -27,9 +27,9 @@ const HealthDashboardScreen = () => {
             setData(vitals);
 
             // Check if user is a new signup without an assessment
-            // (e.g., wellness score is default or vitals are missing)
+            // (e.g., wellness score is default or skipped)
             // If so, automatically open the Cardio Assessment onboarding
-            if (!vitals || Object.keys(vitals).length === 0 || !user?.profile?.healthScore) {
+            if (!user?.profile?.healthScore && user?.profile?.healthScore !== -1) {
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'CardioAssessment' }],

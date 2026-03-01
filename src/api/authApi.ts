@@ -61,3 +61,5 @@ export const calculateAssessmentScore = async (formData: any, token: string): Pr
         throw new Error(msg || 'Failed to calculate score');
     }
 };
+
+

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { calculateAssessmentScore } from '../../api/authApi';
+import { calculateAssessmentScore, updateOnboarding } from '../../api/authApi';
 import { useAuth } from '../../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
@@ -25,7 +25,7 @@ const SECTIONS = [
 export default function CardioAssessmentScreen({ route }: any) {
     const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
-    const { userToken } = useAuth();
+    const { userToken, setAuthToken } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
 
     const progressWidth = useSharedValue(0);
@@ -174,6 +174,29 @@ export default function CardioAssessmentScreen({ route }: any) {
 
     const prevStep = () => {
         if (currentStep > 0) setCurrentStep(curr => curr - 1);
+    };
+
+    const skipAssessment = async () => {
+        const effectiveToken = token || userToken;
+        if (effectiveToken && user) {
+            // Use -1 to flag that the user explicitly skipped
+            const updatedProfile = { ...(user.profile || {}), healthScore: -1 };
+            const updatedUser = { ...user, profile: updatedProfile };
+
+            try {
+                // Save this flag to the backend permanently so the user isn't trapped next session
+                await updateOnboarding({ healthScore: -1 });
+            } catch (e) {
+                console.warn('Could not sync skip status to backend', e);
+            }
+
+            await setAuthToken(effectiveToken, updatedUser);
+        }
+
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main', params: { screen: 'Home' } }],
+        });
     };
 
     const renderOption = (key: string, label: string, value: string, sublabel?: string, flexOption?: boolean) => {
@@ -504,8 +527,11 @@ export default function CardioAssessmentScreen({ route }: any) {
 
                         {/* Nav Buttons */}
                         <View style={styles.footer}>
-                            <TouchableOpacity style={[styles.btnBack, currentStep === 0 && { opacity: 0 }]} onPress={prevStep} disabled={currentStep === 0}>
-                                <Text style={styles.btnBackText}>Back</Text>
+                            <TouchableOpacity
+                                style={[styles.btnBack, currentStep === 0 && { opacity: 1 }]}
+                                onPress={currentStep === 0 ? skipAssessment : prevStep}
+                            >
+                                <Text style={styles.btnBackText}>{currentStep === 0 ? 'Skip' : 'Back'}</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.btnNext} onPress={nextStep}>
