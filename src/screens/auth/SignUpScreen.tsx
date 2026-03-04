@@ -72,7 +72,7 @@ const SignUpScreen = () => {
 
             // Set the token globally. This triggers AppNavigator to unmount AuthStack
             // and mount either ConsentStack or AppStack depending on hasConsented.
-            await setAuthToken(token, user);
+            await setAuthToken(token, user, true);
 
         } catch (error: any) {
             Alert.alert('Sign Up Failed', error.message || 'Something went wrong');

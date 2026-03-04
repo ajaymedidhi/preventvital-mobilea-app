@@ -6,10 +6,11 @@ interface AuthContextType {
     userToken: string | null;
     user: any | null;
     isLoading: boolean;
+    isNewRegistration: boolean;
     signIn: (email: string, password?: string) => Promise<void>;
     signUp: (userData: any) => Promise<void>;
     signOut: () => Promise<void>;
-    setAuthToken: (token: string, user?: any) => Promise<void>;
+    setAuthToken: (token: string, user?: any, isNewReg?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [user, setUser] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isNewRegistration, setIsNewRegistration] = useState(false);
 
     useEffect(() => {
         const bootstrapAsync = async () => {
@@ -59,20 +61,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(signedUpUser);
     };
 
-    const setAuthToken = async (token: string, fetchedUser?: any) => {
+    const setAuthToken = async (token: string, fetchedUser?: any, isNewReg = false) => {
         await setToken('userToken', token);
         setUserToken(token);
         if (fetchedUser) setUser(fetchedUser);
+        setIsNewRegistration(isNewReg);
     };
 
     const signOut = async () => {
         await deleteToken('userToken');
         setUserToken(null);
         setUser(null);
+        setIsNewRegistration(false);
     };
 
     return (
-        <AuthContext.Provider value={{ userToken, user, isLoading, signIn, signUp, signOut, setAuthToken }}>
+        <AuthContext.Provider value={{ userToken, user, isLoading, isNewRegistration, signIn, signUp, signOut, setAuthToken }}>
             {children}
         </AuthContext.Provider>
     );

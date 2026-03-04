@@ -195,7 +195,13 @@ export default function CardioAssessmentScreen({ route }: any) {
 
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Main', params: { screen: 'Home' } }],
+            routes: [{
+                name: 'Main',
+                params: {
+                    screen: 'Home',
+                    params: { skippedAssessment: true }
+                }
+            }],
         });
     };
 

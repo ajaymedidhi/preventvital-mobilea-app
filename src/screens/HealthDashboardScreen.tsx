@@ -12,10 +12,10 @@ import { useAuth } from '../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
-const HealthDashboardScreen = () => {
+const HealthDashboardScreen = ({ route }: any) => {
     const navigation = useNavigation<any>();
     const insets = useSafeAreaInsets();
-    const { signOut, user } = useAuth();
+    const { signOut, user, isNewRegistration } = useAuth();
     const [data, setData] = useState<NormalizedHealthData | null>(null);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
@@ -29,7 +29,11 @@ const HealthDashboardScreen = () => {
             // Check if user is a new signup without an assessment
             // (e.g., wellness score is default or skipped)
             // If so, automatically open the Cardio Assessment onboarding
-            if (!user?.profile?.healthScore && user?.profile?.healthScore !== -1) {
+            const currentScore = user?.profile?.healthScore;
+            const isSkippedFlag = route?.params?.skippedAssessment || false;
+            const isSkippedDB = currentScore === -1;
+
+            if (isNewRegistration && !isSkippedFlag && !isSkippedDB && (!currentScore || currentScore === 0)) {
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'CardioAssessment' }],
