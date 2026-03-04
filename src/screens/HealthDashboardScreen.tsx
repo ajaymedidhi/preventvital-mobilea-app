@@ -102,7 +102,11 @@ const HealthDashboardScreen = ({ route }: any) => {
                         </Text>
                     </View>
                     <View style={styles.headerActions}>
-                        <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)' }]} onPress={() => navigation.navigate('CardioAssessment')}>
+                        <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8 }]} onPress={() => navigation.navigate('WearableDashboard')}>
+                            <Ionicons name="watch-outline" size={20} color="#fff" />
+                            <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold', marginLeft: 4 }}>Live</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8 }]} onPress={() => navigation.navigate('CardioAssessment')}>
                             <Ionicons name="pulse" size={20} color="#fff" />
                             <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold', marginLeft: 4 }}>Assess</Text>
                         </TouchableOpacity>

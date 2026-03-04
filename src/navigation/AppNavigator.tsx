@@ -39,6 +39,7 @@ function AuthStack() {
 
 import BottomTabNavigator from './BottomTabNavigator';
 import WellnessScoreScreen from '../screens/health/WellnessScoreScreen';
+import WearableDashboardScreen from '../screens/health/WearableDashboardScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
 import ProgramDetailsScreen from '../screens/programs/ProgramDetailsScreen';
 import MyProgramsScreen from '../screens/programs/MyProgramsScreen';
@@ -52,6 +53,7 @@ function AppStack() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Main" component={BottomTabNavigator} />
             <Stack.Screen name="WellnessScore" component={WellnessScoreScreen} />
+            <Stack.Screen name="WearableDashboard" component={WearableDashboardScreen} />
             <Stack.Screen name="ContactUs" component={ContactUsScreen} />
             <Stack.Screen name="ProgramDetails" component={ProgramDetailsScreen} />
             <Stack.Screen name="MyPrograms" component={MyProgramsScreen} />
