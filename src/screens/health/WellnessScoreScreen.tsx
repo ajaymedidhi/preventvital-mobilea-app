@@ -4,10 +4,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Circle, G, Path } from 'react-native-svg';
+import { useAuth } from '../../auth/AuthContext';
 
 const WellnessScoreScreen = () => {
     const navigation = useNavigation<any>();
-    const score = 88;
+    const { user } = useAuth();
+
+    // Retrieve backend scores with fallbacks
+    const score = user?.healthProfile?.cvitalScore || user?.profile?.healthScore || 0;
+    const ascvdScore = user?.healthProfile?.ascvdRisk || 0;
+    const metabolicScore = user?.healthProfile?.metabolicAge || 0;
+
+    // Determine status text based on CVITAL
+    let statusText = "Pending";
+    let statusColor = "#94A3B8";
+    if (score >= 80) { statusText = "Excellent"; statusColor = "#22C55E"; }
+    else if (score >= 60) { statusText = "Good"; statusColor = "#3B82F6"; }
+    else if (score >= 40) { statusText = "Fair"; statusColor = "#EAB308"; }
+    else if (score > 0) { statusText = "At Risk"; statusColor = "#EF4444"; }
 
     // Custom Gauge Component
     const WellnessGauge = () => {
@@ -74,13 +88,13 @@ const WellnessScoreScreen = () => {
                             origin="100, 100"
                         />
                     </G>
-
-                    {/* Inner Content */}
-                    <View style={styles.innerGaugeContent}>
-                        <Text style={styles.scoreBig}>{score}</Text>
-                        <Text style={styles.scoreSub}>Out Of 100</Text>
-                    </View>
                 </Svg>
+
+                {/* Inner Content - Moved OUTSIDE SVG so it actually renders on mobile */}
+                <View style={styles.innerGaugeContent}>
+                    <Text style={styles.scoreBig}>{score}</Text>
+                    <Text style={styles.scoreSub}>Out Of 100</Text>
+                </View>
 
                 {/* Labels positioned absolutely over the SVG area */}
                 <Text style={[styles.gaugeLabel, { top: 10, alignSelf: 'center' }]}>MEDIUM</Text>
@@ -107,17 +121,18 @@ const WellnessScoreScreen = () => {
                 </View>
 
                 <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>
-                        <Text style={styles.statusExcellent}>Excellent</Text> Your Vital Score
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                        Your Vital Score is <Text style={styles.statusExcellent}>{statusText}</Text>
                     </Text>
-                    <Text style={styles.statusSub}>Based on vitals and activity</Text>
+                    <Text style={styles.statusSub}>Based on your recent assessment and vitals</Text>
                 </View>
 
                 <View style={styles.breakdownContainer}>
-                    <ScoreRow label="Cardiovascular" value={80} color="#60A5FA" />
-                    <ScoreRow label="Metabolic" value={82} color="#3B82F6" />
-                    <ScoreRow label="Respiratory" value={90} color="#2563EB" />
-                    <ScoreRow label="Mental" value={85} color="#3B82F6" />
+                    <ScoreRow label="CVITAL Score" value={score} color={statusColor} maxValue={100} />
+                    <ScoreRow label="ASCVD Risk" value={ascvdScore} color={ascvdScore > 7.5 ? "#EF4444" : "#3B82F6"} maxValue={100} unit="%" />
+                    {metabolicScore > 0 && <ScoreRow label="Metabolic Age" value={metabolicScore} color="#8B5CF6" maxValue={100} unit=" yrs" />}
+                    <ScoreRow label="Respiratory" value={90} color="#2563EB" maxValue={100} />
+                    <ScoreRow label="Mental wellness" value={85} color="#3B82F6" maxValue={100} />
                 </View>
 
             </ScrollView>
@@ -125,15 +140,20 @@ const WellnessScoreScreen = () => {
     );
 };
 
-const ScoreRow = ({ label, value, color }: { label: string, value: number, color: string }) => (
-    <View style={styles.scoreRow}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${value}%`, backgroundColor: color }]} />
+const ScoreRow = ({ label, value, color, maxValue, unit = '' }: { label: string, value: number, color: string, maxValue: number, unit?: string }) => {
+    // Fill percentage computation, safe bounded 0-100
+    const fillPercent = Math.min(Math.max((value / maxValue) * 100, 0), 100);
+
+    return (
+        <View style={styles.scoreRow}>
+            <Text style={styles.rowLabel}>{label}</Text>
+            <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: `${fillPercent}%`, backgroundColor: color }]} />
+            </View>
+            <Text style={styles.rowValue}>{value}{unit}</Text>
         </View>
-        <Text style={styles.rowValue}>{value}</Text>
-    </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     container: {

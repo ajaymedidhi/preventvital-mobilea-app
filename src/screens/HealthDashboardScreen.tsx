@@ -65,11 +65,19 @@ const HealthDashboardScreen = ({ route }: any) => {
         );
     }
 
-    // Mock scores
-    const wellnessScore = 85;
+    // Real backend scores
+    const wellnessScore = user?.healthProfile?.cvitalScore || user?.profile?.healthScore || 0;
     const scoreProgress = wellnessScore / 100;
     const circleCircumference = 2 * Math.PI * 35; // Smaller circle
     const strokeDashoffset = circleCircumference * (1 - scoreProgress);
+
+    // Status Logic
+    let dbStatusText = "Pending";
+    let dbStatusColor = "#E2E8F0";
+    if (wellnessScore >= 80) { dbStatusText = "Excellent"; dbStatusColor = "#22C55E"; }
+    else if (wellnessScore >= 60) { dbStatusText = "Good"; dbStatusColor = "#3B82F6"; }
+    else if (wellnessScore >= 40) { dbStatusText = "Fair"; dbStatusColor = "#EAB308"; }
+    else if (wellnessScore > 0) { dbStatusText = "At Risk"; dbStatusColor = "#EF4444"; }
 
     return (
         <View style={styles.container}>
@@ -131,7 +139,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                                 <Circle cx="40" cy="40" r="35" stroke="#E2E8F0" strokeWidth="8" fill="transparent" />
                                 <Circle
                                     cx="40" cy="40" r="35"
-                                    stroke="#2563EB" strokeWidth="8" fill="transparent"
+                                    stroke={wellnessScore > 0 ? dbStatusColor : "#E2E8F0"} strokeWidth="8" fill="transparent"
                                     strokeDasharray={circleCircumference}
                                     strokeDashoffset={strokeDashoffset}
                                     strokeLinecap="round"
@@ -144,11 +152,13 @@ const HealthDashboardScreen = ({ route }: any) => {
                         </View>
                     </View>
                     <View style={styles.scoreInfo}>
-                        <Text style={styles.scoreTitle}>Excellent Your Vital Score</Text>
-                        <Text style={styles.scoreSubtitle}>Based on vitals and activity</Text>
+                        <Text style={styles.scoreTitle}>Your Vital Score is {dbStatusText}</Text>
+                        <Text style={styles.scoreSubtitle}>Based on recent assessment</Text>
                         <View style={styles.scoreStatus}>
-                            <Ionicons name="heart" size={14} color="#EF4444" />
-                            <Text style={styles.scoreStatusText}>Healthy</Text>
+                            <Ionicons name="heart" size={14} color={dbStatusColor} />
+                            <Text style={[styles.scoreStatusText, { color: dbStatusColor }]}>
+                                {wellnessScore > 0 ? dbStatusText : "Pending"}
+                            </Text>
                         </View>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
