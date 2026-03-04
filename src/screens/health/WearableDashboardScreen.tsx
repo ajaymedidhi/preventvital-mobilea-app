@@ -7,7 +7,7 @@ import SparklineChart from '../../components/SparklineChart'; // Custom SVG char
 import client from '../../api/client';
 
 export default function WearableDashboardScreen({ navigation }: any) {
-    const [devices, setDevices] = useState({ apple: false, fitbit: false, google: false, withings: false });
+    const [devices, setDevices] = useState({ apple: false, fitbit: false, google: false, withings: false, boat: false });
     const [vitals, setVitals] = useState<any>({});
     const [logs, setLogs] = useState<any[]>([]);
     const [history, setHistory] = useState<any>({ hr: [], spo2: [] });
@@ -22,6 +22,35 @@ export default function WearableDashboardScreen({ navigation }: any) {
             }
         });
     }, []);
+
+    // Simulated Real-Time Data Stream
+    useEffect(() => {
+        let interval: any;
+        const isAnyConnected = devices.apple || devices.fitbit || devices.google || devices.boat;
+
+        if (isAnyConnected) {
+            interval = setInterval(() => {
+                // Generate realistic fluctuations
+                const newHr = Math.floor(65 + Math.random() * 15); // 65-80 bpm
+                const newSpo2 = Math.floor(95 + Math.random() * 5); // 95-99%
+
+                setVitals((prev: any) => ({ ...prev, heartRate: newHr, spo2: newSpo2 }));
+
+                // Update history for sparklines
+                setHistory((prev: any) => ({
+                    hr: [...prev.hr.slice(-19), newHr], // keep last 20 points
+                    spo2: [...prev.spo2.slice(-19), newSpo2]
+                }));
+
+                // Add occasional log
+                if (Math.random() > 0.7) {
+                    addLog('STREAM', `Live update: HR ${newHr} bpm, SpO2 ${newSpo2}%`);
+                }
+            }, 3000); // Update every 3 seconds
+        }
+
+        return () => clearInterval(interval);
+    }, [devices]);
 
     const connectAppleHealth = async () => {
         if (Platform.OS !== 'ios') {
@@ -75,24 +104,70 @@ export default function WearableDashboardScreen({ navigation }: any) {
                     </TouchableOpacity>
 
                     {/* Fitbit */}
-                    <TouchableOpacity style={[styles.deviceCard, devices.fitbit && styles.connectedCard]} onPress={() => Alert.alert('OAuth Proxy', 'Redirecting to Fitbit OAuth')}>
+                    <TouchableOpacity style={[styles.deviceCard, devices.fitbit && styles.connectedCard]} onPress={() => {
+                        Alert.alert('Fitbit OAuth', 'Redirecting to fitbit.com to authorize...', [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                                text: 'Simulate Auth', onPress: () => {
+                                    setDevices(prev => ({ ...prev, fitbit: true }));
+                                    addLog('FITBIT', 'OAuth token received. Syncing history...');
+                                }
+                            }
+                        ]);
+                    }}>
                         <View style={[styles.deviceIcon, { backgroundColor: 'rgba(0,179,136,0.1)' }]}>
                             <Text>📟</Text>
                         </View>
                         <View>
                             <Text style={styles.deviceName}>Fitbit</Text>
-                            <Text style={styles.deviceStatus}>Charge, Sense, Versa</Text>
+                            <Text style={styles.deviceStatus}>{devices.fitbit ? 'Connected & syncing' : 'Charge, Sense, Versa'}</Text>
                         </View>
                     </TouchableOpacity>
 
                     {/* Google Fit */}
-                    <TouchableOpacity style={[styles.deviceCard, devices.google && styles.connectedCard]} onPress={() => Alert.alert('OAuth Proxy', 'Redirecting to Google Fit OAuth')}>
+                    <TouchableOpacity style={[styles.deviceCard, devices.google && styles.connectedCard]} onPress={() => {
+                        Alert.alert('Google Fit OAuth', 'Redirecting to google.com to authorize...', [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                                text: 'Simulate Auth', onPress: () => {
+                                    setDevices(prev => ({ ...prev, google: true }));
+                                    addLog('GOOGLE', 'OAuth token received. Syncing history...');
+                                }
+                            }
+                        ]);
+                    }}>
                         <View style={[styles.deviceIcon, { backgroundColor: 'rgba(66,133,244,0.1)' }]}>
                             <Text>🏃</Text>
                         </View>
                         <View>
                             <Text style={styles.deviceName}>Google Fit</Text>
-                            <Text style={styles.deviceStatus}>Android Sources</Text>
+                            <Text style={styles.deviceStatus}>{devices.google ? 'Connected & syncing' : 'Android Sources'}</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    {/* boAt Watch */}
+                    <TouchableOpacity style={[styles.deviceCard, devices.boat && styles.connectedCard]} onPress={() => {
+                        Alert.alert(
+                            'boAt Integration',
+                            'Please ensure your watch is paired with the boAt Crest app and "Sync to Google Fit / Apple Health" is enabled in its settings.',
+                            [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                    text: 'Connect via ' + (Platform.OS === 'ios' ? 'Apple Health' : 'Google Fit'),
+                                    onPress: () => {
+                                        setDevices(prev => ({ ...prev, boat: true }));
+                                        Platform.OS === 'ios' ? connectAppleHealth() : Alert.alert('OAuth Proxy', 'Redirecting to Google Fit OAuth');
+                                    }
+                                }
+                            ]
+                        );
+                    }}>
+                        <View style={[styles.deviceIcon, { backgroundColor: 'rgba(235,50,35,0.1)' }]}>
+                            <Text>🛥️</Text>
+                        </View>
+                        <View>
+                            <Text style={styles.deviceName}>boAt Watch</Text>
+                            <Text style={styles.deviceStatus}>Via Health/Fit Sync</Text>
                         </View>
                     </TouchableOpacity>
                 </ScrollView>
