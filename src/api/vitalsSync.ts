@@ -68,6 +68,22 @@ export const getVitals = async (): Promise<NormalizedHealthData | null> => {
         return null;
     } catch (error) {
         console.error('Failed to fetch vitals from backend:', error);
-        return null; // Return null instead of mock data if the backend call fails or is empty
+        return null;
+    }
+};
+
+export const getAssessmentHistory = async (): Promise<any[]> => {
+    try {
+        console.log('Fetching Assessment History from Backend...');
+        const response = await client.get('/api/vitals/assessments');
+
+        if (response.data && response.data.status === 'success') {
+            return response.data.data.assessments || [];
+        }
+
+        return [];
+    } catch (error) {
+        console.error('Failed to fetch assessment history:', error);
+        return [];
     }
 };

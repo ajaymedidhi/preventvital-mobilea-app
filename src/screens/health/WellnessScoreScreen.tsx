@@ -135,6 +135,15 @@ const WellnessScoreScreen = () => {
                     <ScoreRow label="Mental wellness" value={85} color="#3B82F6" maxValue={100} />
                 </View>
 
+                <TouchableOpacity 
+                    style={styles.historyButton}
+                    onPress={() => navigation.navigate('AssessmentHistory')}
+                >
+                    <Ionicons name="time-outline" size={20} color="#6366F1" />
+                    <Text style={styles.historyButtonText}>View Assessment History</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#6366F1" />
+                </TouchableOpacity>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -282,6 +291,25 @@ const styles = StyleSheet.create({
         color: '#64748B',
         textAlign: 'right',
     },
+    historyButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        backgroundColor: '#F5F3FF',
+        borderRadius: 16,
+        width: '100%',
+        marginTop: 24,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: '#E0E7FF'
+    },
+    historyButtonText: {
+        flex: 1,
+        fontSize: 15,
+        fontWeight: 'bold',
+        color: '#4F46E5',
+    }
 });
 
 export default WellnessScoreScreen;

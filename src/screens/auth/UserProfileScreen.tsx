@@ -11,23 +11,8 @@ import { fetchMySubscription } from '../../api/subscriptionApi';
 const UserProfileScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
-    const { user, signOut } = useAuth();
-    const [currentSubscription, setCurrentSubscription] = React.useState<string | null>(null);
-
-    React.useEffect(() => {
-        const getSubscription = async () => {
-            const data = await fetchMySubscription();
-            if (data?.subscription?.plan) {
-                const planStr = data.subscription.plan;
-                setCurrentSubscription(planStr.charAt(0).toUpperCase() + planStr.slice(1));
-            } else {
-                setCurrentSubscription('Free');
-            }
-        };
-        if (user) {
-            getSubscription();
-        }
-    }, [user]);
+    const { user, subscription, currentPlan, signOut } = useAuth();
+    const planName = currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1);
 
     // Fallback display values
     const displayName = user?.profile?.firstName
@@ -81,8 +66,8 @@ const UserProfileScreen = () => {
                             <Text style={styles.userEmail}>{displayEmail}</Text>
                             {/* Subscription Badge */}
                             <View style={styles.subscriptionBadge}>
-                                <Ionicons name="star" size={12} color={currentSubscription !== 'Free' ? "#EAB308" : "#94A3B8"} />
-                                <Text style={styles.subscriptionText}>Current: {currentSubscription || 'Loading...'}</Text>
+                                <Ionicons name="star" size={12} color={planName !== 'Free' ? "#EAB308" : "#94A3B8"} />
+                                <Text style={styles.subscriptionText}>Current: {planName}</Text>
                             </View>
                         </View>
                     </View>
@@ -116,6 +101,7 @@ const UserProfileScreen = () => {
                         icon="shield-checkmark-outline"
                         label="Privacy & Security"
                         iconColor="#3b82f6"
+                        onPress={() => (navigation as any).navigate('PrivacyOverview')}
                     />
                     <MenuItem
                         icon="settings-outline"
@@ -129,6 +115,18 @@ const UserProfileScreen = () => {
                         onPress={() => (navigation as any).navigate('ContactUs')}
                     />
 
+                    <MenuItem
+                        icon="document-text-outline"
+                        label="Terms & Conditions"
+                        iconColor="#3b82f6"
+                        onPress={() => (navigation as any).navigate('TermsAndConditions')}
+                    />
+                    <MenuItem
+                        icon="time-outline"
+                        label="Assessment History"
+                        iconColor="#3b82f6"
+                        onPress={() => (navigation as any).navigate('AssessmentHistory')}
+                    />
                     <MenuItem
                         icon="log-out-outline"
                         label="Sign Out"

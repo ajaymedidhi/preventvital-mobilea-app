@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { useConsent } from '../../health/ConsentContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ConsentScreen() {
     const { giveConsent } = useConsent();
     const { signOut } = useAuth();
+    const navigation = useNavigation();
 
     const handleDecline = () => {
         Alert.alert(
@@ -49,13 +51,20 @@ export default function ConsentScreen() {
                 </Text>
 
                 <Text style={styles.disclaimer}>
-                    By clicking "Allow Access", you agree to our Terms of Service and Privacy Policy, and grant PreventVital permission to read your health data from Google Fit/Apple Health.
+                    By clicking "Allow Access", you agree to our{' '}
+                    <Text style={styles.link} onPress={() => (navigation as any).navigate('TermsAndConditions')}>Terms & Conditions</Text>
+                    {' '}and{' '}
+                    <Text style={styles.link} onPress={() => (navigation as any).navigate('PrivacyOverview')}>Privacy Policy</Text>
+                    , and grant PreventalVital permission to read your health data from Google Fit/Apple Health.
                 </Text>
 
                 <View style={styles.buttonContainer}>
-                    <Button title="Allow Access" onPress={giveConsent} />
-                    <View style={styles.spacer} />
-                    <Button title="Decline" onPress={handleDecline} color="red" />
+                    <TouchableOpacity style={styles.allowButton} onPress={giveConsent}>
+                        <Text style={styles.allowButtonText}>Allow Access</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
+                        <Text style={styles.declineButtonText}>Decline</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -89,15 +98,45 @@ const styles = StyleSheet.create({
     },
     disclaimer: {
         fontSize: 14,
-        color: '#666',
+        color: '#64748B',
         marginTop: 30,
         marginBottom: 30,
-        fontStyle: 'italic',
+        textAlign: 'center',
+        paddingHorizontal: 10,
+        lineHeight: 20,
+    },
+    link: {
+        color: '#4F46E5',
+        fontWeight: 'bold',
+        textDecorationLine: 'underline',
     },
     buttonContainer: {
-        marginBottom: 20,
+        gap: 12,
+        marginBottom: 40,
     },
-    spacer: {
-        height: 10,
-    }
+    allowButton: {
+        backgroundColor: '#4F46E5',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        shadowColor: '#4F46E5',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    allowButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    declineButton: {
+        paddingVertical: 12,
+        alignItems: 'center',
+    },
+    declineButtonText: {
+        color: '#94A3B8',
+        fontSize: 14,
+        fontWeight: '600',
+    },
 });

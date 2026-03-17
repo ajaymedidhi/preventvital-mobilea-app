@@ -6,9 +6,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../auth/AuthContext';
 import client from '../../api/client';
 
+const PLAN_COLORS: Record<string, string[]> = {
+    free: ['#9CA3AF', '#6B7280'],
+    silver: ['#94A3B8', '#64748B'],
+    gold: ['#FBBF24', '#D97706'],
+    platinum: ['#C084FC', '#9333EA'],
+    trial: ['#34D399', '#059669'],
+    standard: ['#60A5FA', '#2563EB'],
+    growth: ['#A78BFA', '#7C3AED'],
+    premium: ['#F472B6', '#DB2777'],
+    enterprise: ['#38BDF8', '#0284C7']
+};
+
 const ProfileDetailsScreen = () => {
     const navigation = useNavigation();
-    const { user, setAuthToken, userToken } = useAuth();
+    const { user, subscription, currentPlan, setAuthToken, userToken } = useAuth();
 
     // Mock user details populated from backend/state
     const [firstName, setFirstName] = useState(user?.profile?.firstName || '');
@@ -102,6 +114,62 @@ const ProfileDetailsScreen = () => {
             </LinearGradient>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                {/* Subscription Info Card */}
+                {(() => {
+                    const isCorporate = user?.customerType === 'corporate';
+                    const activePlan = currentPlan;
+
+                    const term = isCorporate
+                        ? (user?.corporateSubscription?.term || '1_month')
+                        : (user?.subscriptionTerm || '1_month');
+                    const formattedTerm = term.replace('_', ' ');
+
+                    const validUntilStr = isCorporate
+                        ? user?.corporateSubscription?.validUntil
+                        : user?.subscriptionValidUntil;
+                    let validUntil = 'Lifetime';
+                    if (validUntilStr) {
+                        const dateObj = new Date(validUntilStr);
+                        validUntil = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    }
+
+                    const subColors = (PLAN_COLORS[activePlan] || ['#6366F1', '#4F46E5']) as [string, string];
+
+                    return (
+                        <LinearGradient
+                            colors={subColors}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                            style={styles.subCard}
+                        >
+                            <View style={styles.subCardTop}>
+                                <View>
+                                    <Text style={styles.subCardLabel}>
+                                        {isCorporate ? 'B2B CORPORATE PLAN' : 'B2C INDIVIDUAL PLAN'}
+                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                        <Ionicons name="shield-checkmark" size={16} color="#FFF" style={{ marginRight: 6 }} />
+                                        <Text style={styles.subCardPlanName}>{activePlan}</Text>
+                                    </View>
+                                    {isCorporate && user?.corporateSubscription?.name && (
+                                        <Text style={styles.subCardOrgName}>Managed by: {user.corporateSubscription.name}</Text>
+                                    )}
+                                </View>
+                            </View>
+
+                            <View style={styles.subCardBottom}>
+                                <View>
+                                    <Text style={styles.subCardBottomLabel}>Billing Term</Text>
+                                    <Text style={styles.subCardBottomValue}>{formattedTerm}</Text>
+                                </View>
+                                <View style={{ alignItems: 'flex-end' }}>
+                                    <Text style={styles.subCardBottomLabel}>Valid Until</Text>
+                                    <Text style={styles.subCardBottomValue}>{validUntil}</Text>
+                                </View>
+                            </View>
+                        </LinearGradient>
+                    );
+                })()}
+
                 <View style={styles.formCard}>
 
                     <View style={styles.row}>
@@ -183,6 +251,60 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingTop: 24,
+    },
+    subCard: {
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    subCardTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.2)',
+        paddingBottom: 16,
+        marginBottom: 16,
+    },
+    subCardLabel: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+    },
+    subCardPlanName: {
+        color: '#FFF',
+        fontSize: 22,
+        fontWeight: 'bold',
+        textTransform: 'capitalize',
+    },
+    subCardOrgName: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 4,
+    },
+    subCardBottom: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    subCardBottomLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 11,
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    subCardBottomValue: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'capitalize',
     },
     formCard: {
         backgroundColor: '#fff',

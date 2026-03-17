@@ -1,16 +1,20 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { setToken, getToken, deleteToken } from '../api/storage';
 import { login, signup, fetchMe } from '../api/authApi';
+import { fetchMySubscription } from '../api/subscriptionApi';
 
 interface AuthContextType {
     userToken: string | null;
     user: any | null;
+    subscription: any | null;
+    currentPlan: string;
     isLoading: boolean;
     isNewRegistration: boolean;
     signIn: (email: string, password?: string) => Promise<void>;
     signUp: (userData: any) => Promise<void>;
     signOut: () => Promise<void>;
     setAuthToken: (token: string, user?: any, isNewReg?: boolean) => Promise<void>;
+    refreshSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,8 +22,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [user, setUser] = useState<any | null>(null);
+    const [subscription, setSubscription] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isNewRegistration, setIsNewRegistration] = useState(false);
+
+    const loadUserAndSubscription = async () => {
+        try {
+            const fetchedUser = await fetchMe();
+            setUser(fetchedUser);
+            const subData = await fetchMySubscription();
+            setSubscription(subData?.subscription || null);
+        } catch (e) {
+            console.error("Failed to fetch user or subscription:", e);
+        }
+    };
 
     useEffect(() => {
         const bootstrapAsync = async () => {
@@ -27,11 +43,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             try {
                 token = await getToken('userToken');
                 if (token) {
-                    const fetchedUser = await fetchMe();
-                    setUser(fetchedUser);
+                    await loadUserAndSubscription();
                 }
             } catch (e) {
-                // Restoring token failed or fetchMe failed (token invalid/expired)
                 console.error("Failed to bootstrap auth:", e);
                 token = null;
                 await deleteToken('userToken');
@@ -43,12 +57,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         bootstrapAsync();
     }, []);
 
+    const refreshSubscription = async () => {
+        const subData = await fetchMySubscription();
+        setSubscription(subData?.subscription || null);
+    };
+
     const signIn = async (email: string, password?: string) => {
         if (password) {
             const { token, user: loggedInUser } = await login(email, password);
             await setToken('userToken', token);
             setUserToken(token);
             setUser(loggedInUser);
+            await refreshSubscription();
         } else {
             console.warn("Using unsafe/mock signIn");
         }
@@ -59,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await setToken('userToken', token);
         setUserToken(token);
         setUser(signedUpUser);
+        await refreshSubscription();
     };
 
     const setAuthToken = async (token: string, fetchedUser?: any, isNewReg = false) => {
@@ -66,6 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUserToken(token);
         if (fetchedUser) setUser(fetchedUser);
         setIsNewRegistration(isNewReg);
+        await refreshSubscription();
     };
 
     const signOut = async () => {
@@ -75,8 +97,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsNewRegistration(false);
     };
 
+    const currentPlan = (user?.subscriptionPlan || subscription?.plan || user?.corporateSubscription?.plan || 'free').toLowerCase();
+
     return (
-        <AuthContext.Provider value={{ userToken, user, isLoading, isNewRegistration, signIn, signUp, signOut, setAuthToken }}>
+        <AuthContext.Provider value={{ userToken, user, subscription, currentPlan, isLoading, isNewRegistration, signIn, signUp, signOut, setAuthToken, refreshSubscription }}>
             {children}
         </AuthContext.Provider>
     );

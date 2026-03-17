@@ -1,443 +1,427 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, FlatList, Dimensions, StatusBar } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
+    FlatList, Dimensions, StatusBar, ActivityIndicator, Linking, Alert, RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import client from '../../api/client';
+import { useAuth } from '../../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
-const FILTER_TAGS = ['All Programs', 'Diabetes', 'Hypertension', 'Cardiac', 'Respiratory'];
-
-// Mock user health data used to drive recommendations
-const userHealthProfile = {
-    vitalScore: 78,
-    conditions: ['High Blood Pressure'],
-    goals: ['Cardiovascular Health']
-};
-
-const getRecommendations = () => {
-    // Dynamically select programs based on user's conditions or goals
-    const isHypertensive = userHealthProfile.conditions.includes('High Blood Pressure');
-    const wantsCardio = userHealthProfile.goals.includes('Cardiovascular Health');
-
-    let recommendations = [];
-    if (isHypertensive) {
-        recommendations.push(ALL_PROGRAMS.find(p => p.id === '2')); // Hypertension Control
-    }
-    if (wantsCardio) {
-        recommendations.push(ALL_PROGRAMS.find(p => p.id === '3')); // Cardiac Wellness
-    }
-
-    // Fallback if no specific matches
-    if (recommendations.length === 0) {
-        recommendations = [ALL_PROGRAMS[0], ALL_PROGRAMS[1]];
-    }
-
-    return {
-        programs: recommendations,
-        reason: isHypertensive ? "Based on your Hypertension risk" : "Recommended for your goals"
-    };
-};
-
-const ALL_PROGRAMS = [
+// ── Recommended Demo Programs with YouTube Videos ──────────────────
+const RECOMMENDED_PROGRAMS = [
     {
-        id: '1',
-        title: 'Diabetes Management',
-        description: 'Blood glucose control, insulin sensitivity',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.8',
-        image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80',
-        actionType: 'enrolled'
+        id: 'rp-1', title: 'Guided Meditation', category: 'Mindfulness', emoji: '🧘',
+        colors: ['#7C3AED', '#6366F1'] as [string, string],
+        description: 'Calm your mind with guided meditation for stress relief and clarity.',
+        duration: '4 weeks', difficulty: 'Beginner',
+        sessions: [
+            { title: '10-Min Morning Meditation', duration: '10 min', videoId: 'inpok4MKVLM' },
+            { title: 'Deep Sleep Meditation', duration: '20 min', videoId: 'aEqlQvczMJQ' },
+            { title: 'Stress Relief Body Scan', duration: '15 min', videoId: 'MIr3RsUWrdo' },
+        ]
     },
     {
-        id: '2',
-        title: 'Hypertension Control',
-        description: 'BP reduction, stress management',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80',
-        actionType: 'enroll'
+        id: 'rp-2', title: 'Pranayam Breathing', category: 'Breathing', emoji: '🌬️',
+        colors: ['#0D9488', '#06B6D4'] as [string, string],
+        description: 'Ancient breathing techniques to boost oxygen and reduce anxiety.',
+        duration: '3 weeks', difficulty: 'Beginner',
+        sessions: [
+            { title: 'Anulom Vilom for Beginners', duration: '12 min', videoId: '8VwufJrUhic' },
+            { title: 'Kapalbhati Pranayam', duration: '10 min', videoId: 'DcUjhJTmHbg' },
+            { title: 'Bhramari (Bee Breath)', duration: '8 min', videoId: 'hJD0uFnylQo' },
+        ]
     },
     {
-        id: '3',
-        title: 'Cardiac Wellness',
-        description: 'Post-op recovery, heart health',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.6',
-        image: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=400&q=80',
-        actionType: 'enroll'
+        id: 'rp-3', title: 'Morning Exercise', category: 'Fitness', emoji: '💪',
+        colors: ['#EA580C', '#DC2626'] as [string, string],
+        description: 'Energizing workouts for cardiovascular health and strength.',
+        duration: '6 weeks', difficulty: 'Intermediate',
+        sessions: [
+            { title: '15-Min Full Body Workout', duration: '15 min', videoId: 'UBMk30rjy0o' },
+            { title: 'Cardio HIIT for Heart Health', duration: '20 min', videoId: 'ml6cT4AZdqI' },
+            { title: 'Core Strength for Beginners', duration: '12 min', videoId: 'AnYl6Nmu9Qo' },
+        ]
     },
     {
-        id: '4',
-        title: 'Respiratory Health',
-        description: 'Lung capacity, breathing efficiency',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=400&q=80',
-        actionType: 'chevron'
+        id: 'rp-4', title: 'Yoga for Health', category: 'Yoga', emoji: '🧎',
+        colors: ['#059669', '#16A34A'] as [string, string],
+        description: 'Holistic yoga combining asanas with breathing for flexibility and peace.',
+        duration: '8 weeks', difficulty: 'All Levels',
+        sessions: [
+            { title: 'Sun Salutation (Surya Namaskar)', duration: '15 min', videoId: 'klmBssEYkdU' },
+            { title: 'Yoga for Back Pain Relief', duration: '20 min', videoId: 'XeXz8fIZDCE' },
+            { title: 'Evening Relaxation Yoga', duration: '18 min', videoId: 'COp7BR_Dvps' },
+        ]
     },
-    {
-        id: '5',
-        title: 'Mental Wellness',
-        description: 'Anxiety, depression, stress relief',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1512438248248-f9f14d38ea18?w=400&q=80',
-        actionType: 'chevron'
-    },
-    {
-        id: '6',
-        title: 'Weight Management',
-        description: 'Weight loss, metabolic health',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80',
-        actionType: 'chevron'
-    },
-    {
-        id: '7',
-        title: 'Cancer Support',
-        description: 'Post-treatment recovery, immunity',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=400&q=80',
-        actionType: 'chevron'
-    },
-    {
-        id: '8',
-        title: 'Cholesterol & Lipid Management',
-        description: 'Lipid profile improvement',
-        duration: '30 day',
-        sessions: 'Sessions',
-        rating: '4.9',
-        image: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=400&q=80',
-        actionType: 'chevron'
-    }
 ];
+
+const PLAN_BADGE: Record<string, { bg: string; text: string }> = {
+    free: { bg: '#F3F4F6', text: '#6B7280' },
+    silver: { bg: '#DBEAFE', text: '#2563EB' },
+    gold: { bg: '#FEF3C7', text: '#D97706' },
+    platinum: { bg: '#EDE9FE', text: '#7C3AED' },
+};
+
+const CAT_EMOJI: Record<string, string> = {
+    hypertension: '🫀', diabetes: '🩸', cardiac: '❤️', stress: '🧠', sleep: '😴',
+    fitness: '💪', nutrition: '🥗', metabolic: '🔬', cardiovascular: '🫁',
+    respiratory: '🌬️', mental: '🧘', musculoskeletal: '🦴', preventive: '🛡️',
+};
 
 const ProgramsListScreen = () => {
     const navigation = useNavigation<any>();
-    const [selectedTag, setSelectedTag] = useState('All Programs');
+    const { subscription, currentPlan } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTag, setSelectedTag] = useState('All');
+    const [expandedRec, setExpandedRec] = useState<string | null>(null);
 
-    const { programs: recommendedPrograms, reason: recommendationReason } = getRecommendations();
+    const userPlan = currentPlan;
+    const planHierarchy = ['free', 'silver', 'gold', 'platinum'];
+    const userPlanRank = planHierarchy.indexOf(userPlan);
 
-    const renderRecommendedItem = ({ item }: { item: any }) => (
-        <TouchableOpacity
-            style={styles.recommendedCard}
-            onPress={() => navigation.navigate('ProgramDetails', { programId: item.id })}
-            activeOpacity={0.9}
-        >
-            <Image source={{ uri: item.image }} style={styles.recommendedImage} />
-            <View style={styles.recommendedContent}>
-                <Text style={styles.recommendedTitle} numberOfLines={1}>{item.title}</Text>
-                <View style={styles.recommendedBottomRow}>
-                    <Text style={styles.recommendedStatText}>{item.duration} • {item.sessions}</Text>
-                </View>
-                <View style={styles.recommendedRatingRow}>
-                    <Ionicons name="star" size={10} color="#EAB308" />
-                    <Text style={styles.recommendedRatingText}>{item.rating} <Text style={styles.reviewsText}>({item.reviews})</Text></Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-    );
+    // API state
+    const [programs, setPrograms] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [enrollingId, setEnrollingId] = useState<string | null>(null);
+
+    const fetchPrograms = useCallback(async () => {
+        try {
+            const res = await client.get('/api/programs?limit=50');
+            setPrograms(res.data?.data?.programs || []);
+        } catch (err) {
+            console.error('Failed to fetch programs', err);
+        }
+        setLoading(false);
+        setRefreshing(false);
+    }, []);
+
+    useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
+
+    const onRefresh = () => { setRefreshing(true); fetchPrograms(); };
+
+    const handleEnroll = async (programId: string) => {
+        setEnrollingId(programId);
+        try {
+            await client.post(`/api/programs/${programId}/enroll`);
+            await fetchPrograms();
+        } catch (err: any) {
+            Alert.alert('Enrollment Failed', err.response?.data?.message || 'Something went wrong');
+        }
+        setEnrollingId(null);
+    };
+
+    const openYouTube = (videoId: string) => {
+        Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
+    };
+
+    // Filters
+    const categories = ['All', ...Array.from(new Set(programs.map(p => p.category).filter(Boolean)))];
+    const filteredPrograms = programs.filter(p => {
+        if (searchQuery && !p.title?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+        if (selectedTag !== 'All' && p.category !== selectedTag) return false;
+        return true;
+    });
 
     return (
-        <View style={styles.mainContainer}>
-            <StatusBar barStyle="light-content" backgroundColor="#A6A0F1" />
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} bounces={false}>
-                {/* Header Gradient Section */}
-                <LinearGradient
-                    colors={['#A6A0F1', '#Dcdbfa', '#FAFAFA']}
-                    style={styles.headerGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    locations={[0, 0.6, 1]}
-                >
-                    <SafeAreaView edges={['top', 'left', 'right']}>
-                        <View style={styles.headerTop}>
-                            <Text style={styles.headerTitle}>Wellness Program</Text>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#6366F1" />
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                bounces={true}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
+            >
+                {/* ── Header ──────────────────────────────────────── */}
+                <LinearGradient colors={['#6366F1', '#8B5CF6', '#F5F3FF']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
+                    <SafeAreaView edges={['top']}>
+                        <View style={styles.headerContent}>
+                            <Text style={styles.headerTitle}>Wellness Programs</Text>
+                            <Text style={styles.headerSub}>Curated for your health journey</Text>
                         </View>
 
-                        <View style={styles.searchContainer}>
-                            <Ionicons name="search" size={20} color="#F8F8FF" style={styles.searchIcon} />
+                        {/* Search */}
+                        <View style={styles.searchBox}>
+                            <Ionicons name="search" size={18} color="#A5B4FC" />
                             <TextInput
                                 style={styles.searchInput}
-                                placeholder="Search Programs"
-                                placeholderTextColor="#F8F8FF"
+                                placeholder="Search programs..."
+                                placeholderTextColor="#A5B4FC"
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
                             />
                         </View>
 
-                        <View style={styles.filterContainer}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
-                                {FILTER_TAGS.map((tag) => {
-                                    const isActive = selectedTag === tag;
-                                    return (
-                                        <TouchableOpacity
-                                            key={tag}
-                                            style={[styles.filterChip, isActive && styles.filterChipActive]}
-                                            onPress={() => setSelectedTag(tag)}
-                                        >
-                                            {isActive ? (
-                                                <LinearGradient
-                                                    colors={['#8B5CF6', '#A75FCD']}
-                                                    style={styles.filterGradientActive}
-                                                    start={{ x: 0, y: 0 }}
-                                                    end={{ x: 1, y: 0 }}
-                                                >
-                                                    <Text style={styles.filterTextActive}>{tag}</Text>
-                                                </LinearGradient>
-                                            ) : (
-                                                <Text style={styles.filterText}>{tag}</Text>
-                                            )}
-                                        </TouchableOpacity>
-                                    );
-                                })}
-                            </ScrollView>
-                        </View>
+                        {/* Category Filter */}
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+                            {categories.map((cat) => (
+                                <TouchableOpacity key={cat} onPress={() => setSelectedTag(cat)}
+                                    style={[styles.filterChip, selectedTag === cat && styles.filterChipActive]}>
+                                    <Text style={[styles.filterChipText, selectedTag === cat && styles.filterChipTextActive]}>
+                                        {cat === 'All' ? '🏷️ All' : `${CAT_EMOJI[cat] || '📋'} ${cat}`}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
                     </SafeAreaView>
                 </LinearGradient>
 
-                <View style={styles.contentSection}>
-                    <Text style={styles.sectionTitle}>Recommended For You</Text>
-                    <Text style={styles.recommendationSubtitle}>{recommendationReason}</Text>
+                {/* ── Recommended Programs ─────────────────────────── */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>🌟 Recommended For You</Text>
+                        <Text style={styles.sectionSub}>Free wellness sessions to get started</Text>
+                    </View>
+
                     <FlatList
-                        data={recommendedPrograms}
-                        renderItem={renderRecommendedItem}
-                        keyExtractor={item => item?.id || Math.random().toString()}
+                        data={RECOMMENDED_PROGRAMS}
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.recommendedList}
-                        snapToInterval={280 + 16} // card width + margin
+                        contentContainerStyle={{ paddingHorizontal: 20 }}
+                        snapToInterval={width * 0.72 + 16}
                         decelerationRate="fast"
+                        keyExtractor={item => item.id}
+                        renderItem={({ item: prog }) => (
+                            <View style={{ width: width * 0.72, marginRight: 16 }}>
+                                <TouchableOpacity
+                                    activeOpacity={0.9}
+                                    onPress={() => navigation.navigate('ProgramDetails', {
+                                        programId: prog.id,
+                                        program: {
+                                            _id: prog.id,
+                                            title: prog.title,
+                                            category: prog.category,
+                                            description: prog.description,
+                                            difficulty: prog.difficulty,
+                                            durationWeeks: parseInt(prog.duration) || 4,
+                                            totalSessions: prog.sessions.length,
+                                            accessiblePlans: ['free'],
+                                            enrollmentRequired: false,
+                                            enrollmentCount: 0,
+                                            locked: false,
+                                            isRecommended: true,
+                                            emoji: prog.emoji,
+                                            gradientColors: prog.colors,
+                                            youtubeSessions: prog.sessions,
+                                        }
+                                    })}
+                                >
+                                    <LinearGradient colors={prog.colors} style={styles.recCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                                        <View style={styles.recCardInner}>
+                                            <Text style={styles.recEmoji}>{prog.emoji}</Text>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.recTitle}>{prog.title}</Text>
+                                                <Text style={styles.recCat}>{prog.category}</Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.recDesc} numberOfLines={2}>{prog.description}</Text>
+                                        <View style={styles.recMeta}>
+                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>{prog.difficulty}</Text></View>
+                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>⏱ {prog.duration}</Text></View>
+                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>{prog.sessions.length} Sessions</Text></View>
+                                        </View>
+                                        <View style={styles.recFooter}>
+                                            <View style={styles.freeBadge}><Text style={styles.freeBadgeText}>🆓 Free</Text></View>
+                                            <Text style={styles.viewSessions}>
+                                                View Details ▸
+                                            </Text>
+                                        </View>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     />
-
-                    <Text style={styles.sectionTitle}>All Programs</Text>
-                    <View style={styles.allProgramsList}>
-                        {ALL_PROGRAMS.map((program) => (
-                            <TouchableOpacity
-                                key={program.id}
-                                style={styles.programCard}
-                                onPress={() => navigation.navigate('ProgramDetails', { programId: program.id })}
-                                activeOpacity={0.8}
-                            >
-                                <Image source={{ uri: program.image }} style={styles.programLeftImage} />
-
-                                <View style={styles.programInfoContainer}>
-                                    <View style={styles.programInfo}>
-                                        <Text style={styles.programTitleSmall} numberOfLines={1}>{program.title}</Text>
-                                        <Text style={styles.programDesc} numberOfLines={1}>{program.description}</Text>
-
-                                        <View style={styles.programStatsRowList}>
-                                            <Ionicons name="time-outline" size={12} color="#64748b" />
-                                            <Text style={styles.programStatText}>{program.duration}</Text>
-
-                                            <Ionicons name="journal-outline" size={12} color="#64748b" style={{ marginLeft: 8 }} />
-                                            <Text style={styles.programStatText}>{program.sessions}</Text>
-
-                                            <Ionicons name="star" size={10} color="#EAB308" style={{ marginLeft: 8 }} />
-                                            <Text style={styles.programStatText}>{program.rating}</Text>
-                                        </View>
-                                    </View>
-
-                                    {program.actionType === 'enrolled' && (
-                                        <TouchableOpacity onPress={() => navigation.navigate('MyPrograms')}>
-                                            <LinearGradient
-                                                colors={['#8A88E1', '#B660C9']}
-                                                start={{ x: 0, y: 0 }}
-                                                end={{ x: 1, y: 0 }}
-                                                style={styles.actionButtonEnrolled}
-                                            >
-                                                <Text style={styles.actionButtonEnrolledText}>Enrolled</Text>
-                                            </LinearGradient>
-                                        </TouchableOpacity>
-                                    )}
-
-                                    {program.actionType === 'enroll' && (
-                                        <View style={styles.actionButtonEnroll}>
-                                            <Text style={styles.actionButtonEnrollText}>Enroll Now</Text>
-                                        </View>
-                                    )}
-
-                                    {program.actionType === 'chevron' && (
-                                        <View style={styles.actionChevron}>
-                                            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
-                                        </View>
-                                    )}
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
                 </View>
+
+                {/* ── All Programs from API ────────────────────────── */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>📋 All Programs</Text>
+                        <Text style={styles.sectionSub}>Based on your subscription plan</Text>
+                    </View>
+
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#6366F1" style={{ marginVertical: 40 }} />
+                    ) : filteredPrograms.length === 0 ? (
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyEmoji}>📭</Text>
+                            <Text style={styles.emptyText}>No programs found</Text>
+                        </View>
+                    ) : (
+                        <View style={{ paddingHorizontal: 20 }}>
+                            {filteredPrograms.map((program) => {
+                                const reqPlan = program.requiredPlan?.toLowerCase() || 'free';
+                                const reqPlanRank = planHierarchy.indexOf(reqPlan);
+                                const emoji = CAT_EMOJI[program.category] || '📋';
+                                // Robust access check: 
+                                // 1. Use backend 'locked' flag if present
+                                // 2. Otherwise check if currentPlan is in accessiblePlans
+                                // 3. Fallback to rank comparison
+                                const isLocked = program.locked !== undefined 
+                                    ? program.locked 
+                                    : (program.accessiblePlans && program.accessiblePlans.length > 0)
+                                        ? !program.accessiblePlans.map((p: string) => p.toLowerCase()).includes(currentPlan.toLowerCase())
+                                        : userPlanRank < reqPlanRank;
+
+                                return (
+                                    <TouchableOpacity
+                                        key={program._id}
+                                        style={[styles.programCard, isLocked && styles.programCardLocked]}
+                                        onPress={() => navigation.navigate('ProgramDetails', { programId: program._id, program })}
+                                        activeOpacity={0.85}
+                                    >
+                                        {/* Lock Badge */}
+                                        {isLocked && (
+                                            <View style={styles.lockBadge}>
+                                                <Ionicons name="lock-closed" size={10} color="#FFF" />
+                                                <Text style={styles.lockBadgeText}>{reqPlan?.charAt(0).toUpperCase() + reqPlan?.slice(1)}+</Text>
+                                            </View>
+                                        )}
+
+                                        {/* Left Emoji Area */}
+                                        <View style={[styles.programEmoji, isLocked && { opacity: 0.4 }]}>
+                                            <Text style={{ fontSize: 32 }}>{emoji}</Text>
+                                        </View>
+
+                                        {/* Info */}
+                                        <View style={styles.programInfo}>
+                                            <Text style={styles.programTitle} numberOfLines={1}>{program.title}</Text>
+                                            <Text style={styles.programDesc} numberOfLines={1}>{program.description}</Text>
+
+                                            <View style={styles.programStatsRow}>
+                                                <View style={styles.statChip}>
+                                                    <Ionicons name="time-outline" size={10} color="#64748B" />
+                                                    <Text style={styles.statChipText}>{program.durationWeeks}w</Text>
+                                                </View>
+                                                <View style={styles.statChip}>
+                                                    <Ionicons name="book-outline" size={10} color="#64748B" />
+                                                    <Text style={styles.statChipText}>{program.totalSessions}s</Text>
+                                                </View>
+                                                {(program.averageRating || 0) > 0 && (
+                                                    <View style={styles.statChip}>
+                                                        <Ionicons name="star" size={10} color="#EAB308" />
+                                                        <Text style={styles.statChipText}>{program.averageRating?.toFixed(1)}</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+
+                                            {/* Plan badges */}
+                                            <View style={styles.planBadges}>
+                                                {(program.accessiblePlans || []).slice(0, 3).map((plan: string) => (
+                                                    <View key={plan} style={[styles.planBadge, { backgroundColor: PLAN_BADGE[plan]?.bg || '#F3F4F6' }]}>
+                                                        <Text style={[styles.planBadgeText, { color: PLAN_BADGE[plan]?.text || '#6B7280' }]}>{plan}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        </View>
+
+                                        {/* Action */}
+                                        <View style={styles.programAction}>
+                                            {isLocked ? (
+                                                <View style={styles.upgradeBtnSmall}>
+                                                    <Ionicons name="arrow-up-circle" size={18} color="#D97706" />
+                                                </View>
+                                            ) : program.enrollmentRequired && program.enrollmentStatus === 'not_enrolled' ? (
+                                                <TouchableOpacity
+                                                    style={styles.enrollBtn}
+                                                    onPress={() => handleEnroll(program._id)}
+                                                    disabled={enrollingId === program._id}
+                                                >
+                                                    {enrollingId === program._id ? (
+                                                        <ActivityIndicator size="small" color="#7C3AED" />
+                                                    ) : (
+                                                        <Text style={styles.enrollBtnText}>Enroll</Text>
+                                                    )}
+                                                </TouchableOpacity>
+                                            ) : (
+                                                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+                                            )}
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    )}
+                </View>
+
+                <View style={{ height: 40 }} />
             </ScrollView>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    mainContainer: { flex: 1, backgroundColor: '#FAFAFA' },
+    container: { flex: 1, backgroundColor: '#FAFAFA' },
 
-    headerGradient: {
-        width: '100%',
-        paddingBottom: 24,
-    },
-    headerTop: {
-        paddingHorizontal: 20,
-        marginBottom: 20,
-        marginTop: 10,
-    },
-    headerTitle: { fontSize: 32, fontWeight: 'bold', color: '#FFFFFF' },
+    // ── Header ──
+    header: { paddingBottom: 24 },
+    headerContent: { paddingHorizontal: 20, marginTop: 12, marginBottom: 16 },
+    headerTitle: { fontSize: 28, fontWeight: '800', color: '#FFF' },
+    headerSub: { fontSize: 13, color: '#C7D2FE', fontWeight: '500', marginTop: 4 },
+    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 20, borderRadius: 14, paddingHorizontal: 14, height: 48, marginBottom: 16 },
+    searchInput: { flex: 1, fontSize: 14, color: '#FFF', fontWeight: '500', marginLeft: 8 },
+    filterRow: { paddingHorizontal: 20, paddingBottom: 4 },
+    filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', marginRight: 10 },
+    filterChipActive: { backgroundColor: '#FFF' },
+    filterChipText: { fontSize: 12, fontWeight: '600', color: '#E0E7FF' },
+    filterChipTextActive: { color: '#6366F1' },
 
-    searchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(230, 230, 255, 0.4)', // Very soft translucent white
-        marginHorizontal: 20,
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        height: 52,
-        marginBottom: 24,
-    },
-    searchIcon: { marginRight: 10, color: '#F0F0FF' },
-    searchInput: { flex: 1, fontSize: 16, color: '#FFFFFF', fontWeight: '500' },
+    // ── Section ──
+    section: { marginTop: 20 },
+    sectionHeader: { paddingHorizontal: 20, marginBottom: 14 },
+    sectionTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+    sectionSub: { fontSize: 12, color: '#64748B', fontWeight: '500', marginTop: 2 },
 
-    filterContainer: { marginBottom: 10 },
-    filterContent: { paddingHorizontal: 20 },
-    filterChip: {
-        borderRadius: 24,
-        backgroundColor: '#F3F4F6', // Lighter grey for inactive
-        marginRight: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-    },
-    filterChipActive: {
-        backgroundColor: 'transparent', // Gradient handles background
-        shadowColor: '#8B5CF6',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    filterGradientActive: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 24,
-    },
-    filterText: { paddingHorizontal: 20, paddingVertical: 10, fontSize: 14, color: '#6B7280', fontWeight: '600' },
-    filterTextActive: { color: '#ffffff', fontSize: 14, fontWeight: '600' },
+    // ── Recommended Cards ──
+    recCard: { borderRadius: 20, padding: 18, minHeight: 170 },
+    recCardInner: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    recEmoji: { fontSize: 36, marginRight: 12 },
+    recTitle: { fontSize: 17, fontWeight: '800', color: '#FFF' },
+    recCat: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1 },
+    recDesc: { fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 17, marginBottom: 12 },
+    recMeta: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+    recBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+    recBadgeText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
+    recFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    freeBadge: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    freeBadgeText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
+    viewSessions: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
 
-    scrollContent: { flexGrow: 1, paddingBottom: 40 },
+    // ── Expanded Sessions ──
+    sessionsExpanded: { marginTop: 10, backgroundColor: '#FFF', borderRadius: 14, borderWidth: 1, borderColor: '#F1F5F9', overflow: 'hidden' },
+    sessionRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+    sessionNum: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    sessionRowTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+    sessionRowDur: { fontSize: 10, color: '#94A3B8', fontWeight: '500' },
 
-    contentSection: {
-        paddingTop: 10,
-    },
-    sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0f172a', marginLeft: 20, marginBottom: 4 },
-    recommendationSubtitle: {
-        fontSize: 14,
-        color: '#6366F1',
-        fontWeight: '500',
-        paddingHorizontal: 20,
-        marginBottom: 16,
-    },
+    // ── API Program Cards ──
+    programCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'center' },
+    programCardLocked: { opacity: 0.7, borderColor: '#E5E7EB' },
+    lockBadge: { position: 'absolute', top: 8, right: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, gap: 3, zIndex: 2 },
+    lockBadgeText: { fontSize: 9, fontWeight: '700', color: '#FFF' },
+    programEmoji: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    programInfo: { flex: 1, justifyContent: 'center' },
+    programTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+    programDesc: { fontSize: 11, color: '#94A3B8', marginBottom: 6 },
+    programStatsRow: { flexDirection: 'row', gap: 6, marginBottom: 6 },
+    statChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F8FAFC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+    statChipText: { fontSize: 10, color: '#64748B', fontWeight: '600' },
+    planBadges: { flexDirection: 'row', gap: 4 },
+    planBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+    planBadgeText: { fontSize: 8, fontWeight: '800', textTransform: 'uppercase' },
+    programAction: { marginLeft: 8, justifyContent: 'center', alignItems: 'center' },
+    upgradeBtnSmall: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center' },
+    enrollBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5, borderColor: '#7C3AED' },
+    enrollBtnText: { fontSize: 11, fontWeight: '700', color: '#7C3AED' },
 
-    recommendedList: { paddingHorizontal: 20, paddingBottom: 24 },
-    recommendedCard: {
-        width: width * 0.75, // Wider cards to match mockup
-        marginRight: 16,
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: '#F1F5F9'
-    },
-    recommendedImage: {
-        width: '100%',
-        height: 140, // Taller image
-        resizeMode: 'cover'
-    },
-    recommendedContent: {
-        padding: 14,
-    },
-    recommendedTitle: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
-    recommendedBottomRow: { flexDirection: 'row', marginBottom: 2 },
-    recommendedStatText: { color: '#94a3b8', fontSize: 11, fontWeight: '500' },
-    recommendedRatingRow: { flexDirection: 'row', alignItems: 'center' },
-    recommendedRatingText: { color: '#0f172a', fontSize: 11, fontWeight: '600', marginLeft: 4 },
-    reviewsText: { color: '#94a3b8', fontWeight: '400' },
-
-    allProgramsList: { paddingHorizontal: 20 },
-    programCard: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        marginBottom: 16,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: '#f1f5f9',
-        height: 110, // Fixed height for full image effect
-        overflow: 'hidden', // clips the left image to the border radius
-    },
-    programLeftImage: {
-        width: 110,
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    programInfoContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 14,
-    },
-    programInfo: {
-        flex: 1,
-        justifyContent: 'center'
-    },
-    programTitleSmall: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
-    programDesc: { fontSize: 11, color: '#94a3b8', marginBottom: 8 },
-    programStatsRowList: { flexDirection: 'row', alignItems: 'center' },
-    programStatText: { fontSize: 11, color: '#64748b', marginLeft: 4, fontWeight: '600' },
-
-    actionButtonEnrolled: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 6,
-        marginLeft: 10,
-    },
-    actionButtonEnrolledText: {
-        color: '#FFF',
-        fontSize: 11,
-        fontWeight: 'bold'
-    },
-    actionButtonEnroll: {
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#B660C9', // Purplish border
-        marginLeft: 10,
-    },
-    actionButtonEnrollText: {
-        color: '#B660C9',
-        fontSize: 11,
-        fontWeight: '600'
-    },
-    actionChevron: {
-        marginLeft: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    }
+    // ── Empty ──
+    emptyState: { alignItems: 'center', paddingVertical: 40 },
+    emptyEmoji: { fontSize: 40, marginBottom: 8 },
+    emptyText: { fontSize: 14, color: '#94A3B8', fontWeight: '500' },
 });
 
 export default ProgramsListScreen;

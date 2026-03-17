@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { WearableSDK } from '../../api/wearableSDK';
@@ -126,12 +126,22 @@ export default function WearableDashboardScreen({ navigation }: any) {
 
                     {/* Google Fit */}
                     <TouchableOpacity style={[styles.deviceCard, devices.google && styles.connectedCard]} onPress={() => {
-                        Alert.alert('Google Fit OAuth', 'Redirecting to google.com to authorize...', [
+                        Alert.alert('Google Fit Auth', 'Redirecting to Google to authorize data access...', [
                             { text: 'Cancel', style: 'cancel' },
                             {
-                                text: 'Simulate Auth', onPress: () => {
-                                    setDevices(prev => ({ ...prev, google: true }));
-                                    addLog('GOOGLE', 'OAuth token received. Syncing history...');
+                                text: 'Connect', onPress: async () => {
+                                    try {
+                                        const res = await client.get('/api/wearables/oauth/googlefit/login');
+                                        if (res.data.url) {
+                                            Linking.openURL(res.data.url);
+                                            // Optimistically set UI connected since the callback handles the backend success
+                                            setDevices(prev => ({ ...prev, google: true }));
+                                            addLog('GOOGLE', 'Redirecting to browser for OAuth...');
+                                        }
+                                    } catch (err) {
+                                        Alert.alert('Error', 'Could not reach backend for Google Auth');
+                                        console.error(err);
+                                    }
                                 }
                             }
                         ]);

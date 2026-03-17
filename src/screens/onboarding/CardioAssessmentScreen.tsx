@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,19 +11,20 @@ import { useAuth } from '../../auth/AuthContext';
 const { width } = Dimensions.get('window');
 
 const SECTIONS = [
-    { id: 1, icon: 'person-outline', title: 'Personal Demographics', desc: 'Basic patient profile' },
-    { id: 2, icon: 'body-outline', title: 'Body Measurements', desc: 'Anthropometric data' },
-    { id: 3, icon: 'medical-outline', title: 'Blood Pressure', desc: 'Hypertension status' },
-    { id: 4, icon: 'flask-outline', title: 'Lipid Profile', desc: 'Cholesterol levels' },
-    { id: 5, icon: 'water-outline', title: 'Diabetes Assessment', desc: 'Blood sugar control' },
-    { id: 6, icon: 'heart-half-outline', title: 'CVD History', desc: 'Cardiovascular events' },
-    { id: 7, icon: 'walk-outline', title: 'Lifestyle Factors', desc: 'Habits and physical activity' },
-    { id: 8, icon: 'analytics-outline', title: 'Advanced Biomarkers', desc: 'Inflammation & renal function' },
-    { id: 9, icon: 'pulse-outline', title: 'Organ Assessment', desc: 'Target organ damage' }
+    { id: 1, icon: 'person', title: 'Personal Demographics', desc: 'Basic Patient Profile' },
+    { id: 2, icon: 'body', title: 'Body Measurements', desc: 'Anthropometric data' },
+    { id: 3, icon: 'medical', title: 'Blood Pressure', desc: 'Hypertension status' },
+    { id: 4, icon: 'flask', title: 'Lipid Profile', desc: 'Cholesterol levels' },
+    { id: 5, icon: 'water', title: 'Diabetes Assessment', desc: 'Blood sugar control' },
+    { id: 6, icon: 'heart-half', title: 'CVD History', desc: 'Cardiovascular events' },
+    { id: 7, icon: 'walk', title: 'Lifestyle Factors', desc: 'Habits and physical activity' },
+    { id: 8, icon: 'analytics', title: 'Advanced Biomarkers', desc: 'Inflammation & renal function' },
+    { id: 9, icon: 'pulse', title: 'Organ Assessment', desc: 'Target organ damage' }
 ];
 
-export default function CardioAssessmentScreen({ route }: any) {
+export default function CardioAssessmentScreen() {
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const insets = useSafeAreaInsets();
     const { userToken, setAuthToken } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
@@ -31,7 +32,7 @@ export default function CardioAssessmentScreen({ route }: any) {
     const progressWidth = useSharedValue(0);
 
     useEffect(() => {
-        progressWidth.value = withTiming(((currentStep + 1) / SECTIONS.length) * 100 + '%', {
+        progressWidth.value = withTiming(((currentStep + 1) / SECTIONS.length) * 100, {
             duration: 500,
             easing: Easing.out(Easing.quad)
         });
@@ -39,14 +40,14 @@ export default function CardioAssessmentScreen({ route }: any) {
 
     const animatedProgressStyle = useAnimatedStyle(() => {
         return {
-            width: progressWidth.value as any
+            width: `${progressWidth.value}%`
         };
     });
 
     // Get user details passed from SignUp screen
     const { token, user } = route.params || {};
 
-    // Basic Form State (Steps 1-3)
+    // Basic Form State
     const [formData, setFormData] = useState({
         name: user?.name || '',
         age: '',
@@ -153,20 +154,16 @@ export default function CardioAssessmentScreen({ route }: any) {
         if (currentStep < SECTIONS.length - 1) {
             setCurrentStep(curr => curr + 1);
         } else {
-            // Calculate and show results
             const effectiveToken = token || userToken;
             try {
                 if (effectiveToken) {
                     const scoreData = await calculateAssessmentScore(formData, effectiveToken);
                     navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData, scoreData });
-                    console.log('Finished with API Score', scoreData);
                 } else {
-                    // Fallback if token missing
                     navigation.navigate('AssessmentResults', { token: null, user, formData });
                 }
             } catch (e) {
                 console.error(e);
-                // Navigate anyway with fallback dummy data to not block the user
                 navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData });
             }
         }
@@ -179,20 +176,15 @@ export default function CardioAssessmentScreen({ route }: any) {
     const skipAssessment = async () => {
         const effectiveToken = token || userToken;
         if (effectiveToken && user) {
-            // Use -1 to flag that the user explicitly skipped
             const updatedProfile = { ...(user.profile || {}), healthScore: -1 };
             const updatedUser = { ...user, profile: updatedProfile };
-
             try {
-                // Save this flag to the backend permanently so the user isn't trapped next session
                 await updateOnboarding({ healthScore: -1 });
             } catch (e) {
                 console.warn('Could not sync skip status to backend', e);
             }
-
             await setAuthToken(effectiveToken, updatedUser);
         }
-
         navigation.reset({
             index: 0,
             routes: [{
@@ -235,7 +227,7 @@ export default function CardioAssessmentScreen({ route }: any) {
                     <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={styles.stepContent}>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Age <Text style={styles.req}>*</Text></Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 45" keyboardType="numeric" value={formData.age} onChangeText={(t) => updateForm('age', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 45" keyboardType="numeric" value={formData.age} onChangeText={(t) => updateForm('age', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Biological Sex <Text style={styles.req}>*</Text></Text>
@@ -262,7 +254,7 @@ export default function CardioAssessmentScreen({ route }: any) {
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Country of Residence</Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. India, UK, USA" value={formData.country} onChangeText={(t) => updateForm('country', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. India, UK, USA" value={formData.country} onChangeText={(t) => updateForm('country', t)} />
                         </View>
                     </Animated.View>
                 );
@@ -271,11 +263,11 @@ export default function CardioAssessmentScreen({ route }: any) {
                     <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={styles.stepContent}>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Height (cm) <Text style={styles.req}>*</Text></Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 170" keyboardType="numeric" value={formData.height} onChangeText={(t) => updateForm('height', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 170" keyboardType="numeric" value={formData.height} onChangeText={(t) => updateForm('height', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Weight (kg) <Text style={styles.req}>*</Text></Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 75" keyboardType="numeric" value={formData.weight} onChangeText={(t) => updateForm('weight', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 75" keyboardType="numeric" value={formData.weight} onChangeText={(t) => updateForm('weight', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>BMI (auto-calculated)</Text>
@@ -283,11 +275,11 @@ export default function CardioAssessmentScreen({ route }: any) {
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Waist (cm) <Text style={styles.req}>*</Text></Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 90" keyboardType="numeric" value={formData.waist} onChangeText={(t) => updateForm('waist', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 90" keyboardType="numeric" value={formData.waist} onChangeText={(t) => updateForm('waist', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Hip (cm)</Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 100" keyboardType="numeric" value={formData.hip} onChangeText={(t) => updateForm('hip', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 100" keyboardType="numeric" value={formData.hip} onChangeText={(t) => updateForm('hip', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Waist-to-Hip Ratio</Text>
@@ -298,14 +290,14 @@ export default function CardioAssessmentScreen({ route }: any) {
             case 2:
                 return (
                     <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={styles.stepContent}>
-                        <View style={styles.inputGroupRow}>
-                            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                        <View style={styles.inputRow}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                                 <Text style={styles.label}>Systolic BP <Text style={styles.req}>*</Text></Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 130" keyboardType="numeric" value={formData.sbp} onChangeText={(t) => updateForm('sbp', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 130" keyboardType="numeric" value={formData.sbp} onChangeText={(t) => updateForm('sbp', t)} />
                             </View>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                                 <Text style={styles.label}>Diastolic BP</Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 85" keyboardType="numeric" value={formData.dbp} onChangeText={(t) => updateForm('dbp', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 85" keyboardType="numeric" value={formData.dbp} onChangeText={(t) => updateForm('dbp', t)} />
                             </View>
                         </View>
 
@@ -340,24 +332,24 @@ export default function CardioAssessmentScreen({ route }: any) {
             case 3:
                 return (
                     <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={styles.stepContent}>
-                        <View style={styles.inputGroupRow}>
-                            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                                <Text style={styles.label}>Total Cholesterol (mg/dL) <Text style={styles.req}>*</Text></Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 200" keyboardType="numeric" value={formData.tc} onChangeText={(t) => updateForm('tc', t)} />
+                        <View style={styles.inputRow}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={styles.label}>Total Cholesterol <Text style={styles.req}>*</Text></Text>
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.tc} onChangeText={(t) => updateForm('tc', t)} />
                             </View>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>LDL (mg/dL)</Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 120" keyboardType="numeric" value={formData.ldl} onChangeText={(t) => updateForm('ldl', t)} />
+                            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                <Text style={styles.label}>LDL</Text>
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.ldl} onChangeText={(t) => updateForm('ldl', t)} />
                             </View>
                         </View>
-                        <View style={styles.inputGroupRow}>
-                            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                                <Text style={styles.label}>HDL (mg/dL) <Text style={styles.req}>*</Text></Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 50" keyboardType="numeric" value={formData.hdl} onChangeText={(t) => updateForm('hdl', t)} />
+                        <View style={styles.inputRow}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={styles.label}>HDL <Text style={styles.req}>*</Text></Text>
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.hdl} onChangeText={(t) => updateForm('hdl', t)} />
                             </View>
-                            <View style={[styles.inputGroup, { flex: 1 }]}>
-                                <Text style={styles.label}>Triglycerides (mg/dL)</Text>
-                                <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 150" keyboardType="numeric" value={formData.trig} onChangeText={(t) => updateForm('trig', t)} />
+                            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                <Text style={styles.label}>Triglycerides</Text>
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.trig} onChangeText={(t) => updateForm('trig', t)} />
                             </View>
                         </View>
                     </Animated.View>
@@ -373,14 +365,14 @@ export default function CardioAssessmentScreen({ route }: any) {
                             {renderOption('dmStatus', 'Type 1 Diabetes', 't1dm')}
                         </View>
                         {formData.dmStatus && formData.dmStatus !== 'none' && (
-                            <View style={styles.inputGroupRow}>
-                                <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                            <View style={styles.inputRow}>
+                                <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                                     <Text style={styles.label}>HbA1c (%)</Text>
-                                    <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 6.5" keyboardType="numeric" value={formData.hba1c} onChangeText={(t) => updateForm('hba1c', t)} />
+                                    <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 6.5" keyboardType="numeric" value={formData.hba1c} onChangeText={(t) => updateForm('hba1c', t)} />
                                 </View>
-                                <View style={[styles.inputGroup, { flex: 1 }]}>
-                                    <Text style={styles.label}>Fasting Glucose (mg/dL)</Text>
-                                    <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 110" keyboardType="numeric" value={formData.fbg} onChangeText={(t) => updateForm('fbg', t)} />
+                                <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                    <Text style={styles.label}>Fasting Glucose</Text>
+                                    <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.fbg} onChangeText={(t) => updateForm('fbg', t)} />
                                 </View>
                             </View>
                         )}
@@ -440,12 +432,12 @@ export default function CardioAssessmentScreen({ route }: any) {
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>High-sensitivity CRP (mg/L)</Text>
                             <Text style={styles.hintText}>Marker of systemic inflammation</Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 1.5" keyboardType="numeric" value={formData.crp} onChangeText={(t) => updateForm('crp', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 1.5" keyboardType="numeric" value={formData.crp} onChangeText={(t) => updateForm('crp', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Estimated GFR (mL/min/1.73m²)</Text>
                             <Text style={styles.hintText}>Renal function {'>'}60 is normal</Text>
-                            <TextInput style={styles.input} placeholderTextColor="rgba(255,255,255,0.5)" placeholder="e.g. 90" keyboardType="numeric" value={formData.egfr} onChangeText={(t) => updateForm('egfr', t)} />
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 90" keyboardType="numeric" value={formData.egfr} onChangeText={(t) => updateForm('egfr', t)} />
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Microalbuminuria</Text>
@@ -478,11 +470,7 @@ export default function CardioAssessmentScreen({ route }: any) {
                     </Animated.View>
                 );
             default:
-                return (
-                    <Animated.View entering={SlideInRight} exiting={SlideOutLeft} style={styles.stepContent}>
-                        <Text style={{ color: '#fff' }}>Section implementation in progress...</Text>
-                    </Animated.View>
-                );
+                return null;
         }
     };
 
@@ -491,303 +479,154 @@ export default function CardioAssessmentScreen({ route }: any) {
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={['#51A6CB', '#BF40A3']}
+                colors={['#60A5FA', '#8B5CF6']}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.background}
-            />
-            <SafeAreaView style={styles.contentContainer} edges={['bottom', 'left', 'right']}>
-                {/* Top Bar with Progress */}
-                <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 20) }]}>
-                    <View style={styles.topBarInner}>
-                        <Text style={styles.miniBrand}>🫀 CVITAL™</Text>
-                        <View style={styles.progressWrap}>
-                            <View style={styles.progressLabel}>
-                                <Text style={styles.progressText}>Section {currentStep + 1} of {SECTIONS.length} — {section.title}</Text>
-                                <Text style={styles.progressText}>{Math.round(((currentStep + 1) / SECTIONS.length) * 100)}%</Text>
-                            </View>
-                            <View style={styles.progressBar}>
-                                <Animated.View style={[styles.progressFill, animatedProgressStyle]} />
-                            </View>
+                end={{ x: 1, y: 0 }}
+                style={styles.headerGradient}
+            >
+                <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerSafeArea}>
+                    <View style={styles.headerContent}>
+                        <TouchableOpacity onPress={() => currentStep === 0 ? navigation.goBack() : prevStep()} style={styles.backIconButton}>
+                            <Ionicons name="arrow-back" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoText}>CVITAL</Text>
+                            <View style={styles.logoBadge} />
+                        </View>
+
+                        <View style={styles.stepBadge}>
+                            <Text style={styles.stepBadgeText}>{currentStep + 1}/{SECTIONS.length}</Text>
                         </View>
                     </View>
-                </View>
 
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.headerInfo}>
+                        <Text style={styles.profileSetupLabel}>Profile Setup</Text>
+                        <Text style={styles.percentageText}>{Math.round(((currentStep + 1) / SECTIONS.length) * 100)}%</Text>
+                    </View>
 
-                        {/* Section Header */}
-                        <View style={styles.sectionHeader}>
-                            <View style={styles.sectionIcon}>
-                                <Ionicons name={section.icon as any} size={24} color="#10d98a" />
-                            </View>
-                            <View style={styles.sectionTitleWrap}>
-                                <Text style={styles.sectionNum}>SECTION 0{currentStep + 1}</Text>
-                                <Text style={styles.sectionTitle}>{section.title}</Text>
-                                <Text style={styles.sectionDesc}>{section.desc}</Text>
-                            </View>
+                    <View style={styles.progressBarBg}>
+                        <Animated.View style={[styles.progressBarFill, animatedProgressStyle]} />
+                    </View>
+                </SafeAreaView>
+            </LinearGradient>
+
+            <View style={styles.contentCard}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    
+                    <View style={styles.sectionTitleRow}>
+                        <View style={styles.sectionIconContainer}>
+                            <Ionicons name={section.icon as any} size={28} color="#fff" />
                         </View>
+                        <View style={styles.sectionTitleTextContainer}>
+                            <Text style={styles.sectionTitle}>{section.title}</Text>
+                            <Text style={styles.sectionDesc}>{section.desc}</Text>
+                        </View>
+                    </View>
 
-                        {/* Specific Step Content */}
-                        {renderStep()}
+                    {renderStep()}
 
-                        {/* Nav Buttons */}
-                        <View style={styles.footer}>
-                            <TouchableOpacity
-                                style={[styles.btnBack, currentStep === 0 && { opacity: 1 }]}
-                                onPress={currentStep === 0 ? skipAssessment : prevStep}
+                    <View style={styles.footerButtons}>
+                        <TouchableOpacity 
+                            style={styles.outlineButton} 
+                            onPress={currentStep === 0 ? skipAssessment : prevStep}
+                        >
+                            <Text style={styles.outlineButtonText}>{currentStep === 0 ? 'Skip' : 'Back'}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.nextButtonContainer} onPress={nextStep}>
+                            <LinearGradient
+                                colors={['#60A5FA', '#8B5CF6']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={styles.gradientButton}
                             >
-                                <Text style={styles.btnBackText}>{currentStep === 0 ? 'Skip' : 'Back'}</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.btnNext} onPress={nextStep}>
-                                <LinearGradient colors={['#10d98a', '#0ab87a']} style={styles.btnNextGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                                    <Text style={styles.btnNextText}>{currentStep === SECTIONS.length - 1 ? 'Calculate Score' : 'Continue'}</Text>
-                                    <Ionicons name="arrow-forward" size={18} color="#000" />
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        </View>
-
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </SafeAreaView>
+                                <Text style={styles.gradientButtonText}>
+                                    {currentStep === SECTIONS.length - 1 ? 'Calculate Score' : 'Continue'}
+                                </Text>
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0F172A',
+    container: { flex: 1, backgroundColor: '#8B5CF6' },
+    headerGradient: { paddingBottom: 40 },
+    headerSafeArea: { paddingHorizontal: 24, paddingTop: 10 },
+    headerContent: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24
     },
-    background: {
-        ...StyleSheet.absoluteFillObject,
+    backIconButton: { padding: 4 },
+    logoContainer: { flexDirection: 'row', alignItems: 'center' },
+    logoText: { color: '#fff', fontSize: 20, fontWeight: 'bold', letterSpacing: 1 },
+    logoBadge: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', marginLeft: 4, marginTop: -10 },
+    stepBadge: {
+        backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)'
     },
-    contentContainer: {
-        flex: 1,
+    stepBadgeText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+    headerInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 },
+    profileSetupLabel: { color: '#fff', fontSize: 14, opacity: 0.9 },
+    percentageText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+    progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 3, overflow: 'hidden' },
+    progressBarFill: { height: '100%', backgroundColor: '#fff', borderRadius: 3 },
+
+    contentCard: {
+        flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 36, borderTopRightRadius: 36,
+        marginTop: -30, overflow: 'hidden'
     },
-    topBar: {
-        borderBottomWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        backgroundColor: 'transparent'
+    scrollContent: { padding: 24, paddingTop: 32 },
+    
+    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 32 },
+    sectionIconContainer: {
+        width: 56, height: 56, borderRadius: 16, backgroundColor: '#8B5CF6',
+        justifyContent: 'center', alignItems: 'center', marginRight: 16
     },
-    topBarInner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    miniBrand: {
-        color: '#10d98a',
-        fontSize: 14,
-        fontWeight: 'bold',
-        marginRight: 16,
-        letterSpacing: 1
-    },
-    progressWrap: {
-        flex: 1,
-    },
-    progressLabel: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 6,
-    },
-    progressText: {
-        color: '#6b7280',
-        fontSize: 11,
-    },
-    progressBar: {
-        height: 4,
-        backgroundColor: '#111520',
-        borderRadius: 2,
-        overflow: 'hidden'
-    },
-    progressFill: {
-        height: '100%',
-        backgroundColor: '#10d98a', // Actually it was gradient in CSS, but solid is fine
-        borderRadius: 2,
-    },
-    scrollContent: {
-        padding: 20,
-        paddingBottom: 60,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 32,
-        paddingBottom: 20,
-        borderBottomWidth: 1,
-        borderColor: 'rgba(255,255,255,0.07)',
-    },
-    sectionIcon: {
-        width: 52,
-        height: 52,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-    },
-    sectionTitleWrap: {
-        flex: 1,
-    },
-    sectionNum: {
-        color: '#10d98a',
-        fontSize: 11,
-        fontWeight: 'bold',
-        letterSpacing: 2,
-        marginBottom: 4,
-    },
-    sectionTitle: {
-        color: '#fff',
-        fontSize: 24,
-        fontWeight: 'bold', // Using system font instead of DM Serif Display for now
-    },
-    sectionDesc: {
-        color: '#6b7280',
-        fontSize: 13,
-        marginTop: 4,
-    },
-    stepContent: {
-        marginBottom: 20,
-    },
-    inputGroup: {
-        marginBottom: 20,
-    },
-    inputGroupRow: {
-        flexDirection: 'row',
-    },
-    label: {
-        color: '#e4e8f5',
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    req: {
-        color: '#f04f4f',
-    },
-    hintText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 11,
-        marginBottom: 8,
-        marginTop: -4,
-    },
+    sectionTitleTextContainer: { flex: 1 },
+    sectionTitle: { fontSize: 24, fontWeight: 'bold', color: '#1E293B', marginBottom: 4 },
+    sectionDesc: { fontSize: 13, color: '#64748B' },
+
+    stepContent: { marginBottom: 24 },
+    inputRow: { flexDirection: 'row', marginBottom: 16 },
+    inputGroup: { marginBottom: 20 },
+    label: { fontSize: 13, fontWeight: '600', color: '#1E293B', marginBottom: 8 },
+    req: { color: '#EF4444' },
+    hintText: { fontSize: 12, color: '#64748B', marginBottom: 10, marginTop: -4 },
     input: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 16,
-        paddingHorizontal: 20,
-        paddingVertical: 18,
-        color: '#fff',
-        fontSize: 16,
+        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 16,
+        height: 54, fontSize: 15, color: '#1E293B', backgroundColor: '#F8FAFC'
     },
-    readOnlyInput: {
-        color: '#10d98a',
-        backgroundColor: 'rgba(16,217,138,0.12)',
-        borderColor: 'rgba(16,217,138,0.2)',
-    },
-    row: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
+    readOnlyInput: { backgroundColor: '#F1F5F9', color: '#64748B' },
+
+    row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     radioCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 16,
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        marginBottom: 10,
+        flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+        borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, marginBottom: 12
     },
-    radioCardSelected: {
-        borderColor: '#10d98a',
-        backgroundColor: 'rgba(16,217,138,0.12)',
-    },
+    radioCardSelected: { backgroundColor: '#F5F3FF', borderColor: '#8B5CF6' },
     radioDot: {
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.12)',
-        marginRight: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#CBD5E1',
+        justifyContent: 'center', alignItems: 'center', marginRight: 12
     },
-    radioDotSelected: {
-        borderColor: '#10d98a',
-        backgroundColor: '#10d98a',
+    radioDotSelected: { borderColor: '#8B5CF6' },
+    radioDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#8B5CF6' },
+    radioTextContainer: { flex: 1 },
+    radioText: { fontSize: 14, color: '#475569' },
+    radioTextSelected: { color: '#1E293B', fontWeight: '600' },
+    radioSubText: { fontSize: 12, color: '#64748B', marginTop: 2 },
+
+    footerButtons: { flexDirection: 'row', gap: 16, marginTop: 10, paddingBottom: 20 },
+    outlineButton: {
+        flex: 1, height: 56, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8F0',
+        justifyContent: 'center', alignItems: 'center'
     },
-    radioDotInner: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: '#000',
+    outlineButtonText: { fontSize: 16, fontWeight: '600', color: '#64748B' },
+    nextButtonContainer: { flex: 1.5 },
+    gradientButton: {
+        height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center'
     },
-    radioTextContainer: {
-        flex: 1,
-    },
-    radioText: {
-        color: '#ffffff',
-        fontSize: 14,
-    },
-    radioTextSelected: {
-        fontWeight: '600',
-    },
-    radioSubText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 11,
-        marginTop: 2,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 20,
-        paddingTop: 20,
-        borderTopWidth: 1,
-        borderColor: 'rgba(255,255,255,0.07)',
-        gap: 16,
-    },
-    btnBack: {
-        flex: 1,
-        paddingVertical: 16,
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    btnBackText: {
-        color: '#e4e8f5',
-        fontSize: 16,
-        fontWeight: 'bold',
-        letterSpacing: 0.5,
-    },
-    btnNext: {
-        flex: 1,
-        shadowColor: '#10d98a',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    btnNextGradient: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        borderRadius: 16,
-    },
-    btnNextText: {
-        color: '#000',
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginRight: 8,
-        letterSpacing: 0.5
-    }
+    gradientButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

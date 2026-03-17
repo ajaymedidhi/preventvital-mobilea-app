@@ -232,7 +232,7 @@ const SignUpScreen = () => {
                                 {agreeToTerms && <Ionicons name="checkmark" size={14} color="#fff" />}
                             </View>
                             <Text style={styles.checkboxLabel}>
-                                I agree to the <Text style={styles.linkText}>Terms and Conditions</Text> and <Text style={styles.linkText}>Privacy Policy</Text>
+                                I agree to the <Text style={styles.linkText} onPress={() => navigation.navigate('TermsAndConditions')}>Terms and Conditions</Text> and <Text style={styles.linkText} onPress={() => navigation.navigate('PrivacyOverview')}>Privacy Policy</Text>
                             </Text>
                         </TouchableOpacity>
 

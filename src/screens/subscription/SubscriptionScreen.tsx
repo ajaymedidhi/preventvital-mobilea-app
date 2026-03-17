@@ -64,21 +64,13 @@ const PLANS = [
 
 const SubscriptionScreen = () => {
     const navigation = useNavigation();
-    const { userToken, setAuthToken } = useAuth(); // If needed for refetching user profile later
+    const { subscription, currentPlan, refreshSubscription } = useAuth();
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
-    const [currentPlanId, setCurrentPlanId] = useState<string>('free'); // Default
+    const currentPlanId = currentPlan;
 
-    React.useEffect(() => {
-        const fetchCurrent = async () => {
-            const data = await fetchMySubscription();
-            if (data?.subscription?.plan) {
-                setCurrentPlanId(data.subscription.plan.toLowerCase());
-            }
-        };
-        fetchCurrent();
-    }, []);
+    // Subscription is now synchronized with AuthContext
 
     const handleSubscribe = async (plan: any) => {
         if (plan.monthlyPrice === 0) {
@@ -141,9 +133,7 @@ const SubscriptionScreen = () => {
             const response = await verifySubscription(paymentData);
 
             // Update global user state with new subscription details
-            if (response?.user && userToken && setAuthToken) {
-                await setAuthToken(userToken, response.user);
-            }
+            await refreshSubscription();
 
             Alert.alert("Success", "Subscription active! Welcome to " + PLANS.find(p => p.id === planId)?.name);
             navigation.goBack(); // Or navigate to Home/Profile

@@ -12,6 +12,12 @@ import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
 
 import CardioAssessmentScreen from '../screens/onboarding/CardioAssessmentScreen';
 import AssessmentResultsScreen from '../screens/onboarding/AssessmentResultsScreen';
+import AssessmentHistoryScreen from '../screens/health/AssessmentHistoryScreen';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import PrivacyOverviewScreen from '../screens/legal/PrivacyOverviewScreen';
+import PrivacyPolicyLandingScreen from '../screens/legal/PrivacyPolicyLandingScreen';
+import PrivacyDetailScreen from '../screens/legal/PrivacyDetailScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,8 +37,14 @@ function AuthStack() {
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
             <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
+            <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} />
             <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} />
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+            <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyOverview" component={PrivacyOverviewScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyPolicyLanding" component={PrivacyPolicyLandingScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyDetail" component={PrivacyDetailScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 }
@@ -40,6 +52,7 @@ function AuthStack() {
 import BottomTabNavigator from './BottomTabNavigator';
 import WellnessScoreScreen from '../screens/health/WellnessScoreScreen';
 import WearableDashboardScreen from '../screens/health/WearableDashboardScreen';
+import AllVitalsScreen from '../screens/health/AllVitalsScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
 import ProgramDetailsScreen from '../screens/programs/ProgramDetailsScreen';
 import MyProgramsScreen from '../screens/programs/MyProgramsScreen';
@@ -54,6 +67,7 @@ function AppStack() {
             <Stack.Screen name="Main" component={BottomTabNavigator} />
             <Stack.Screen name="WellnessScore" component={WellnessScoreScreen} />
             <Stack.Screen name="WearableDashboard" component={WearableDashboardScreen} />
+            <Stack.Screen name="AllVitals" component={AllVitalsScreen} />
             <Stack.Screen name="ContactUs" component={ContactUsScreen} />
             <Stack.Screen name="ProgramDetails" component={ProgramDetailsScreen} />
             <Stack.Screen name="MyPrograms" component={MyProgramsScreen} />
@@ -63,6 +77,12 @@ function AppStack() {
             <Stack.Screen name="ProfileDetails" component={ProfileDetailsScreen} />
             <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
             <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
+            <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} />
+            <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyOverview" component={PrivacyOverviewScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyPolicyLanding" component={PrivacyPolicyLandingScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyDetail" component={PrivacyDetailScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 }
@@ -79,7 +99,7 @@ export default function AppNavigator() {
     const { userToken, isLoading: isAuthLoading } = useAuth();
     const { hasConsented, isLoadingConsent } = useConsent();
 
-    console.log("AppNavigator: Rendering. userToken:", userToken, "hasConsented:", hasConsented);
+    console.log("AppNavigator: Rendering. userToken:", userToken ? "EXISTS" : "NULL", "hasConsented:", hasConsented, "isAuthLoading:", isAuthLoading, "isLoadingConsent:", isLoadingConsent);
 
     if (isAuthLoading || isLoadingConsent) {
         return (

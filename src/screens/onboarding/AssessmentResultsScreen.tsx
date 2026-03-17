@@ -1,25 +1,26 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withRepeat, withSequence, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '../../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
-export default function AssessmentResultsScreen({ route }: any) {
+export default function AssessmentResultsScreen() {
     const navigation = useNavigation<any>();
+    const route = useRoute<any>();
     const { setAuthToken, userToken, user: contextUser } = useAuth();
     const { token, user, formData, scoreData } = route.params || {};
 
-    // If scoreData exists (passed from API), use it, else default for now
     const results = {
         cvitalScore: scoreData?.cvitalScore || 0,
         cvitalTier: scoreData?.cvitalTier || 'PENDING',
         cvitalTierDetails: scoreData?.cvitalTierDetails || {
             action: "Awaiting calculation",
-            color: "#aaa",
+            color: "#94A3B8",
             label: "Pending"
         },
         ascvdRisk: scoreData?.ascvdRisk || 0,
@@ -31,7 +32,6 @@ export default function AssessmentResultsScreen({ route }: any) {
     };
 
     const pulseAnim = useSharedValue(1);
-    const gaugeAnim = useSharedValue(0);
 
     useEffect(() => {
         pulseAnim.value = withRepeat(
@@ -42,11 +42,6 @@ export default function AssessmentResultsScreen({ route }: any) {
             -1,
             true
         );
-
-        gaugeAnim.value = withTiming(results.cvitalScore, {
-            duration: 1500,
-            easing: Easing.out(Easing.cubic)
-        });
     }, []);
 
     const animatedPulseStyle = useAnimatedStyle(() => ({
@@ -54,39 +49,24 @@ export default function AssessmentResultsScreen({ route }: any) {
     }));
 
     const handleGoToDashboard = async () => {
-        // We need to update the global AuthContext so the Dashboard doesn't 
-        // think we still need to take the assessment and redirect us back here.
-
-        const effectiveToken = token || userToken; // Route param or context
-        const effectiveUser = user || contextUser; // Route param or context
+        const effectiveToken = token || userToken;
+        const effectiveUser = user || contextUser;
 
         if (effectiveToken && effectiveUser) {
-            // Artificially inject the new health score into the user profile
             const updatedProfile = {
                 ...(effectiveUser.profile || {}),
                 healthScore: results.cvitalScore
             };
             const updatedUser = { ...effectiveUser, profile: updatedProfile };
-
             await setAuthToken(effectiveToken, updatedUser);
 
-            if (token && user) {
-                // If this was a first-time signup flow, wait for AppStack to mount
-                setTimeout(() => {
-                    navigation.reset({
-                        index: 0,
-                        routes: [{ name: 'Main' }],
-                    });
-                }, 100);
-            } else {
-                // Already in AppStack (taking assessment from Dashboard)
+            setTimeout(() => {
                 navigation.reset({
                     index: 0,
                     routes: [{ name: 'Main' }],
                 });
-            }
+            }, 100);
         } else {
-            // Fallback
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Main' }],
@@ -97,408 +77,204 @@ export default function AssessmentResultsScreen({ route }: any) {
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={['#51A6CB', '#BF40A3']}
+                colors={['#60A5FA', '#8B5CF6']}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.background}
-            />
-            <SafeAreaView style={styles.contentContainer}>
-                <View style={styles.topBar}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={styles.miniBrand}>🫀 CVITAL™ RESULTS</Text>
-                    <View style={{ width: 24 }} />
-                </View>
+                end={{ x: 1, y: 0 }}
+                style={styles.headerGradient}
+            >
+                <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerSafeArea}>
+                    <View style={styles.headerContent}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                            <Ionicons name="arrow-back" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>ASSESSMENT RESULTS</Text>
+                        <View style={{ width: 32 }} />
+                    </View>
+                </SafeAreaView>
+            </LinearGradient>
 
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-                    {/* Patient Header */}
-                    <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.patientHeader}>
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>👤</Text>
+            <View style={styles.contentCard}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    
+                    <Animated.View entering={FadeInDown.delay(100).duration(500)} style={styles.patientCard}>
+                        <View style={styles.avatarContainer}>
+                            <Ionicons name="person" size={24} color="#8B5CF6" />
                         </View>
                         <View style={styles.patientInfo}>
                             <Text style={styles.patientName}>{results.patientName}</Text>
                             <Text style={styles.patientMeta}>{results.patientAge} yrs • {results.patientSex}</Text>
                         </View>
-                        <View style={styles.dateInfo}>
-                            <Text style={styles.dateLabel}>ASSESSMENT DATE</Text>
-                            <Text style={styles.dateVal}>{results.date}</Text>
+                        <View style={styles.dateContainer}>
+                            <Text style={styles.dateLabel}>DATE</Text>
+                            <Text style={styles.dateValue}>{results.date}</Text>
                         </View>
                     </Animated.View>
 
-                    {/* Scores Row */}
-                    <View style={styles.scoresRow}>
-                        {/* CVITAL Card */}
-                        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={[styles.card, { borderWidth: 2, borderColor: results.cvitalTierDetails.color }]}>
-                            <View style={styles.badgeWrap}>
-                                <View style={[styles.cardBadge, { backgroundColor: `${results.cvitalTierDetails.color}1E`, borderColor: `${results.cvitalTierDetails.color}40` }]}>
-                                    <Ionicons name="pulse" size={12} color={results.cvitalTierDetails.color} />
-                                    <Text style={[styles.cardBadgeText, { color: results.cvitalTierDetails.color }]}>VITALITY INDEX</Text>
-                                </View>
+                    <View style={styles.scoresContainer}>
+                        <Animated.View entering={FadeInDown.delay(200).duration(500)} style={[styles.mainScoreCard, { borderColor: results.cvitalTierDetails.color }]}>
+                            <View style={styles.scoreBadge}>
+                                <Ionicons name="pulse" size={14} color={results.cvitalTierDetails.color} />
+                                <Text style={[styles.scoreBadgeText, { color: results.cvitalTierDetails.color }]}>VITALITY INDEX</Text>
                             </View>
-
-                            <View style={styles.gaugeWrap}>
-                                <Text style={styles.gaugeNum}>{results.cvitalScore}</Text>
-                                <Text style={[styles.gaugeTier, { color: results.cvitalTierDetails.color }]}>{results.cvitalTierDetails.label}</Text>
-                            </View>
-
+                            <Text style={styles.scoreValue}>{results.cvitalScore}</Text>
+                            <Text style={[styles.scoreTier, { color: results.cvitalTierDetails.color }]}>{results.cvitalTierDetails.label}</Text>
                             <View style={[styles.actionBox, { borderLeftColor: results.cvitalTierDetails.color }]}>
                                 <Text style={styles.actionText}>{results.cvitalTierDetails.action}</Text>
                             </View>
                         </Animated.View>
 
-                        {/* ASCVD Card */}
-                        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={[styles.card, styles.ascvdCard]}>
-                            <View style={styles.badgeWrap}>
-                                <View style={[styles.cardBadge, { backgroundColor: 'rgba(79,142,240,0.12)', borderColor: 'rgba(79,142,240,0.25)' }]}>
-                                    <Ionicons name="medkit" size={12} color="#4f8ef0" />
-                                    <Text style={[styles.cardBadgeText, { color: '#4f8ef0' }]}>10-YR RISK</Text>
-                                </View>
+                        <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.secondaryScoreCard}>
+                            <View style={styles.scoreBadge}>
+                                <Ionicons name="medkit" size={14} color="#3B82F6" />
+                                <Text style={[styles.scoreBadgeText, { color: '#3B82F6' }]}>10-YR RISK</Text>
                             </View>
-
-                            <Text style={styles.ascvdNum}>{results.ascvdRisk}%</Text>
-                            <Text style={styles.ascvdEq}>ACC/AHA POOLED COHORT</Text>
-
-                            <View style={styles.ascvdBands}>
-                                <View style={[styles.band, { borderColor: '#10d98a' }]}>
-                                    <Text style={styles.bandText}>Low</Text>
-                                    <Text style={styles.bandVal}>{'<'}5%</Text>
+                            <Text style={styles.riskValue}>{results.ascvdRisk}%</Text>
+                            <Text style={styles.riskLabel}>ACC/AHA POOLED COHORT</Text>
+                            <View style={styles.riskScale}>
+                                <View style={[styles.scaleItem, results.ascvdRisk < 5 && styles.scaleActive, { borderLeftColor: '#10B981' }]}>
+                                    <Text style={styles.scaleText}>Low {'<'}5%</Text>
                                 </View>
-                                <View style={[styles.band, styles.bandActive, { borderColor: '#f5c842' }]}>
-                                    <Text style={styles.bandText}>Borderline</Text>
-                                    <Text style={styles.bandVal}>5–7.4%</Text>
+                                <View style={[styles.scaleItem, results.ascvdRisk >= 5 && results.ascvdRisk < 20 && styles.scaleActive, { borderLeftColor: '#F59E0B' }]}>
+                                    <Text style={styles.scaleText}>Borderline</Text>
                                 </View>
-                                <View style={[styles.band, { borderColor: '#f04f4f' }]}>
-                                    <Text style={styles.bandText}>High</Text>
-                                    <Text style={styles.bandVal}>≥20%</Text>
+                                <View style={[styles.scaleItem, results.ascvdRisk >= 20 && styles.scaleActive, { borderLeftColor: '#EF4444' }]}>
+                                    <Text style={styles.scaleText}>High ≥20%</Text>
                                 </View>
                             </View>
                         </Animated.View>
                     </View>
 
-                    {/* Vascular Age */}
-                    <Animated.View entering={FadeInDown.delay(400).duration(500)} style={[styles.card, styles.vaCard]}>
-                        <Ionicons name="infinite-outline" size={32} color="#f5c842" />
+                    <Animated.View entering={FadeInDown.delay(400).duration(500)} style={styles.vaCard}>
+                        <View style={styles.vaIconContainer}>
+                            <Ionicons name="infinite" size={32} color="#F59E0B" />
+                        </View>
                         <View style={styles.vaDivider} />
                         <View style={styles.vaInfo}>
                             <Text style={styles.vaLabel}>VASCULAR AGE</Text>
-                            <Text style={styles.vaNum}>{results.vascularAge} <Text style={{ fontSize: 20 }}>yrs</Text></Text>
-                            <Text style={styles.vaNote}>Your arterial age is {results.patientAge - results.vascularAge} years younger than your chronological age.</Text>
+                            <Text style={styles.vaValue}>{results.vascularAge} <Text style={{ fontSize: 20 }}>yrs</Text></Text>
+                            <Text style={styles.vaNote}>Chronological Age: {results.patientAge} years</Text>
                         </View>
                     </Animated.View>
 
-                    {/* AI Summary */}
-                    <Animated.View entering={FadeInDown.delay(600).duration(500)} style={styles.aiCard}>
+                    <Animated.View entering={FadeInDown.delay(500).duration(500)} style={styles.aiCard}>
                         <View style={styles.aiHeader}>
-                            <Animated.View style={[styles.aiDot, animatedPulseStyle]} />
+                            <Animated.View style={[styles.aiPulse, animatedPulseStyle]} />
                             <Text style={styles.aiTitle}>CLINICAL INTELLIGENCE</Text>
                         </View>
                         <Text style={styles.aiText}>
-                            Patient demonstrates optimal metabolic and hemodynamic profiles. ASCVD risk is borderline primarily driven by age, but heavily offset by excellent lifestyle metrics and lipid control. No immediate pharmacological intervention required. Continue annual monitoring.
+                            Based on your assessment, your cardiovascular profile shows {results.cvitalTierDetails.label.toLowerCase()} risk. 
+                            We recommend focusing on {results.cvitalTierDetails.action.toLowerCase()}. 
+                            Regular monitoring of your vitals is advised.
                         </Text>
                     </Animated.View>
 
-                    {/* Actions */}
-                    <View style={styles.footer}>
-                        <TouchableOpacity style={styles.btnDashboard} onPress={handleGoToDashboard}>
-                            <Text style={styles.btnDashboardText}>Go to Dashboard</Text>
+                    <View style={styles.footerButtons}>
+                        <TouchableOpacity style={styles.gradientButtonContainer} onPress={handleGoToDashboard}>
+                            <LinearGradient
+                                colors={['#60A5FA', '#8B5CF6']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={styles.gradientButton}
+                            >
+                                <Text style={styles.gradientButtonText}>Go to Dashboard</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.btnRetake} onPress={() => navigation.navigate('CardioAssessment')}>
-                            <Text style={styles.btnRetakeText}>Retake Assessment</Text>
+                        <TouchableOpacity style={styles.outlineButton} onPress={() => navigation.navigate('CardioAssessment')}>
+                            <Text style={styles.outlineButtonText}>Retake Assessment</Text>
                         </TouchableOpacity>
                     </View>
 
                 </ScrollView>
-            </SafeAreaView>
+            </View>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#0F172A',
+    container: { flex: 1, backgroundColor: '#8B5CF6' },
+    headerGradient: { paddingBottom: 40 },
+    headerSafeArea: { paddingHorizontal: 24, paddingTop: 10 },
+    headerContent: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10
     },
-    background: {
-        ...StyleSheet.absoluteFillObject,
+    backButton: { padding: 4 },
+    headerTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
+
+    contentCard: {
+        flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 36, borderTopRightRadius: 36,
+        marginTop: -30, overflow: 'hidden'
     },
-    contentContainer: {
-        flex: 1,
+    scrollContent: { padding: 24, paddingTop: 32 },
+
+    patientCard: {
+        flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+        borderRadius: 20, padding: 20, marginBottom: 24, borderWidth: 1, borderColor: '#E2E8F0'
     },
-    topBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-        backgroundColor: 'transparent',
+    avatarContainer: {
+        width: 48, height: 48, borderRadius: 12, backgroundColor: '#F5F3FF',
+        justifyContent: 'center', alignItems: 'center', marginRight: 16
     },
-    backBtn: {
-        padding: 4,
+    patientInfo: { flex: 1 },
+    patientName: { fontSize: 18, fontWeight: 'bold', color: '#1E293B' },
+    patientMeta: { fontSize: 13, color: '#64748B', marginTop: 2 },
+    dateContainer: { alignItems: 'flex-end' },
+    dateLabel: { fontSize: 10, color: '#94A3B8', fontWeight: 'bold' },
+    dateValue: { fontSize: 13, color: '#1E293B', marginTop: 2 },
+
+    scoresContainer: { gap: 20, marginBottom: 20 },
+    mainScoreCard: {
+        backgroundColor: '#fff', borderRadius: 24, padding: 24, borderWidth: 2,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 4
     },
-    miniBrand: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-        letterSpacing: 1
+    scoreBadge: {
+        flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100, alignSelf: 'flex-start', marginBottom: 16
     },
-    scrollContent: {
-        padding: 20,
-        paddingBottom: 60,
+    scoreBadgeText: { fontSize: 11, fontWeight: 'bold', marginLeft: 6, letterSpacing: 1 },
+    scoreValue: { fontSize: 64, fontWeight: 'bold', color: '#1E293B', textAlign: 'center' },
+    scoreTier: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', letterSpacing: 2, marginTop: -8, marginBottom: 20 },
+    actionBox: { backgroundColor: '#F8FAFC', borderRadius: 12, padding: 16, borderLeftWidth: 4 },
+    actionText: { fontSize: 13, color: '#475569', lineHeight: 20 },
+
+    secondaryScoreCard: {
+        backgroundColor: '#fff', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#E2E8F0'
     },
-    patientHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 20,
-        padding: 24,
-        marginBottom: 20,
+    riskValue: { fontSize: 48, fontWeight: 'bold', color: '#3B82F6', textAlign: 'center' },
+    riskLabel: { fontSize: 10, color: '#94A3B8', textAlign: 'center', letterSpacing: 1, marginBottom: 20 },
+    riskScale: { gap: 8 },
+    scaleItem: {
+        flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderRadius: 8,
+        backgroundColor: '#F8FAFC', borderLeftWidth: 3
     },
-    avatar: {
-        width: 56,
-        height: 56,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 16,
-    },
-    avatarText: {
-        fontSize: 24,
-    },
-    patientInfo: {
-        flex: 1,
-    },
-    patientName: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    patientMeta: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-        marginTop: 4,
-    },
-    dateInfo: {
-        alignItems: 'flex-end',
-    },
-    dateLabel: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 11,
-        letterSpacing: 1,
-    },
-    dateVal: {
-        color: '#fff',
-        fontSize: 14,
-        marginTop: 4,
-    },
-    scoresRow: {
-        flexDirection: 'column',
-        gap: 20,
-        marginBottom: 20,
-    },
-    card: {
-        backgroundColor: 'rgba(6,8,16,0.6)',
-        borderRadius: 24,
-        padding: 24,
-        overflow: 'hidden',
-    },
-    ascvdCard: {
-        borderWidth: 2,
-        borderColor: '#4f8ef0',
-    },
-    badgeWrap: {
-        flexDirection: 'row',
-    },
-    cardBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 100,
-        marginBottom: 20,
-        borderWidth: 1,
-    },
-    cardBadgeText: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        marginLeft: 6,
-        letterSpacing: 1,
-    },
-    gaugeWrap: {
-        alignItems: 'center',
-        marginVertical: 10,
-    },
-    gaugeNum: {
-        color: '#fff',
-        fontSize: 56,
-        fontWeight: '600',
-        lineHeight: 60,
-    },
-    gaugeTier: {
-        color: '#10d98a',
-        fontSize: 12,
-        fontWeight: 'bold',
-        letterSpacing: 2,
-        marginTop: 4,
-    },
-    actionBox: {
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 20,
-        borderLeftWidth: 3,
-        borderLeftColor: '#10d98a',
-    },
-    actionText: {
-        color: '#e4e8f5',
-        fontSize: 13,
-        lineHeight: 20,
-    },
-    ascvdNum: {
-        color: '#4f8ef0',
-        fontSize: 56,
-        fontWeight: '600',
-        lineHeight: 60,
-        marginBottom: 4,
-    },
-    ascvdEq: {
-        color: '#b8c4e0',
-        fontSize: 10,
-        letterSpacing: 1,
-        marginBottom: 20,
-    },
-    ascvdBands: {
-        gap: 8,
-    },
-    band: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 10,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        borderLeftWidth: 3,
-    },
-    bandActive: {
-        backgroundColor: 'rgba(245,200,66,0.2)',
-    },
-    bandText: {
-        color: '#fff',
-        fontSize: 13,
-    },
-    bandVal: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 13,
-    },
+    scaleActive: { backgroundColor: '#F1F5F9' },
+    scaleText: { fontSize: 12, color: '#475569' },
+
     vaCard: {
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.15)',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-        backgroundColor: 'rgba(6,8,16,0.6)',
+        flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+        borderRadius: 24, padding: 24, marginBottom: 24, borderWidth: 1, borderColor: '#E2E8F0'
     },
-    vaDivider: {
-        width: 1,
-        height: 60,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        marginHorizontal: 20,
-    },
-    vaInfo: {
-        flex: 1,
-    },
-    vaLabel: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 11,
-        letterSpacing: 2,
-    },
-    vaNum: {
-        color: '#fff',
-        fontSize: 40,
-        fontWeight: '600',
-        lineHeight: 44,
-        marginVertical: 4,
-    },
-    vaNote: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-    },
+    vaIconContainer: { width: 56, alignItems: 'center' },
+    vaDivider: { width: 1, height: 40, backgroundColor: '#E2E8F0', marginHorizontal: 20 },
+    vaInfo: { flex: 1 },
+    vaLabel: { fontSize: 11, color: '#94A3B8', fontWeight: 'bold', letterSpacing: 1 },
+    vaValue: { fontSize: 32, fontWeight: 'bold', color: '#1E293B', marginVertical: 4 },
+    vaNote: { fontSize: 13, color: '#64748B' },
+
     aiCard: {
-        backgroundColor: 'rgba(6,8,16,0.6)',
-        borderWidth: 1,
-        borderColor: 'rgba(79,142,240,0.3)',
-        borderRadius: 20,
-        padding: 24,
-        marginBottom: 30,
+        backgroundColor: '#F5F3FF', borderRadius: 20, padding: 24, marginBottom: 32,
+        borderWidth: 1, borderColor: '#DDD6FE'
     },
-    aiHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 16,
+    aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    aiPulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#8B5CF6', marginRight: 10 },
+    aiTitle: { color: '#8B5CF6', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 },
+    aiText: { fontSize: 14, color: '#4C1D95', lineHeight: 22 },
+
+    footerButtons: { gap: 16, paddingBottom: 40 },
+    gradientButtonContainer: { height: 56 },
+    gradientButton: { flex: 1, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+    gradientButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    outlineButton: {
+        height: 56, borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E8F0',
+        justifyContent: 'center', alignItems: 'center'
     },
-    aiDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#4f8ef0',
-        marginRight: 10,
-        shadowColor: '#4f8ef0',
-        shadowOpacity: 1,
-        shadowRadius: 10,
-        elevation: 5,
-    },
-    aiTitle: {
-        color: '#4f8ef0',
-        fontSize: 12,
-        fontWeight: 'bold',
-        letterSpacing: 2,
-    },
-    aiText: {
-        color: '#fff',
-        fontSize: 14,
-        lineHeight: 22,
-    },
-    footer: {
-        gap: 16,
-    },
-    btnDashboard: {
-        backgroundColor: '#10d98a',
-        paddingVertical: 18,
-        borderRadius: 14,
-        alignItems: 'center',
-        shadowColor: '#10d98a',
-        shadowOpacity: 0.3,
-        shadowOffset: { width: 0, height: 8 },
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    btnDashboardText: {
-        color: '#000',
-        fontSize: 16,
-        fontWeight: 'bold',
-        letterSpacing: 0.5,
-    },
-    btnRetake: {
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.3)',
-        paddingVertical: 16,
-        borderRadius: 14,
-        alignItems: 'center',
-    },
-    btnRetakeText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '600',
-    }
+    outlineButtonText: { fontSize: 16, fontWeight: '600', color: '#64748B' },
 });

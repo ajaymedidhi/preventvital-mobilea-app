@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Dimensions, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, G } from 'react-native-svg';
+import YoutubeIframe from 'react-native-youtube-iframe';
 
 import { getVitals, syncVitals } from '../api/vitalsSync';
 import { NormalizedHealthData } from '../api/types';
@@ -19,6 +20,7 @@ const HealthDashboardScreen = ({ route }: any) => {
     const [data, setData] = useState<NormalizedHealthData | null>(null);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
+    const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -102,10 +104,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                         </Text>
                     </View>
                     <View style={styles.headerActions}>
-                        <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8 }]} onPress={() => navigation.navigate('WearableDashboard')}>
-                            <Ionicons name="watch-outline" size={20} color="#fff" />
-                            <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold', marginLeft: 4 }}>Live</Text>
-                        </TouchableOpacity>
+
                         <TouchableOpacity style={[styles.iconButton, { width: undefined, paddingHorizontal: 12, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 8 }]} onPress={() => navigation.navigate('CardioAssessment')}>
                             <Ionicons name="pulse" size={20} color="#fff" />
                             <Text style={{ color: '#fff', fontSize: 13, fontWeight: 'bold', marginLeft: 4 }}>Assess</Text>
@@ -183,7 +182,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                 {/* Vitals Section */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Today's Vitals</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('AllVitals')}>
                         <Text style={styles.seeAll}>View All</Text>
                     </TouchableOpacity>
                 </View>
@@ -225,29 +224,74 @@ const HealthDashboardScreen = ({ route }: any) => {
                     </View>
                 </View>
 
-                {/* Sessions Section */}
+                {/* ── Today's Sessions (Dynamic) ────────────────── */}
                 <View style={[styles.sectionHeader, { marginTop: 24 }]}>
                     <Text style={styles.sectionTitle}>Today's Sessions</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('Programs')}>
                         <Text style={styles.seeAll}>View All</Text>
                     </TouchableOpacity>
                 </View>
 
-                <SessionCard
-                    title="Morning Yoga for Glucose Control"
-                    details="20 min • Yoga • morning"
-                    image="https://images.unsplash.com/photo-1544367563-12123d8965cd?w=400&q=80"
-                />
-                <SessionCard
-                    title="Breathing Exercise for Stress"
-                    details="10 min • Breathing • afternoon"
-                    image="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80"
-                />
-                <SessionCard
-                    title="Weight Management"
-                    details="10 min • Exercise • morning"
-                    image="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80"
-                />
+                {(() => {
+                    const hour = new Date().getHours();
+                    const todaysSessions = [
+                        // Morning
+                        { emoji: '🧎', title: 'Sun Salutation (Surya Namaskar)', details: '15 min • Yoga • Morning', videoId: 'klmBssEYkdU', colors: ['#059669', '#16A34A'] as [string, string], timeSlot: '🌅 Morning', image: 'https://images.unsplash.com/photo-1544367563-12123d8965cd?w=400&auto=format&fit=crop' },
+                        { emoji: '💪', title: '15-Min Full Body Workout', details: '15 min • Fitness • Morning', videoId: 'UBMk30rjy0o', colors: ['#EA580C', '#DC2626'] as [string, string], timeSlot: '🌅 Morning', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&auto=format&fit=crop' },
+                        // Afternoon
+                        { emoji: '🌬️', title: 'Anulom Vilom Pranayam', details: '12 min • Breathing • Afternoon', videoId: '8VwufJrUhic', colors: ['#0D9488', '#06B6D4'] as [string, string], timeSlot: '☀️ Afternoon', image: 'https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=400&auto=format&fit=crop' },
+                        { emoji: '🌬️', title: 'Kapalbhati Pranayam', details: '10 min • Breathing • Afternoon', videoId: 'DcUjhJTmHbg', colors: ['#0D9488', '#06B6D4'] as [string, string], timeSlot: '☀️ Afternoon', image: 'https://images.unsplash.com/photo-1588286840104-8957b019727f?w=400&auto=format&fit=crop' },
+                        // Evening
+                        { emoji: '🧘', title: '10-Minute Morning Meditation', details: '10 min • Mindfulness • Evening', videoId: 'inpok4MKVLM', colors: ['#7C3AED', '#6366F1'] as [string, string], timeSlot: '🌙 Evening', image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&auto=format&fit=crop' },
+                        { emoji: '🧎', title: 'Evening Relaxation Yoga', details: '18 min • Yoga • Evening', videoId: 'COp7BR_Dvps', colors: ['#059669', '#16A34A'] as [string, string], timeSlot: '🌙 Evening', image: 'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?w=400&auto=format&fit=crop' },
+                    ];
+
+                    // Pick sessions based on time of day, always show 3
+                    let picked: typeof todaysSessions = [];
+                    if (hour < 12) {
+                        picked = [todaysSessions[0], todaysSessions[1], todaysSessions[2]];
+                    } else if (hour < 17) {
+                        picked = [todaysSessions[2], todaysSessions[3], todaysSessions[4]];
+                    } else {
+                        picked = [todaysSessions[4], todaysSessions[5], todaysSessions[0]];
+                    }
+
+                    return (
+                        <>
+                            {/* Inline Video Player */}
+                            {playingVideoId && (
+                                <View style={styles.videoPlayerContainer}>
+                                    <View style={styles.videoPlayerHeader}>
+                                        <Text style={styles.videoPlayerTitle}>Now Playing</Text>
+                                        <TouchableOpacity onPress={() => setPlayingVideoId(null)}>
+                                            <Ionicons name="close-circle" size={24} color="#64748B" />
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.videoWrapper}>
+                                        <YoutubeIframe
+                                            height={200}
+                                            play={true}
+                                            videoId={playingVideoId}
+                                        />
+                                    </View>
+                                </View>
+                            )}
+
+                            {picked.map((s, i) => (
+                                <SessionCard
+                                    key={i}
+                                    emoji={s.emoji}
+                                    title={s.title}
+                                    details={s.details}
+                                    image={s.image}
+                                    timeSlot={s.timeSlot}
+                                    gradientColors={s.colors}
+                                    onPress={() => setPlayingVideoId(s.videoId)}
+                                />
+                            ))}
+                        </>
+                    );
+                })()}
 
                 <View style={{ height: 100 }} />
             </ScrollView>
@@ -268,17 +312,32 @@ const VitalCard = ({ icon, color, value, unit, label }: any) => (
     </View>
 );
 
-const SessionCard = ({ title, details, image }: any) => (
-    <View style={styles.sessionCard}>
-        <Image source={{ uri: image }} style={styles.sessionImage} />
+const SessionCard = ({ title, details, image, emoji, timeSlot, gradientColors, onPress }: any) => (
+    <TouchableOpacity style={styles.sessionCard} onPress={onPress} activeOpacity={0.85}>
+        <View style={styles.sessionImageWrap}>
+            <Image source={{ uri: image }} style={styles.sessionImage} />
+            <View style={styles.sessionPlayOverlay}>
+                <Ionicons name="play" size={14} color="#FFF" style={{ marginLeft: 2 }} />
+            </View>
+        </View>
         <View style={styles.sessionContent}>
-            <Text style={styles.sessionTitle}>{title}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                {timeSlot && <Text style={styles.sessionTimeSlot}>{timeSlot}</Text>}
+            </View>
+            <Text style={styles.sessionTitle} numberOfLines={1}>{emoji ? `${emoji} ` : ''}{title}</Text>
             <Text style={styles.sessionDetails}>{details}</Text>
         </View>
-        <TouchableOpacity style={styles.startButton}>
-            <Text style={styles.startButtonText}>Start</Text>
-        </TouchableOpacity>
-    </View>
+        {gradientColors ? (
+            <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.startButton}>
+                <Ionicons name="play" size={12} color="#FFF" />
+                <Text style={styles.startButtonText}>Play</Text>
+            </LinearGradient>
+        ) : (
+            <TouchableOpacity style={[styles.startButton, { backgroundColor: '#8B5CF6' }]} onPress={onPress}>
+                <Text style={styles.startButtonText}>Start</Text>
+            </TouchableOpacity>
+        )}
+    </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -545,37 +604,75 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+    },
+    sessionImageWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginRight: 12,
+        position: 'relative' as const,
     },
     sessionImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 12,
-        marginRight: 12,
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover' as const,
+    },
+    sessionPlayOverlay: {
+        position: 'absolute' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
     },
     sessionContent: {
         flex: 1,
-        marginRight: 12,
+        marginRight: 8,
+    },
+    sessionTimeSlot: {
+        fontSize: 9,
+        fontWeight: '700' as const,
+        color: '#64748B',
+        textTransform: 'uppercase' as const,
+        letterSpacing: 0.5,
     },
     sessionTitle: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 13,
+        fontWeight: '700' as const,
         color: '#1E293B',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     sessionDetails: {
         fontSize: 11,
         color: '#64748B',
+        fontWeight: '500',
+        marginBottom: 10,
     },
+
+    // Video Player
+    videoPlayerContainer: { marginTop: 16, marginBottom: 8, backgroundColor: '#F8FAFC', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0' },
+    videoPlayerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', backgroundColor: '#FFF' },
+    videoPlayerTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+    videoWrapper: { width: '100%', height: 200, backgroundColor: '#000' },
+
     startButton: {
-        backgroundColor: '#8B5CF6',
-        paddingHorizontal: 16,
+        alignSelf: 'flex-start',
+        flexDirection: 'row' as const,
+        alignItems: 'center' as const,
+        gap: 4,
+        paddingHorizontal: 14,
         paddingVertical: 8,
-        borderRadius: 8,
+        borderRadius: 10,
     },
     startButtonText: {
         color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 11,
+        fontWeight: '700' as const,
     },
 });
 
