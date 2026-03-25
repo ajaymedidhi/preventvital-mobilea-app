@@ -32,7 +32,7 @@ const DevicesScreen = () => {
     // Check connection status on mount
     const checkConnectionStatus = useCallback(async () => {
         try {
-            const res = await client.get('/api/auth/profile');
+            const res = await client.get('/api/users/me');
             const profile = res.data?.data?.user || res.data?.user;
             if (profile?.wearableIntegrations?.googleFit?.connected) {
                 setGoogleFitConnected(true);
@@ -152,6 +152,9 @@ const DevicesScreen = () => {
     const heartRate = latestVitals?.heartRate || null;
     const spo2 = latestVitals?.spo2 || null;
     const bp = latestVitals?.bloodPressure || null;
+    const steps = latestVitals?.steps || null;
+    const calories = latestVitals?.calories || null;
+    const distance = latestVitals?.distance || null;
     const anyConnected = googleFitConnected || appleHealthConnected;
 
     return (
@@ -339,6 +342,37 @@ const DevicesScreen = () => {
                             </View >
                         </View >
 
+                        <View style={[styles.vitalsGrid, { marginTop: 10 }]}>
+                            <View style={styles.vitalCard}>
+                                <View style={styles.vitalIcon}>
+                                    <Ionicons name="footsteps" size={18} color="#16A34A" />
+                                </View>
+                                <Text style={styles.vitalVal}>{steps ?? '—'}</Text>
+                                <Text style={styles.vitalUnit}>steps</Text>
+                                <Text style={styles.vitalLabel}>Activity</Text>
+                            </View>
+
+                            <View style={styles.vitalCard}>
+                                <View style={styles.vitalIcon}>
+                                    <Ionicons name="flame" size={18} color="#F59E0B" />
+                                </View>
+                                <Text style={styles.vitalVal}>{calories ?? '—'}</Text>
+                                <Text style={styles.vitalUnit}>kcal</Text>
+                                <Text style={styles.vitalLabel}>Burned</Text>
+                            </View>
+
+                            <View style={styles.vitalCard}>
+                                <View style={styles.vitalIcon}>
+                                    <Ionicons name="location" size={18} color="#6366F1" />
+                                </View>
+                                <Text style={styles.vitalVal}>
+                                    {distance !== null ? (distance / 1000).toFixed(2) : '—'}
+                                </Text >
+                                <Text style={styles.vitalUnit}>km</Text>
+                                <Text style={styles.vitalLabel}>Distance</Text>
+                            </View >
+                        </View >
+
                         {/* Recent Activity Log */}
                         {
                             vitalHistory.length > 0 && (
@@ -431,24 +465,37 @@ const DevicesScreen = () => {
                             onNavigationStateChange={async (navState) => {
                                 // Close the modal once we hit our backend callback URL securely
                                 if (navState.url.includes('/oauth/googlefit/callback') && !navState.loading) {
+                                    const url = navState.url;
+                                    const hasError = url.includes('error=');
+                                    
+                                    if (hasError) {
+                                        setGoogleAuthUrl(null);
+                                        setConnectingGoogle(false);
+                                        Alert.alert('Connection Failed', 'Authorization was denied or an error occurred during login.');
+                                        return;
+                                    }
+
                                     setGoogleAuthUrl(null);
                                     setTimeout(async () => {
                                         try {
-                                            const checkRes = await client.get('/api/auth/profile');
+                                            const checkRes = await client.get('/api/users/me');
                                             const profile = checkRes.data?.data?.user || checkRes.data?.user;
                                             if (profile?.wearableIntegrations?.googleFit?.connected) {
                                                 setGoogleFitConnected(true);
                                                 setConnectingGoogle(false);
                                                 try { await client.post('/api/wearables/sync/googlefit'); } catch (e) { }
                                                 await loadHealthData();
-                                                Alert.alert('✅ Connected!', 'Google Fit is now linked.');
+                                                Alert.alert('✅ Connected!', 'Google Fit is now linked and syncing.');
                                             } else {
+                                                Alert.alert('Almost there', 'We are still waiting for the connection to finalize. Try refreshing in a moment.');
                                                 setConnectingGoogle(false);
                                             }
-                                        } catch (e) {
+                                        } catch (e: any) {
                                             setConnectingGoogle(false);
+                                            const errorMsg = e.response?.data?.message || e.message || 'Unknown error';
+                                            Alert.alert('Error', `Failed to verify connection status: ${errorMsg}`);
                                         }
-                                    }, 1000);
+                                    }, 1500);
                                 }
                             }}
                         />

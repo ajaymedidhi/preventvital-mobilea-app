@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import { fetchHealthData as fetchGoogleFit } from './googleFitService';
+
 import { fetchAppleHealthData } from './appleHealthService';
 import { NormalizedHealthData } from './types';
 
@@ -11,7 +11,8 @@ export const syncVitals = async (): Promise<boolean> => {
         let data: NormalizedHealthData | null = null;
 
         if (Platform.OS === 'android') {
-            data = await fetchGoogleFit();
+            console.log('Android sync is backend-driven. Use syncGoogleFit endpoint.');
+            return true; // Return true to indicate we handled the call
         } else if (Platform.OS === 'ios') {
             data = await fetchAppleHealthData();
         }

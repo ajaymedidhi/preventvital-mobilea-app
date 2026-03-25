@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { setToken, getToken, deleteToken } from '../api/storage';
-import { initializeGoogleFit } from '../api/googleFitService';
+
 
 interface ConsentContextType {
     hasConsented: boolean;
@@ -35,7 +35,8 @@ export const ConsentProvider = ({ children }: { children: ReactNode }) => {
         await setToken('userConsent', 'true');
         setHasConsented(true);
         if (Platform.OS === 'android') {
-            await initializeGoogleFit();
+            // Google Fit initialization is now handled via the backend OAuth flow in DevicesScreen
+            console.log('Consent given: Google Fit sync will be active once linked in Devices.');
         }
     };
 
