@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, withRepeat, withSequence, FadeInDown } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '../../auth/AuthContext';
 
-const { width } = Dimensions.get('window');
+
 
 export default function AssessmentResultsScreen() {
     const navigation = useNavigation<any>();
@@ -42,7 +42,7 @@ export default function AssessmentResultsScreen() {
             -1,
             true
         );
-    }, []);
+    }, [pulseAnim]);
 
     const animatedPulseStyle = useAnimatedStyle(() => ({
         opacity: pulseAnim.value
