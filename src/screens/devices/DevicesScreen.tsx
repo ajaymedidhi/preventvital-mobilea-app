@@ -140,7 +140,6 @@ const DevicesScreen = () => {
             }
             // Pull the latest snapshot from backend to update UI
             await loadHealthData();
-            setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             Alert.alert('✅ Synced', 'Latest health data has been fetched.');
         } catch (err) {
             Alert.alert('Sync Failed', 'Could not fetch latest data.');

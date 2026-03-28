@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,6 +61,8 @@ export default function CardioAssessmentScreen() {
         waist: '',
         hip: '',
         mac: '',
+        neck: '',
+        bodyFat: '',
 
         sbp: '',
         dbp: '',
@@ -148,6 +150,26 @@ export default function CardioAssessmentScreen() {
         return isValid;
     };
 
+    const calcBodyFat = () => {
+        const h = parseFloat(formData.height);
+        const w = parseFloat(formData.waist);
+        const n = parseFloat(formData.neck);
+        const hip = parseFloat(formData.hip);
+        const isFemale = formData.sex === 'female';
+
+        if (!h || !w || !n || (isFemale && !hip)) return '';
+
+        let bf = 0;
+        if (isFemale) {
+            // US Navy Female formula (cm)
+            bf = 163.205 * Math.log10(w + hip - n) - 97.684 * Math.log10(h) - 78.387;
+        } else {
+            // US Navy Male formula (cm)
+            bf = 86.010 * Math.log10(w - n) - 70.041 * Math.log10(h) + 36.76;
+        }
+        return bf > 0 ? bf.toFixed(1) : '0.0';
+    };
+
     const nextStep = async () => {
         if (!validateStep()) return;
 
@@ -157,8 +179,14 @@ export default function CardioAssessmentScreen() {
             const effectiveToken = token || userToken;
             try {
                 if (effectiveToken) {
-                    const scoreData = await calculateAssessmentScore(formData, effectiveToken);
-                    navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData, scoreData });
+                    // Auto-calculate body fat if not manually provided
+                    const calculatedBF = calcBodyFat();
+                    const submissionData = {
+                        ...formData,
+                        bodyFat: formData.bodyFat || calculatedBF
+                    };
+                    const scoreData = await calculateAssessmentScore(submissionData, effectiveToken);
+                    navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData: submissionData, scoreData });
                 } else {
                     navigation.navigate('AssessmentResults', { token: null, user, formData });
                 }
@@ -282,6 +310,21 @@ export default function CardioAssessmentScreen() {
                             <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 100" keyboardType="numeric" value={formData.hip} onChangeText={(t) => updateForm('hip', t)} />
                         </View>
                         <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Neck Circumference (cm)</Text>
+                            <Text style={styles.hintText}>Used to calc Body Fat %</Text>
+                            <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 38" keyboardType="numeric" value={formData.neck} onChangeText={(t) => updateForm('neck', t)} />
+                        </View>
+                        <View style={styles.inputRow}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                                <Text style={styles.label}>Body Fat % (Auto)</Text>
+                                <TextInput style={[styles.input, styles.readOnlyInput]} value={calcBodyFat()} editable={false} />
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
+                                <Text style={styles.label}>Manual Body Fat %</Text>
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="Override" keyboardType="numeric" value={formData.bodyFat} onChangeText={(t) => updateForm('bodyFat', t)} />
+                            </View>
+                        </View>
+                        <View style={styles.inputGroup}>
                             <Text style={styles.label}>Waist-to-Hip Ratio</Text>
                             <TextInput style={[styles.input, styles.readOnlyInput]} value={calcWHR()} editable={false} />
                         </View>
@@ -335,21 +378,21 @@ export default function CardioAssessmentScreen() {
                         <View style={styles.inputRow}>
                             <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                                 <Text style={styles.label}>Total Cholesterol <Text style={styles.req}>*</Text></Text>
-                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.tc} onChangeText={(t) => updateForm('tc', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 200" keyboardType="numeric" value={formData.tc} onChangeText={(t) => updateForm('tc', t)} />
                             </View>
                             <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                                 <Text style={styles.label}>LDL</Text>
-                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.ldl} onChangeText={(t) => updateForm('ldl', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 100" keyboardType="numeric" value={formData.ldl} onChangeText={(t) => updateForm('ldl', t)} />
                             </View>
                         </View>
                         <View style={styles.inputRow}>
                             <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                                 <Text style={styles.label}>HDL <Text style={styles.req}>*</Text></Text>
-                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.hdl} onChangeText={(t) => updateForm('hdl', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 50" keyboardType="numeric" value={formData.hdl} onChangeText={(t) => updateForm('hdl', t)} />
                             </View>
                             <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                                 <Text style={styles.label}>Triglycerides</Text>
-                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.trig} onChangeText={(t) => updateForm('trig', t)} />
+                                <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 150" keyboardType="numeric" value={formData.trig} onChangeText={(t) => updateForm('trig', t)} />
                             </View>
                         </View>
                     </Animated.View>
@@ -372,7 +415,7 @@ export default function CardioAssessmentScreen() {
                                 </View>
                                 <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                                     <Text style={styles.label}>Fasting Glucose</Text>
-                                    <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="mg/dL" keyboardType="numeric" value={formData.fbg} onChangeText={(t) => updateForm('fbg', t)} />
+                                    <TextInput style={styles.input} placeholderTextColor="#94A3B8" placeholder="e.g. 100" keyboardType="numeric" value={formData.fbg} onChangeText={(t) => updateForm('fbg', t)} />
                                 </View>
                             </View>
                         )}
@@ -456,13 +499,13 @@ export default function CardioAssessmentScreen() {
                             {renderOption('lvh', 'Yes', 'yes')}
                         </View>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Carotid Plaque / IMT {'>'}0.9mm</Text>
+                            <Text style={styles.label}>Carotid Plaque / IMT \u003e0.9mm</Text>
                             <Text style={styles.hintText}>Determined via ultrasound</Text>
                             {renderOption('plaque', 'No', 'no')}
                             {renderOption('plaque', 'Yes', 'yes')}
                         </View>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Ankle-Brachial Index (ABI) {'<'}0.9</Text>
+                            <Text style={styles.label}>Ankle-Brachial Index (ABI) \u003c0.9</Text>
                             <Text style={styles.hintText}>Indicator of peripheral artery disease</Text>
                             {renderOption('abi', 'Normal (≥0.9)', 'normal')}
                             {renderOption('abi', 'Abnormal (<0.9)', 'abnormal')}

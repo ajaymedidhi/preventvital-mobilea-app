@@ -22,10 +22,14 @@ const ActivityScreen = () => {
 
     const loadData = useCallback(async () => {
         try {
-            const [historyRes, userRes] = await Promise.all([
-                client.get('/api/wearables/history/googlefit'),
-                client.get('/api/users/me')
-            ]);
+            let historyRes = { data: { success: false, history: [] } };
+            try {
+                historyRes = await client.get('/api/wearables/history/googlefit');
+            } catch (e) {
+                console.log('[ACTIVITY] History not available');
+            }
+
+            const userRes = await client.get('/api/users/me');
 
             if (historyRes.data.success) {
                 setHistory(historyRes.data.history);
@@ -108,13 +112,13 @@ const ActivityScreen = () => {
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>My Activity</Text>
                     <View style={styles.filterTabs}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             onPress={() => setFilter('today')}
                             style={[styles.filterTab, filter === 'today' && styles.filterTabActive]}
                         >
                             <Text style={[styles.filterTabText, filter === 'today' && styles.filterTextActive]}>Day</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             onPress={() => setFilter('weekly')}
                             style={[styles.filterTab, filter === 'weekly' && styles.filterTabActive]}
                         >
@@ -123,8 +127,8 @@ const ActivityScreen = () => {
                     </View>
                 </View>
 
-                <ScrollView 
-                    showsVerticalScrollIndicator={false} 
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 >
@@ -139,20 +143,20 @@ const ActivityScreen = () => {
                             <Text style={styles.sectionTitle}>{filter === 'today' ? "Today's Overview" : 'Weekly Average'}</Text>
                             <View style={styles.summaryGrid}>
                                 <SummaryCard
-                                    title="Steps" 
-                                    value={filter === 'today' ? todayStats.steps?.toLocaleString() : Math.round(weeklyData.reduce((acc, curr) => acc + curr.steps, 0) / (weeklyData.length || 1)).toLocaleString()} 
+                                    title="Steps"
+                                    value={filter === 'today' ? todayStats.steps?.toLocaleString() : Math.round(weeklyData.reduce((acc, curr) => acc + curr.steps, 0) / (weeklyData.length || 1)).toLocaleString()}
                                     unit=""
                                     icon="footsteps-outline" color="#16A34A" bgColor="#DCFCE7"
                                 />
                                 <SummaryCard
-                                    title="Calories" 
-                                    value={filter === 'today' ? todayStats.calories : Math.round(history.reduce((acc, curr) => acc + curr.calories, 0) / (history.length || 1))} 
+                                    title="Calories"
+                                    value={filter === 'today' ? todayStats.calories : Math.round(history.reduce((acc, curr) => acc + curr.calories, 0) / (history.length || 1))}
                                     unit="kcal"
                                     icon="flame-outline" color="#EF4444" bgColor="#FEE2E2"
                                 />
                                 <SummaryCard
-                                    title="Distance" 
-                                    value={filter === 'today' ? (todayStats.distance / 1000).toFixed(2) : (history.reduce((acc, curr) => acc + (curr.distance || 0), 0) / (history.length || 1) / 1000).toFixed(2)} 
+                                    title="Distance"
+                                    value={filter === 'today' ? (todayStats.distance / 1000).toFixed(2) : (history.reduce((acc, curr) => acc + (curr.distance || 0), 0) / (history.length || 1) / 1000).toFixed(2)}
                                     unit="km"
                                     icon="walk-outline" color="#3B82F6" bgColor="#EFF6FF"
                                 />

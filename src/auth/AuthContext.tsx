@@ -15,6 +15,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     setAuthToken: (token: string, user?: any, isNewReg?: boolean) => Promise<void>;
     refreshSubscription: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const currentPlan = (user?.subscriptionPlan || subscription?.plan || user?.corporateSubscription?.plan || 'free').toLowerCase();
 
     return (
-        <AuthContext.Provider value={{ userToken, user, subscription, currentPlan, isLoading, isNewRegistration, signIn, signUp, signOut, setAuthToken, refreshSubscription }}>
+        <AuthContext.Provider value={{ userToken, user, subscription, currentPlan, isLoading, isNewRegistration, signIn, signUp, signOut, setAuthToken, refreshSubscription, refreshUser: loadUserAndSubscription }}>
             {children}
         </AuthContext.Provider>
     );

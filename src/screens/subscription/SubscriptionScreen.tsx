@@ -18,8 +18,7 @@ const PLANS = [
         headerColor: '#64748b',
         buttonGradient: ['#56A3CD', '#AA41B4'],
         buttonColor: null, // We'll use gradient for Free
-        isCurrent: true,
-        buttonText: 'Current'
+        buttonText: 'Select Plan'
     },
     {
         id: 'silver',
@@ -31,7 +30,6 @@ const PLANS = [
         headerColor: '#6b7280',
         buttonGradient: null,
         buttonColor: '#B6C0C6', // Grey button
-        isCurrent: false,
         buttonText: 'Upgrade Now'
     },
     {
@@ -44,7 +42,6 @@ const PLANS = [
         headerColor: '#E6A800',
         buttonGradient: null,
         buttonColor: '#EAB308', // Gold button
-        isCurrent: false,
         buttonText: 'Upgrade Now'
     },
     {
@@ -57,18 +54,20 @@ const PLANS = [
         headerColor: '#1774A0',
         buttonGradient: null,
         buttonColor: '#2691C3', // Blue button
-        isCurrent: false,
         buttonText: 'Upgrade Now'
     }
 ];
 
 const SubscriptionScreen = () => {
     const navigation = useNavigation();
-    const { subscription, currentPlan, refreshSubscription } = useAuth();
+    const { subscription, currentPlan, refreshSubscription, user } = useAuth();
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
     const currentPlanId = currentPlan;
+    
+    const isCorporate = user?.customerType === 'corporate';
+    const corporateName = user?.corporateSubscription?.name || 'your Organization';
 
     // Subscription is now synchronized with AuthContext
 
@@ -134,6 +133,9 @@ const SubscriptionScreen = () => {
 
             // Update global user state with new subscription details
             await refreshSubscription();
+            if (typeof (useAuth() as any).refreshUser === 'function') {
+                await (useAuth() as any).refreshUser();
+            }
 
             Alert.alert("Success", "Subscription active! Welcome to " + PLANS.find(p => p.id === planId)?.name);
             navigation.goBack(); // Or navigate to Home/Profile
@@ -155,6 +157,18 @@ const SubscriptionScreen = () => {
                 <Text style={styles.headerTitle}>Choose Your Plan</Text>
                 <View style={{ width: 40 }} />
             </View>
+
+            {isCorporate && (
+                <LinearGradient
+                    colors={['#DCFCE7', '#F0FDF4']}
+                    style={styles.corporateBanner}
+                >
+                    <Ionicons name="business" size={20} color="#166534" />
+                    <Text style={styles.corporateText}>
+                        Your subscription is managed by <Text style={{ fontWeight: 'bold' }}>{corporateName}</Text>.
+                    </Text>
+                </LinearGradient>
+            )}
 
             <View style={styles.toggleContainerWrapper}>
                 <View style={styles.toggleContainer}>
@@ -186,8 +200,14 @@ const SubscriptionScreen = () => {
                                 plan.id === 'platinum' && { borderColor: '#38bdf8', borderWidth: 1 }
                             ]}
                             activeOpacity={0.9}
-                            onPress={() => isUserCurrentPlan ? Alert.alert("Current Plan", "You are already on this plan.") : handleSubscribe(plan)}
-                            disabled={loading || isUserCurrentPlan}
+                            onPress={() => {
+                                if (isCorporate) {
+                                    Alert.alert("Corporate Plan", `Your subscription is managed by ${corporateName}. Please contact your administrator for plan changes.`);
+                                    return;
+                                }
+                                isUserCurrentPlan ? Alert.alert("Current Plan", "You are already on this plan.") : handleSubscribe(plan)
+                            }}
+                            disabled={loading || isUserCurrentPlan || isCorporate}
                         >
                             <View style={styles.cardHeader}>
                                 <Text style={[styles.planName, { color: plan.headerColor }]}>{plan.name}</Text>
@@ -222,11 +242,13 @@ const SubscriptionScreen = () => {
                                     <Text style={styles.subscribeText}>{isUserCurrentPlan ? 'Current' : plan.buttonText}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.subscribeButton, { backgroundColor: isUserCurrentPlan ? '#94A3B8' : plan.buttonColor }]}>
+                                <View style={[styles.subscribeButton, { backgroundColor: isUserCurrentPlan ? '#94A3B8' : (isCorporate ? '#E2E8F0' : plan.buttonColor) }]}>
                                     {loading && processingPlanId === plan.id ? (
                                         <ActivityIndicator color="#fff" />
                                     ) : (
-                                        <Text style={styles.subscribeText}>{isUserCurrentPlan ? 'Current' : plan.buttonText}</Text>
+                                        <Text style={[styles.subscribeText, isCorporate && !isUserCurrentPlan && { color: '#64748B' }]}>
+                                            {isUserCurrentPlan ? 'Current Plan' : (isCorporate ? 'Managed' : plan.buttonText)}
+                                        </Text>
                                     )}
                                 </View>
                             )}
@@ -240,6 +262,23 @@ const SubscriptionScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8fafc' },
+    corporateBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        marginHorizontal: 20,
+        marginBottom: 20,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#BBF7D0',
+        gap: 12
+    },
+    corporateText: {
+        flex: 1,
+        fontSize: 13,
+        color: '#166534',
+        lineHeight: 18
+    },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
     headerTitle: { fontSize: 18, fontWeight: '700', color: '#1E293B' },
     backButton: { padding: 8 },

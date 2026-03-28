@@ -112,7 +112,12 @@ export default function AssessmentHistoryScreen() {
                                 </View>
                                 <TouchableOpacity 
                                     style={styles.detailsButton}
-                                    onPress={() => navigation.navigate('AssessmentResults', { scoreData: item.results, formData: item.responses })}
+                                    onPress={() => navigation.navigate('AssessmentResults', { 
+                                        scoreData: item.results, 
+                                        formData: item.rawFormData,
+                                        assessmentData: item.assessmentData,
+                                        date: item.completedAt ? new Date(item.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null
+                                    })}
                                 >
                                     <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
                                 </TouchableOpacity>

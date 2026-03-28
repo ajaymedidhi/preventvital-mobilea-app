@@ -1,18 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useAuth } from '../../auth/AuthContext';
 
 const WellnessScoreScreen = () => {
     const navigation = useNavigation<any>();
-    const { user } = useAuth();
+    const { user, refreshUser, isLoading } = useAuth();
+    const [refreshing, setRefreshing] = React.useState(false);
 
+    useFocusEffect(
+        useCallback(() => {
+            const refresh = async () => {
+                setRefreshing(true);
+                await refreshUser();
+                setRefreshing(false);
+            };
+            refresh();
+        }, [])
+    );
+
+    // Retrieve backend scores with fallbacks
     // Retrieve backend scores with fallbacks
     const score = user?.healthProfile?.cvitalScore || user?.profile?.healthScore || 0;
     const ascvdScore = user?.healthProfile?.ascvdRisk || 0;
+    const bodyFat = user?.healthProfile?.bodyFat || 0;
+    const vascularAge = user?.healthProfile?.vascularAge || 0;
     const metabolicScore = user?.healthProfile?.metabolicAge || 0;
 
     // Determine status text based on CVITAL
@@ -25,69 +40,53 @@ const WellnessScoreScreen = () => {
 
     // Custom Gauge Component
     const WellnessGauge = () => {
-        // Simplified SVG representation of the segmented gauge
+        const radius = 75;
+        const strokeWidth = 16;
+        const center = 100;
+        const circumference = 2 * Math.PI * radius;
+        
+        // We'll use a 280-degree arc for the gauge
+        const arcDegrees = 280;
+        const gapDegrees = 360 - arcDegrees;
+        const totalArcLength = (arcDegrees / 360) * circumference;
+        const progressLength = (score / 100) * totalArcLength;
+        
         return (
             <View style={styles.gaugeContainer}>
                 <Svg height="250" width="250" viewBox="0 0 200 200">
-                    {/* Outer Dashed Circle - Simplified */}
-                    <Circle
-                        cx="100"
-                        cy="100"
-                        r="90"
-                        stroke="#E2E8F0"
-                        strokeWidth="1"
-                        strokeDasharray="4, 4"
-                        fill="transparent"
-                    />
-
-                    {/* Text Labels on Circle */}
-                    <Text style={[styles.gaugeLabel, { top: 90, left: -20 }]}>LOW</Text>
-                    {/* Note: SVG Text is different, using absolute positioned View Text for simplicity/compatibility if needed, 
-                        but here we'll use View over SVG for labels to avoid font issues 
-                    */}
-
-                    {/* Blue Segments - Hardcoded paths for the specific look */}
-                    <G rotation="-90" origin="100, 100">
-                        {/* Top Segment */}
+                    {/* Background Arc (Gray) */}
+                    <G rotation={90 + gapDegrees/2} origin="100, 100">
                         <Circle
-                            cx="100"
-                            cy="100"
-                            r="70"
-                            stroke="#3B82F6"
-                            strokeWidth="20"
+                            cx={center}
+                            cy={center}
+                            r={radius}
+                            stroke="#F1F5F9"
+                            strokeWidth={strokeWidth}
                             fill="transparent"
-                            strokeDasharray={[110, 330]} // approximate arc
+                            strokeDasharray={[totalArcLength, circumference]}
                             strokeLinecap="round"
-                            rotation="45"
-                            origin="100, 100"
                         />
-                        {/* Left Segment */}
+                        {/* Foreground Progress Arc (Blue) */}
                         <Circle
-                            cx="100"
-                            cy="100"
-                            r="70"
-                            stroke="#2563EB"
-                            strokeWidth="20"
+                            cx={center}
+                            cy={center}
+                            r={radius}
+                            stroke={statusColor}
+                            strokeWidth={strokeWidth}
                             fill="transparent"
-                            strokeDasharray={[110, 330]}
+                            strokeDasharray={[progressLength, circumference]}
                             strokeLinecap="round"
-                            rotation="165"
-                            origin="100, 100"
-                        />
-                        {/* Right Segment */}
-                        <Circle
-                            cx="100"
-                            cy="100"
-                            r="70"
-                            stroke="#2563EB"
-                            strokeWidth="20"
-                            fill="transparent"
-                            strokeDasharray={[110, 330]}
-                            strokeLinecap="round"
-                            rotation="-75"
-                            origin="100, 100"
                         />
                     </G>
+                    
+                    {/* Tick Markings - Small dots around the circle */}
+                    {[...Array(8)].map((_, i) => {
+                        const angle = (i * (arcDegrees / 7)) + (90 + gapDegrees/2);
+                        const rad = (angle * Math.PI) / 180;
+                        const x = center + (radius + 15) * Math.cos(rad);
+                        const y = center + (radius + 15) * Math.sin(rad);
+                        return <Circle key={i} cx={x} cy={y} r="1.5" fill="#CBD5E1" />;
+                    })}
                 </Svg>
 
                 {/* Inner Content - Moved OUTSIDE SVG so it actually renders on mobile */}
@@ -96,10 +95,10 @@ const WellnessScoreScreen = () => {
                     <Text style={styles.scoreSub}>Out Of 100</Text>
                 </View>
 
-                {/* Labels positioned absolutely over the SVG area */}
-                <Text style={[styles.gaugeLabel, { top: 10, alignSelf: 'center' }]}>MEDIUM</Text>
-                <Text style={[styles.gaugeLabel, { top: '50%', left: 10, transform: [{ rotate: '-90deg' }] }]}>LOW</Text>
-                <Text style={[styles.gaugeLabel, { top: '50%', right: 10, transform: [{ rotate: '90deg' }] }]}>HIGH</Text>
+                {/* Labels positioned around the arc */}
+                <Text style={[styles.gaugeLabel, { top: 20, alignSelf: 'center' }]}>MEDIUM</Text>
+                <Text style={[styles.gaugeLabel, { bottom: 20, left: 30 }]}>LOW</Text>
+                <Text style={[styles.gaugeLabel, { bottom: 20, right: 30 }]}>HIGH</Text>
             </View>
         );
     };
@@ -111,7 +110,9 @@ const WellnessScoreScreen = () => {
                     <Ionicons name="chevron-back" size={24} color="#1E293B" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Your Vital Score</Text>
-                <View style={{ width: 40 }} />
+                <View style={{ width: 40, alignItems: 'center', justifyContent: 'center' }}>
+                    {refreshing && <ActivityIndicator size="small" color="#6366F1" />}
+                </View>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -130,6 +131,8 @@ const WellnessScoreScreen = () => {
                 <View style={styles.breakdownContainer}>
                     <ScoreRow label="CVITAL Score" value={score} color={statusColor} maxValue={100} />
                     <ScoreRow label="ASCVD Risk" value={ascvdScore} color={ascvdScore > 7.5 ? "#EF4444" : "#3B82F6"} maxValue={100} unit="%" />
+                    <ScoreRow label="Body Fat" value={bodyFat} color={bodyFat > 25 ? "#F59E0B" : "#10B981"} maxValue={60} unit="%" />
+                    {vascularAge > 0 && <ScoreRow label="Vascular Age" value={vascularAge} color="#8B5CF6" maxValue={100} unit=" yrs" />}
                     {metabolicScore > 0 && <ScoreRow label="Metabolic Age" value={metabolicScore} color="#8B5CF6" maxValue={100} unit=" yrs" />}
                     <ScoreRow label="Respiratory" value={90} color="#2563EB" maxValue={100} />
                     <ScoreRow label="Mental wellness" value={85} color="#3B82F6" maxValue={100} />
