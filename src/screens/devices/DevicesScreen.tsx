@@ -9,6 +9,7 @@ import { WebView } from 'react-native-webview';
 import client from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { syncVitals } from '../../api/vitalsSync';
+import { initializeAppleHealth } from '../../api/appleHealthService';
 
 const { width } = Dimensions.get('window');
 
@@ -36,6 +37,9 @@ const DevicesScreen = () => {
             const profile = res.data?.data?.user || res.data?.user;
             if (profile?.wearableIntegrations?.googleFit?.connected) {
                 setGoogleFitConnected(true);
+            }
+            if (profile?.wearableIntegrations?.appleHealth?.connected && Platform.OS === 'ios') {
+                setAppleHealthConnected(true);
             }
         } catch (err) {
             console.log('Could not check integration status');
@@ -294,12 +298,27 @@ const DevicesScreen = () => {
                             thumbColor="#FFF"
                             ios_backgroundColor="#E2E8F0"
                             value={appleHealthConnected}
-                            onValueChange={(val) => {
+                            onValueChange={async (val) => {
                                 if (Platform.OS !== 'ios') {
                                     Alert.alert('iOS Only', 'Apple Health is only available on iOS devices.');
                                     return;
                                 }
-                                setAppleHealthConnected(val);
+                                if (val) {
+                                    const granted = await initializeAppleHealth();
+                                    if (granted) {
+                                        setAppleHealthConnected(true);
+                                        await syncVitals();
+                                        await loadHealthData();
+                                        Alert.alert('Connected', 'Apple Health synced successfully!');
+                                    } else {
+                                        Alert.alert('Permission Denied', 'Please enable permissions in the Health app.');
+                                        setAppleHealthConnected(false);
+                                    }
+                                } else {
+                                    Alert.alert('To Disconnect', 'Please revoke permissions inside the iOS Health app or iOS Settings.');
+                                    // Optionally clear backend state here.
+                                    setAppleHealthConnected(false);
+                                }
                             }}
                         />
                     </View>

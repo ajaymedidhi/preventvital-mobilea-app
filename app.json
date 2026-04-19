@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "preventvital",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "entitlements": {
@@ -58,6 +58,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3c843647-d8cb-4428-94c3-3dff7ae15523"
+      }
     }
   }
 }

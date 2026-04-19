@@ -1,12 +1,11 @@
 export interface NormalizedHealthData {
-    s: number; // steps
-    hr: {
-        avg: number;
-        min: number;
-        max: number;
-    } | null;
-    slp: {
-        totalMinutes: number;
-    } | null;
-    ts: string; // timestamp ISO
+    date: string; // ISO String
+    metrics: {
+        steps?: number;
+        heartRate?: number;
+        calories?: number;
+        distance?: number;
+        spo2?: number;
+        sleepMinutes?: number;
+    }
 }

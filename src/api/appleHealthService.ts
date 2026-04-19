@@ -12,6 +12,8 @@ const permissions: HealthKitPermissions = {
             AppleHealthKit.Constants.Permissions.Steps,
             AppleHealthKit.Constants.Permissions.HeartRate,
             AppleHealthKit.Constants.Permissions.SleepAnalysis,
+            AppleHealthKit.Constants.Permissions.ActiveEnergyBurned,
+            AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
         ],
         write: [],
     },
@@ -47,73 +49,68 @@ export const fetchAppleHealthData = async (): Promise<NormalizedHealthData | nul
     try {
         const stepsPromise = new Promise<number>((resolve) => {
             AppleHealthKit.getStepCount(options, (err: Object, results: HealthValue) => {
-                if (err) {
-                    console.warn('Error fetching steps:', err);
-                    resolve(0);
-                    return;
-                }
-                resolve(results.value);
+                if (err) resolve(0); else resolve(results.value || 0);
             });
         });
 
-        const heartRatePromise = new Promise<{ avg: number; min: number; max: number } | null>((resolve) => {
+        const heartRatePromise = new Promise<number | undefined>((resolve) => {
             AppleHealthKit.getHeartRateSamples(options, (err: Object, results: Array<HealthValue>) => {
-                if (err) {
-                    console.warn('Error fetching heart rate:', err);
-                    resolve(null);
-                    return;
+                if (err || results.length === 0) resolve(undefined);
+                else {
+                    const values = results.map(r => r.value);
+                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    resolve(Math.round(avg));
                 }
-                if (results.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                const values = results.map(r => r.value);
-                const sum = values.reduce((a, b) => a + b, 0);
-                const avg = sum / values.length;
-                const min = Math.min(...values);
-                const max = Math.max(...values);
-                resolve({ avg, min, max });
             });
         });
 
-        const sleepPromise = new Promise<{ totalMinutes: number } | null>((resolve) => {
+        const caloriesPromise = new Promise<number | undefined>((resolve) => {
+            AppleHealthKit.getActiveEnergyBurned(options, (err: string, results: Array<HealthValue>) => {
+                if (err || !results || results.length === 0) resolve(undefined);
+                else {
+                    const sum = results.reduce((acc, curr) => acc + curr.value, 0);
+                    resolve(Math.round(sum));
+                }
+            });
+        });
+        
+        const distancePromise = new Promise<number | undefined>((resolve) => {
+            AppleHealthKit.getDistanceWalkingRunning(options, (err: string, results: HealthValue) => {
+                if (err || !results) resolve(undefined);
+                else {
+                    resolve(Math.round(results.value || 0));
+                }
+            });
+        });
+
+        const sleepPromise = new Promise<number | undefined>((resolve) => {
             AppleHealthKit.getSleepSamples(options, (err: Object, results: Array<HealthValue>) => {
-                if (err) {
-                    console.warn('Error fetching sleep:', err);
-                    resolve(null);
-                    return;
+                if (err || !results || results.length === 0) resolve(undefined);
+                else {
+                    let totalMinutes = 0;
+                    results.forEach(sample => {
+                        const start = new Date(sample.startDate).getTime();
+                        const end = new Date(sample.endDate).getTime();
+                        totalMinutes += Math.floor((end - start) / (1000 * 60));
+                    });
+                    resolve(totalMinutes);
                 }
-                if (results.length === 0) {
-                    resolve(null);
-                    return;
-                }
-                // Sleep samples in HealthKit can vary (InBed, Asleep, etc.)
-                // Usually we care about 'ASLEEP' values.
-                // Value is often implicitly duration or we calculate from start/end.
-                // react-native-health 'value' is usually 'AGREEABLE' enum or similar?
-                // Actually `getSleepSamples` returns array of objects with startDate, endDate, value (category).
-
-                let totalMinutes = 0;
-                results.forEach(sample => {
-                    // For simplicity, summing up all sleep analysis samples that are "ASLEEP" (value 1) or "INBED" (value 0)?
-                    // AppleHealthKit.Constants.SleepAnalysis : { INBED: 0, ASLEEP: 1, AWAKE: 2 } or similar.
-                    // We will sum simple duration for now. 
-                    const start = new Date(sample.startDate).getTime();
-                    const end = new Date(sample.endDate).getTime();
-                    const diffMs = end - start;
-                    totalMinutes += Math.floor(diffMs / (1000 * 60));
-                });
-                resolve(totalMinutes > 0 ? { totalMinutes } : null);
             });
         });
 
-        const [steps, hr, slp] = await Promise.all([stepsPromise, heartRatePromise, sleepPromise]);
+        const [steps, heartRate, calories, distance, sleepMinutes] = await Promise.all([
+            stepsPromise, heartRatePromise, caloriesPromise, distancePromise, sleepPromise
+        ]);
 
         const normalized: NormalizedHealthData = {
-            s: steps,
-            hr: hr,
-            slp: slp,
-            ts: new Date().toISOString()
+            date: new Date().toISOString(),
+            metrics: {
+                steps,
+                heartRate,
+                calories,
+                distance,
+                sleepMinutes
+            }
         };
 
         console.log('Fetched & Normalized Health Data (iOS):', normalized);

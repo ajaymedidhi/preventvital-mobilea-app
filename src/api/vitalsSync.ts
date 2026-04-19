@@ -34,18 +34,18 @@ export const syncVitals = async (): Promise<boolean> => {
 
         while (attempts < maxAttempts) {
             try {
-                // Real backend call
-                await client.post('/api/vitals', data);
-                console.log('Vitals synced successfully!');
+                // Post to our new endpoint in PreventVital-Backend
+                await client.post('/api/wearable/sync/applehealth', data);
+                console.log('Apple Health Vitals synced successfully!');
                 return true;
             } catch (err: any) {
                 attempts++;
                 console.warn(`Sync attempt ${attempts} failed:`, err.message);
                 if (attempts >= maxAttempts) {
-                    console.error('Final sync failure:', err.response?.data);
-                    throw err;
+                    console.error('Final sync failure:', err.response?.data || err.message);
+                    return false;
                 }
-                await new Promise(r => setTimeout(r, 1000 * attempts)); // Exponential backoff-ish
+                await new Promise(r => setTimeout(r, 1000 * attempts)); // Exponential backoff
             }
         }
 
