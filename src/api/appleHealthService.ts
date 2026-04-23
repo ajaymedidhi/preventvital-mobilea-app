@@ -113,7 +113,6 @@ export const fetchAppleHealthData = async (): Promise<NormalizedHealthData | nul
             }
         };
 
-        console.log('Fetched & Normalized Health Data (iOS):', normalized);
         return normalized;
 
     } catch (e) {

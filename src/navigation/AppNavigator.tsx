@@ -13,11 +13,10 @@ import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
 import CardioAssessmentScreen from '../screens/onboarding/CardioAssessmentScreen';
 import AssessmentResultsScreen from '../screens/onboarding/AssessmentResultsScreen';
 import AssessmentHistoryScreen from '../screens/health/AssessmentHistoryScreen';
-import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import TermsAndConditionsScreen from '../screens/legal/TermsAndConditionsScreen';
 import PrivacyOverviewScreen from '../screens/legal/PrivacyOverviewScreen';
 import PrivacyPolicyLandingScreen from '../screens/legal/PrivacyPolicyLandingScreen';
 import PrivacyDetailScreen from '../screens/legal/PrivacyDetailScreen';
-import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,7 +43,6 @@ function AuthStack() {
             <Stack.Screen name="PrivacyOverview" component={PrivacyOverviewScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyPolicyLanding" component={PrivacyPolicyLandingScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyDetail" component={PrivacyDetailScreen} options={{ presentation: 'modal' }} />
-            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 }
@@ -61,6 +59,13 @@ import SessionPlayerScreen from '../screens/programs/SessionPlayerScreen';
 import SubscriptionScreen from '../screens/subscription/SubscriptionScreen';
 import ProfileDetailsScreen from '../screens/profile/ProfileDetailsScreen';
 
+// Shop Screens
+import ProductDetailScreen from '../screens/shop/ProductDetailScreen';
+import CartScreen from '../screens/shop/CartScreen';
+import CheckoutScreen from '../screens/shop/CheckoutScreen';
+import OrderSuccessScreen from '../screens/shop/OrderSuccessScreen';
+import OrderHistoryScreen from '../screens/shop/OrderHistoryScreen';
+
 function AppStack() {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -75,6 +80,14 @@ function AppStack() {
             <Stack.Screen name="SessionPlayer" component={SessionPlayerScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="ProfileDetails" component={ProfileDetailsScreen} />
+            
+            {/* Shop Screens */}
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="Cart" component={CartScreen} />
+            <Stack.Screen name="Checkout" component={CheckoutScreen} />
+            <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+            <Stack.Screen name="OrderHistory" component={OrderHistoryScreen} />
+
             <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
             <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
             <Stack.Screen name="AssessmentHistory" component={AssessmentHistoryScreen} />
@@ -82,7 +95,6 @@ function AppStack() {
             <Stack.Screen name="PrivacyOverview" component={PrivacyOverviewScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyPolicyLanding" component={PrivacyPolicyLandingScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyDetail" component={PrivacyDetailScreen} options={{ presentation: 'modal' }} />
-            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 }

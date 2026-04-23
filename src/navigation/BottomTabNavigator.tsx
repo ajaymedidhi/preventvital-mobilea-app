@@ -2,24 +2,31 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
 import HealthDashboardScreen from '../screens/HealthDashboardScreen';
 import ProgramsListScreen from '../screens/programs/ProgramsListScreen';
 import UserProfileScreen from '../screens/auth/UserProfileScreen';
 import DevicesScreen from '../screens/devices/DevicesScreen';
+import ShopScreen from '../screens/shop/ShopScreen';
 import ActivityScreen from '../screens/activity/ActivityScreen';
 import VIDAChatbot from '../components/VIDAChatbot';
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
+    const insets = useSafeAreaInsets();
+
     return (
         <>
             <Tab.Navigator
                 screenOptions={{
                     headerShown: false,
-                    tabBarStyle: styles.tabBar,
+                    tabBarStyle: [styles.tabBar, { 
+                        height: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom,
+                        paddingBottom: insets.bottom || 5
+                    }],
                     tabBarActiveTintColor: '#3B82F6',
                     tabBarInactiveTintColor: '#94A3B8',
                     tabBarShowLabel: true,
@@ -46,6 +53,15 @@ const BottomTabNavigator = () => {
                     options={{
                         tabBarIcon: ({ color, size }) => (
                             <Ionicons name="documents-outline" size={24} color={color} />
+                        ),
+                    }}
+                />
+                <Tab.Screen
+                    name="Shop"
+                    component={ShopScreen}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="cart-outline" size={24} color={color} />
                         ),
                     }}
                 />
@@ -88,7 +104,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#F1F5F9',
-        height: Platform.OS === 'ios' ? 88 : 60,
         paddingTop: 5,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: -2 },

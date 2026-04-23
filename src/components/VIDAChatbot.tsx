@@ -4,6 +4,7 @@ import {
     FlatList, Modal, StyleSheet, KeyboardAvoidingView,
     Platform, ActivityIndicator, Image
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import client from '../api/client';
 
 const SUGGESTIONS = [
@@ -14,6 +15,7 @@ const SUGGESTIONS = [
 ];
 
 export default function VIDAChatbot() {
+    const insets = useSafeAreaInsets();
     const [open, setOpen] = useState(false);
     const [msgs, setMsgs] = useState<any[]>([
         { id: '1', role: 'vita', text: "Hi! I'm VIDA 👋 Ask me anything about your health." }
@@ -53,7 +55,17 @@ export default function VIDAChatbot() {
     return (
         <>
             {/* Floating button — always visible */}
-            <TouchableOpacity style={styles.fab} onPress={() => setOpen(true)} activeOpacity={0.8}>
+            <TouchableOpacity 
+                style={[
+                    styles.fab, 
+                    { 
+                        bottom: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom + 16,
+                        right: 16 
+                    }
+                ]} 
+                onPress={() => setOpen(true)} 
+                activeOpacity={0.8}
+            >
                 <Image 
                     source={require('../../assets/images/vida_bot.png')} 
                     style={styles.fabImg} 
@@ -115,7 +127,7 @@ export default function VIDAChatbot() {
                     {loading && <ActivityIndicator color="#3B82F6" style={{ padding: 8 }} />}
 
                     {/* Input */}
-                    <View style={styles.inputRow}>
+                    <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                         <TextInput
                             style={styles.input}
                             value={input}
@@ -136,7 +148,7 @@ export default function VIDAChatbot() {
 
 const styles = StyleSheet.create({
     fab: {
-        position: 'absolute', bottom: 90, right: 16,
+        position: 'absolute',
         width: 60, height: 60, borderRadius: 30,
         backgroundColor: '#3B82F6', justifyContent: 'center',
         alignItems: 'center', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 },
@@ -173,7 +185,6 @@ const styles = StyleSheet.create({
     inputRow: {
         flexDirection: 'row', padding: 12, gap: 10,
         borderTopWidth: 1, borderColor: '#F3F4F6', backgroundColor: '#fff',
-        paddingBottom: Platform.OS === 'ios' ? 30 : 12
     },
     input: {
         flex: 1, backgroundColor: '#F9FAFB', borderRadius: 22,

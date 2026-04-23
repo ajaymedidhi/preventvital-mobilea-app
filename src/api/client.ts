@@ -2,14 +2,17 @@ import axios from 'axios';
 import { getToken } from './storage';
 import { Platform } from 'react-native';
 
-const API_URL = 'https://prevent-vital-backend.onrender.com';
+// Production URL (Set this to your GCP Cloud Run URL once deployed)
+const PROD_URL = 'https://preventvital-api-988713182018.asia-south1.run.app'; // Fallback to Render for now
 // const LOCAL_IP = '192.168.31.86';
-// const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001' : `http://${LOCAL_IP}:5001`;
-// For physical devices on Android, you might still need the local IP, but 10.0.2.2 is standard for emulators.
+
+// export const API_URL = __DEV__
+//     ? (Platform.OS === 'android' ? 'http://10.0.2.2:5001' : `http://${LOCAL_IP}:5001`)
+//     : PROD_URL;
 
 const client = axios.create({
-    baseURL: API_URL,
-    timeout: 15000,
+    baseURL: PROD_URL,
+    timeout: 60000,
     headers: {
         'Content-Type': 'application/json',
     },

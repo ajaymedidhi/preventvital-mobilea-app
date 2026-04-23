@@ -88,6 +88,12 @@ const UserProfileScreen = () => {
                         onPress={() => (navigation as any).navigate('Subscription')}
                     />
                     <MenuItem
+                        icon="receipt-outline"
+                        label="My Orders"
+                        iconColor="#3b82f6"
+                        onPress={() => (navigation as any).navigate('OrderHistory')}
+                    />
+                    <MenuItem
                         icon="phone-portrait-outline"
                         label="Connected Devices"
                         iconColor="#3b82f6"
