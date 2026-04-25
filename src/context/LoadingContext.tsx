@@ -54,30 +54,27 @@ const styles = StyleSheet.create({
     modalBackground: {
         flex: 1,
         alignItems: 'center',
-        flexDirection: 'column',
-        justifyContent: 'space-around',
-        backgroundColor: '#00000060' // Slightly dark overlay
+        justifyContent: 'center',
+        backgroundColor: 'rgba(15, 23, 42, 0.8)' // Dark slate semi-transparent
     },
     activityIndicatorWrapper: {
         backgroundColor: '#FFFFFF',
-        minHeight: 100,
-        minWidth: 100,
-        padding: 20,
-        borderRadius: 20,
-        display: 'flex',
+        padding: 24,
+        borderRadius: 24,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#0F172A',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 25,
-        elevation: 8
+        shadowOpacity: 0.25,
+        shadowRadius: 20,
+        elevation: 10
     },
     messageText: {
-        marginTop: 12,
-        fontSize: 12,
-        color: '#64748B',
-        fontWeight: '700',
+        marginTop: 16,
+        fontSize: 14,
+        color: '#1E293B',
+        fontWeight: '600',
+        letterSpacing: 0.5,
         textAlign: 'center'
     }
 });

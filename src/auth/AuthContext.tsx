@@ -29,9 +29,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const loadUserAndSubscription = async () => {
         try {
-            const fetchedUser = await fetchMe();
+            // Parallelize these calls to cut loading time in half
+            const [fetchedUser, subData] = await Promise.all([
+                fetchMe(),
+                fetchMySubscription()
+            ]);
+            
             setUser(fetchedUser);
-            const subData = await fetchMySubscription();
             setSubscription(subData?.subscription || null);
         } catch (e) {
             console.error("Failed to fetch user or subscription:", e);
@@ -69,7 +73,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await setToken('userToken', token);
             setUserToken(token);
             setUser(loggedInUser);
-            await refreshSubscription();
+            
+            // Fire and forget - don't block the UI transition with subscription fetch
+            refreshSubscription();
         } else {
             console.warn("Using unsafe/mock signIn");
         }

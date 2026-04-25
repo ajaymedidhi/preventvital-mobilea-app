@@ -1,5 +1,15 @@
 import client from './client';
 
+export const preWarmBackend = async (): Promise<void> => {
+    try {
+        await client.get('/api/public/ping');
+        console.log('[DEBUG] Backend pre-warmed successfully');
+    } catch (e) {
+        // Silently fail as this is just a background warm-up
+        console.log('[DEBUG] Backend pre-warm ping failed (could be offline or slow)');
+    }
+};
+
 export const login = async (email: string, password: string): Promise<{ token: string; user: any }> => {
     try {
         const response = await client.post('/api/auth/login', { email, password });

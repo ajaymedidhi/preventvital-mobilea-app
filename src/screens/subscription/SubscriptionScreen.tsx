@@ -60,7 +60,7 @@ const PLANS = [
 
 const SubscriptionScreen = () => {
     const navigation = useNavigation();
-    const { subscription, currentPlan, refreshSubscription, user } = useAuth();
+    const { subscription, currentPlan, refreshSubscription, refreshUser, user } = useAuth();
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
@@ -133,8 +133,8 @@ const SubscriptionScreen = () => {
 
             // Update global user state with new subscription details
             await refreshSubscription();
-            if (typeof (useAuth() as any).refreshUser === 'function') {
-                await (useAuth() as any).refreshUser();
+            if (refreshUser) {
+                await refreshUser();
             }
 
             Alert.alert("Success", "Subscription active! Welcome to " + PLANS.find(p => p.id === planId)?.name);

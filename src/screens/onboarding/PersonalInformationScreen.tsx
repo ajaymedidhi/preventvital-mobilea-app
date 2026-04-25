@@ -18,11 +18,19 @@ const PersonalInformationScreen = () => {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [dateObj, setDateObj] = useState(new Date(2000, 0, 1)); // Default to 2000-01-01
     const [phone, setPhone] = useState('');
+    const [bloodGroup, setBloodGroup] = useState('');
+    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
     const [height, setHeight] = useState('');
     const [weight, setWeight] = useState('');
 
+    const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
     const handleNext = () => {
-        navigation.navigate('HealthConditions', { token, user, personalInfo: { firstName, lastName, gender, dob, phone, height, weight } });
+        navigation.navigate('HealthConditions', { 
+            token, user, 
+            personalInfo: { firstName, lastName, gender, dob, phone, height, weight, bloodGroup, city, country } 
+        });
     };
 
     const onChangeDate = (event: any, selectedDate?: Date) => {
@@ -43,6 +51,15 @@ const PersonalInformationScreen = () => {
             onPress={() => setGender(label)}
         >
             <Text style={[styles.genderText, gender === label && styles.genderTextSelected]}>{label}</Text>
+        </TouchableOpacity>
+    );
+
+    const BloodGroupButton = ({ label }: { label: string }) => (
+        <TouchableOpacity
+            style={[styles.bloodButton, bloodGroup === label && styles.bloodButtonSelected]}
+            onPress={() => setBloodGroup(label)}
+        >
+            <Text style={[styles.bloodText, bloodGroup === label && styles.bloodTextSelected]}>{label}</Text>
         </TouchableOpacity>
     );
 
@@ -103,18 +120,17 @@ const PersonalInformationScreen = () => {
                         </View>
                     </View>
 
-                    <Text style={styles.label}>Gender</Text>
+                    <Text style={styles.label}>Gender (Optional)</Text>
                     <View style={styles.genderRow}>
                         <GenderButton label="Male" />
                         <GenderButton label="Female" />
                         <GenderButton label="Others" />
-                        <GenderButton label="Prefer not to say" />
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Date Of Birth</Text>
+                        <Text style={styles.label}>Date Of Birth (Optional)</Text>
                         <TouchableOpacity style={styles.inputWrapper} onPress={() => setShowDatePicker(true)}>
-                            <Text style={[styles.input, !dob && { color: '#64748B' }]}>
+                            <Text style={[styles.input, !dob && { color: '#64748B', borderWidth: 0 }]}>
                                 {dob || "DD/MM/YYYY"}
                             </Text>
                             <Ionicons name="calendar-outline" size={20} color="#64748B" />
@@ -133,16 +149,32 @@ const PersonalInformationScreen = () => {
 
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Phone number</Text>
-                        <TextInput style={styles.input} placeholder="+1234567890" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+                        <TextInput style={styles.input} placeholder="+1 234 567 890" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+                    </View>
+
+                    <Text style={styles.label}>Blood Group (Optional)</Text>
+                    <View style={styles.bloodRow}>
+                        {BLOOD_GROUPS.map(bg => <BloodGroupButton key={bg} label={bg} />)}
                     </View>
 
                     <View style={styles.row}>
                         <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                            <Text style={styles.label}>Height (cm)</Text>
+                            <Text style={styles.label}>City (Optional)</Text>
+                            <TextInput style={styles.input} placeholder="e.g. London" value={city} onChangeText={setCity} />
+                        </View>
+                        <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
+                            <Text style={styles.label}>Country (Optional)</Text>
+                            <TextInput style={styles.input} placeholder="e.g. UK" value={country} onChangeText={setCountry} />
+                        </View>
+                    </View>
+
+                    <View style={styles.row}>
+                        <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
+                            <Text style={styles.label}>Height (cm) (Optional)</Text>
                             <TextInput style={styles.input} placeholder="cm" value={height} onChangeText={setHeight} keyboardType="numeric" />
                         </View>
                         <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
-                            <Text style={styles.label}>Weight (kg)</Text>
+                            <Text style={styles.label}>Weight (kg) (Optional)</Text>
                             <TextInput style={styles.input} placeholder="kg" value={weight} onChangeText={setWeight} keyboardType="numeric" />
                         </View>
                     </View>
@@ -199,16 +231,27 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {
         flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0',
-        borderRadius: 8, paddingHorizontal: 12, height: 48
+        borderRadius: 12, paddingHorizontal: 16, height: 52, backgroundColor: '#fff'
     },
 
-    genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+    genderRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
     genderButton: {
-        paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0'
+        flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0',
+        justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff'
     },
-    genderButtonSelected: { backgroundColor: '#E0E7FF', borderColor: '#6366F1' },
-    genderText: { fontSize: 12, color: '#64748B' },
-    genderTextSelected: { color: '#6366F1', fontWeight: '600' },
+    genderButtonSelected: { backgroundColor: '#3B82F6', borderColor: '#3B82F6', shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
+    genderText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
+    genderTextSelected: { color: '#fff', fontWeight: '700' },
+
+    bloodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+    bloodButton: {
+        flex: 1, minWidth: '22%', height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0',
+        justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff'
+    },
+    bloodButtonSelected: { backgroundColor: '#3B82F6', borderColor: '#3B82F6', shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
+    bloodText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
+    bloodTextSelected: { color: '#fff', fontWeight: '700' },
+
 
     nextButton: {
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',

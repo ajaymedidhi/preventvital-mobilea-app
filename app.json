@@ -2,6 +2,7 @@
   "expo": {
     "name": "PreventVital",
     "slug": "PreventVital",
+    "owner": "ajay-dev9",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/premium-icon.png",
@@ -34,7 +35,11 @@
         "foregroundImage": "./assets/images/premium-icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "navigationBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#FFFFFF"
+      }
     },
     "web": {
       "output": "static",
@@ -63,7 +68,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3c843647-d8cb-4428-94c3-3dff7ae15523"
+        "projectId": "18d8ec02-3133-4a8f-8e8d-d139b00b55d6"
       }
     }
   }

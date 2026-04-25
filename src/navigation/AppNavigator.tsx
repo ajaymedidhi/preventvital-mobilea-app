@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../auth/AuthContext';
 import { useConsent } from '../health/ConsentContext';
+import PremiumLoadingScreen from '../components/PremiumLoadingScreen';
 
 import ConsentScreen from '../screens/health/ConsentScreen';
 
@@ -114,11 +115,7 @@ export default function AppNavigator() {
     console.log("AppNavigator: Rendering. userToken:", userToken ? "EXISTS" : "NULL", "hasConsented:", hasConsented, "isAuthLoading:", isAuthLoading, "isLoadingConsent:", isLoadingConsent);
 
     if (isAuthLoading || isLoadingConsent) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Loading...</Text>
-            </View>
-        );
+        return <PremiumLoadingScreen />;
     }
 
     return (

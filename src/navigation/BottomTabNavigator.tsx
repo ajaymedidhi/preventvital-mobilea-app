@@ -24,8 +24,8 @@ const BottomTabNavigator = () => {
                 screenOptions={{
                     headerShown: false,
                     tabBarStyle: [styles.tabBar, { 
-                        height: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom,
-                        paddingBottom: insets.bottom || 5
+                        height: (Platform.OS === 'ios' ? 88 : 70) + (insets.bottom > 0 ? insets.bottom : 5),
+                        paddingBottom: (insets.bottom > 0 ? insets.bottom : 10)
                     }],
                     tabBarActiveTintColor: '#3B82F6',
                     tabBarInactiveTintColor: '#94A3B8',

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    Dimensions, StatusBar
+    Dimensions, StatusBar, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,32 +91,34 @@ const CartScreen = () => {
 
             {/* Summary & Checkout */}
             <View style={styles.footer}>
-                <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Subtotal</Text>
-                    <Text style={styles.summaryValue}>₹{totalAmount}</Text>
-                </View>
-                <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Shipping</Text>
-                    <Text style={[styles.summaryValue, { color: '#059669' }]}>FREE</Text>
-                </View>
-                <View style={[styles.summaryRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Total</Text>
-                    <Text style={styles.totalValue}>₹{totalAmount}</Text>
-                </View>
+                <SafeAreaView edges={['bottom']} style={styles.safeFooter}>
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Subtotal</Text>
+                        <Text style={styles.summaryValue}>₹{totalAmount}</Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Shipping</Text>
+                        <Text style={[styles.summaryValue, { color: '#059669' }]}>FREE</Text>
+                    </View>
+                    <View style={[styles.summaryRow, styles.totalRow]}>
+                        <Text style={styles.totalLabel}>Total</Text>
+                        <Text style={styles.totalValue}>₹{totalAmount}</Text>
+                    </View>
 
-                <TouchableOpacity 
-                    style={styles.checkoutBtn}
-                    onPress={handleCheckout}
-                >
-                    <LinearGradient
-                        colors={['#3B82F6', '#2563EB']}
-                        style={styles.btnGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                    <TouchableOpacity 
+                        style={styles.checkoutBtn}
+                        onPress={handleCheckout}
                     >
-                        <Text style={styles.btnText}>Proceed to Checkout</Text>
-                    </LinearGradient>
-                </TouchableOpacity>
+                        <LinearGradient
+                            colors={['#3B82F6', '#2563EB']}
+                            style={styles.btnGradient}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Text style={styles.btnText}>Proceed to Checkout</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </SafeAreaView>
             </View>
         </View>
     );
@@ -172,6 +174,9 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 10,
+    },
+    safeFooter: {
+        paddingBottom: Platform.OS === 'android' ? 10 : 0
     },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
     summaryLabel: { fontSize: 14, color: '#64748B' },

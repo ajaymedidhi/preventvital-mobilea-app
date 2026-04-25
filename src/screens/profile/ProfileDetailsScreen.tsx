@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../auth/AuthContext';
 import client from '../../api/client';
 
@@ -23,8 +24,8 @@ const ProfileDetailsScreen = () => {
     const { user, subscription, currentPlan, setAuthToken, userToken } = useAuth();
 
     // Mock user details populated from backend/state
-    const [firstName, setFirstName] = useState(user?.profile?.firstName || '');
-    const [lastName, setLastName] = useState(user?.profile?.lastName || '');
+    const [firstName, setFirstName] = useState(user?.profile?.firstName || user?.name?.split(' ')[0] || '');
+    const [lastName, setLastName] = useState(user?.profile?.lastName || user?.name?.split(' ').slice(1).join(' ') || '');
     const [email, setEmail] = useState(user?.email || '');
     const [phone, setPhone] = useState(user?.profile?.phoneNumber || '');
 
@@ -37,36 +38,61 @@ const ProfileDetailsScreen = () => {
     const [dob, setDob] = useState(initialDob);
 
     const [gender, setGender] = useState(user?.profile?.gender || '');
+    const [bloodGroup, setBloodGroup] = useState(user?.profile?.bloodGroup || '');
+    const [city, setCity] = useState(user?.profile?.city || '');
+    const [country, setCountry] = useState(user?.profile?.country || '');
     const [height, setHeight] = useState(user?.profile?.height?.toString() || '');
     const [weight, setWeight] = useState(user?.profile?.weight?.toString() || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [dateObj, setDateObj] = useState(user?.profile?.dateOfBirth ? new Date(user.profile.dateOfBirth) : new Date(2000, 0, 1));
+
+    const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    const GENDERS = ['Male', 'Female', 'Other'];
+
+    const onChangeDate = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(Platform.OS === 'ios');
+        if (selectedDate) {
+            setDateObj(selectedDate);
+            const day = selectedDate.getDate().toString().padStart(2, '0');
+            const month = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+            const year = selectedDate.getFullYear();
+            setDob(`${day}/${month}/${year}`);
+        }
+    };
 
     const handleSave = async () => {
+        if (!firstName || !lastName) {
+            Alert.alert("Required Fields", "Please enter both your first and last name.");
+            return;
+        }
         setIsSaving(true);
         try {
             // Reformat DOB back to ISO if provided, else undefined
-            let dobValue = undefined;
+            // Construct profile object and remove any empty string fields to avoid backend enum validation errors
+            const profileData: any = {
+                firstName: firstName.trim(),
+                lastName: lastName.trim(),
+                phoneNumber: phone.trim() || undefined,
+                gender: gender ? gender.toLowerCase() : undefined,
+                bloodGroup: bloodGroup || undefined,
+                city: city.trim() || undefined,
+                country: country.trim() || undefined,
+                height: height ? parseFloat(height) : undefined,
+                weight: weight ? parseFloat(weight) : undefined
+            };
+
+            // Only add date if valid
             if (dob) {
-                const parts = dob.split('/');
-                if (parts.length === 3) {
-                    dobValue = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                const date = new Date(dob.split('/').reverse().join('-'));
+                if (!isNaN(date.getTime())) {
+                    profileData.dateOfBirth = date;
                 }
             }
 
-            const profileData = {
-                profile: {
-                    ...user?.profile, // Keep existing fields
-                    firstName,
-                    lastName,
-                    phoneNumber: phone,
-                    gender,
-                    height: height ? Number(height) : undefined,
-                    weight: weight ? Number(weight) : undefined,
-                    ...(dobValue && { dateOfBirth: dobValue })
-                }
-            };
+            const updatedData = { profile: profileData };
 
-            const response = await client.patch('/api/users/updateMe', profileData);
+            const response = await client.patch('/api/users/updateMe', updatedData);
 
             // Assuming response contains updated user, update global context
             if (response.data?.data?.user && userToken) {
@@ -82,17 +108,21 @@ const ProfileDetailsScreen = () => {
         }
     };
 
-    const InputField = ({ label, value, onChangeText, keyboardType = 'default', editable = true }: any) => (
+    const InputField = ({ label, value, onChangeText, keyboardType = 'default', editable = true, icon }: any) => (
         <View style={styles.inputContainer}>
             <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={[styles.input, !editable && styles.inputDisabled]}
-                value={value}
-                onChangeText={onChangeText}
-                keyboardType={keyboardType}
-                editable={editable}
-                placeholder={`Enter ${label}`}
-            />
+            <View style={[styles.inputWrapperField, !editable && styles.inputDisabled]}>
+                {icon && <Ionicons name={icon} size={18} color="#94A3B8" style={{ marginRight: 10 }} />}
+                <TextInput
+                    style={styles.textInput}
+                    value={value}
+                    onChangeText={onChangeText}
+                    keyboardType={keyboardType}
+                    editable={editable}
+                    placeholder={`Enter ${label}`}
+                    placeholderTextColor="#94A3B8"
+                />
+            </View>
         </View>
     );
 
@@ -171,34 +201,106 @@ const ProfileDetailsScreen = () => {
                 })()}
 
                 <View style={styles.formCard}>
-
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                            <InputField label="First Name" value={firstName} onChangeText={setFirstName} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 8 }}>
-                            <InputField label="Last Name" value={lastName} onChangeText={setLastName} />
-                        </View>
-                    </View>
-
-                    <InputField label="Email Address" value={email} onChangeText={setEmail} keyboardType="email-address" editable={false} />
-                    <InputField label="Phone Number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-
-                    <View style={styles.row}>
-                        <View style={{ flex: 1, marginRight: 8 }}>
-                            <InputField label="Date of Birth" value={dob} onChangeText={setDob} />
-                        </View>
-                        <View style={{ flex: 1, marginLeft: 8 }}>
-                            <InputField label="Gender" value={gender} onChangeText={setGender} />
-                        </View>
+                    {/* Section: Identity */}
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="person-circle-outline" size={20} color="#8B5CF6" />
+                        <Text style={styles.sectionTitle}>Identity</Text>
                     </View>
 
                     <View style={styles.row}>
                         <View style={{ flex: 1, marginRight: 8 }}>
-                            <InputField label="Height (cm)" value={height} onChangeText={setHeight} keyboardType="numeric" />
+                            <InputField label="First Name" value={firstName} onChangeText={setFirstName} icon="person-outline" />
                         </View>
                         <View style={{ flex: 1, marginLeft: 8 }}>
-                            <InputField label="Weight (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" />
+                            <InputField label="Last Name" value={lastName} onChangeText={setLastName} icon="person-outline" />
+                        </View>
+                    </View>
+
+                    <InputField label="Email Address" value={email} onChangeText={setEmail} keyboardType="email-address" editable={false} icon="mail-outline" />
+                    <InputField label="Phone Number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" icon="call-outline" />
+
+                    <View style={styles.sectionDivider} />
+
+                    {/* Section: Body Metrics */}
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="fitness-outline" size={20} color="#8B5CF6" />
+                        <Text style={styles.sectionTitle}>Body Metrics</Text>
+                    </View>
+
+                    <View style={styles.row}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <Text style={styles.label}>Date of Birth</Text>
+                            <TouchableOpacity style={styles.inputWrapper} onPress={() => setShowDatePicker(true)}>
+                                <View style={[styles.inputWrapperField, { height: 52 }]}>
+                                    <Ionicons name="calendar-outline" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
+                                    <Text style={[styles.dateText, !dob && { color: '#94A3B8' }]}>
+                                        {dob || "DD/MM/YYYY"}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                            <Text style={styles.label}>Gender</Text>
+                            <View style={styles.chipRow}>
+                                {GENDERS.map(g => (
+                                    <TouchableOpacity 
+                                        key={g} 
+                                        style={[styles.chip, gender.toLowerCase() === g.toLowerCase() && styles.chipActive]} 
+                                        onPress={() => setGender(g.toLowerCase())}
+                                    >
+                                        <Text style={[styles.chipText, gender.toLowerCase() === g.toLowerCase() && styles.chipTextActive]}>{g}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+                    </View>
+
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={dateObj}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={onChangeDate}
+                            maximumDate={new Date()}
+                        />
+                    )}
+
+                    <Text style={styles.label}>Blood Group</Text>
+                    <View style={styles.chipRow}>
+                        {BLOOD_GROUPS.map(bg => (
+                            <TouchableOpacity 
+                                key={bg} 
+                                style={[styles.bloodChip, bloodGroup === bg && styles.bloodChipActive]} 
+                                onPress={() => setBloodGroup(bg)}
+                            >
+                                <Text style={[styles.chipText, bloodGroup === bg && styles.chipTextActive]}>{bg}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+
+                    <View style={styles.row}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <InputField label="Height (cm)" value={height} onChangeText={setHeight} keyboardType="numeric" icon="resize-outline" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                            <InputField label="Weight (kg)" value={weight} onChangeText={setWeight} keyboardType="numeric" icon="barbell-outline" />
+                        </View>
+                    </View>
+
+                    <View style={styles.sectionDivider} />
+
+                    {/* Section: Location */}
+                    <View style={styles.sectionHeader}>
+                        <Ionicons name="location-outline" size={20} color="#8B5CF6" />
+                        <Text style={styles.sectionTitle}>Location</Text>
+                    </View>
+
+                    <View style={styles.row}>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                            <InputField label="City" value={city} onChangeText={setCity} icon="business-outline" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                            <InputField label="Country" value={country} onChangeText={setCountry} icon="earth-outline" />
                         </View>
                     </View>
 
@@ -211,7 +313,6 @@ const ProfileDetailsScreen = () => {
                             <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
-
                 </View>
             </ScrollView>
         </View>
@@ -321,7 +422,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     inputContainer: {
-        marginBottom: 20,
+        marginBottom: 16,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        gap: 8,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1E293B',
+    },
+    sectionDivider: {
+        height: 1,
+        backgroundColor: '#F1F5F9',
+        marginVertical: 20,
     },
     label: {
         fontSize: 13,
@@ -329,19 +446,77 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         fontWeight: '500',
     },
-    input: {
+    inputWrapperField: {
+        flexDirection: 'row',
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: '#E2E8F0',
         borderRadius: 12,
         paddingHorizontal: 16,
         height: 52,
-        fontSize: 15,
-        color: '#1E293B',
         backgroundColor: '#fff',
     },
+    textInput: {
+        flex: 1,
+        fontSize: 15,
+        color: '#1E293B',
+        height: '100%',
+    },
     inputDisabled: {
-        backgroundColor: '#F1F5F9',
-        color: '#94A3B8',
+        backgroundColor: '#F8FAFC',
+        borderColor: '#F1F5F9',
+    },
+    inputWrapper: {
+        marginBottom: 0,
+    },
+    chipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+        marginBottom: 10,
+    },
+    chip: {
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#fff',
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    chipActive: {
+        backgroundColor: '#8B5CF6',
+        borderColor: '#8B5CF6',
+    },
+    bloodChip: {
+        paddingHorizontal: 8,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#fff',
+        width: '23%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 8,
+    },
+    bloodChipActive: {
+        backgroundColor: '#8B5CF6',
+        borderColor: '#8B5CF6',
+    },
+    chipText: {
+        fontSize: 12,
+        color: '#64748B',
+        fontWeight: 'bold',
+    },
+    chipTextActive: {
+        color: '#fff',
+    },
+    dateText: {
+        fontSize: 15,
+        color: '#1E293B',
     },
     saveButton: {
         height: 56,

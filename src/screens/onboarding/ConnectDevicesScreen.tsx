@@ -14,7 +14,7 @@ const ConnectDevicesScreen = () => {
     const { token, user, personalInfo, healthConditions, healthGoals } = route.params || {};
 
     // In a real app, we might save profile data here using an API call with the token
-    const { setAuthToken } = useAuth(); // We need to add this to AuthContext
+    const { setAuthToken, refreshUser } = useAuth();
 
     const handleComplete = async () => {
         try {
@@ -32,7 +32,13 @@ const ConnectDevicesScreen = () => {
                     healthGoals
                 });
 
+                // 2. Refresh local user data to ensure Profile screen shows latest info
+                if (refreshUser) {
+                    await refreshUser();
+                }
+
                 Alert.alert("Success", "Profile updated successfully!");
+                navigation.navigate('MainTabs'); // Navigate to home after success
             } else {
                 Alert.alert("Error", "Authentication token missing. Please try logging in.");
                 navigation.navigate('SignIn');

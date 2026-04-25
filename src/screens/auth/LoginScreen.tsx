@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { preWarmBackend } from '../../api/authApi';
 
 const { width, height } = Dimensions.get('window');
 
@@ -17,6 +18,11 @@ const LoginScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        // Pre-warm the backend while the user is typing their credentials
+        preWarmBackend();
+    }, []);
 
     console.log("LoginScreen: Rendering");
 
