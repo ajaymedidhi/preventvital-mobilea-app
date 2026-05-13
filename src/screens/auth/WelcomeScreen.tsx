@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -13,6 +14,7 @@ import Animated, {
     Extrapolation,
     withDelay,
     withSequence,
+    SharedValue,
 } from 'react-native-reanimated';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 
@@ -55,8 +57,40 @@ const ORBIT_ICONS = [
     },
 ];
 
+const WELCOME_SEEN_KEY = 'pv_welcome_seen';
+
+type OrbitIconProps = {
+    item: typeof ORBIT_ICONS[0];
+    index: number;
+    rotation: SharedValue<number>;
+};
+
+const OrbitIcon = ({ item, index, rotation }: OrbitIconProps) => {
+    const initialAngle = (index * 360) / ORBIT_ICONS.length;
+
+    const animatedIconStyle = useAnimatedStyle(() => {
+        const currentAngle = rotation.value + initialAngle;
+        const rad = (currentAngle * Math.PI) / 180;
+        const translateX = ORBIT_RADIUS * Math.cos(rad);
+        const translateY = ORBIT_RADIUS * Math.sin(rad);
+        const scale = interpolate(Math.sin(rad), [-1, 1], [0.8, 1.1], Extrapolation.CLAMP);
+        const zIndex = Math.sin(rad) > 0 ? 10 : 1;
+        const opacity = interpolate(Math.sin(rad), [-1, 1], [0.6, 1], Extrapolation.CLAMP);
+        return { transform: [{ translateX }, { translateY }, { scale }], zIndex, opacity };
+    });
+
+    return (
+        <Animated.View style={[styles.orbitIconContainer, animatedIconStyle]}>
+            <View style={styles.orbitIconCircle}>
+                <item.Component name={item.name as any} size={20} color={index % 2 === 0 ? "#8B5CF6" : "#3B82F6"} />
+            </View>
+        </Animated.View>
+    );
+};
+
 const WelcomeScreen = () => {
     const navigation = useNavigation<any>();
+    const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null);
 
     // Animation Values
     const rotation = useSharedValue(0);
@@ -65,32 +99,41 @@ const WelcomeScreen = () => {
     const textOpacity = useSharedValue(0);
     const textTranslateY = useSharedValue(20);
 
+    // Determine first vs returning visit
     useEffect(() => {
-        // Start Orbit Rotation loop
-        rotation.value = withRepeat(
-            withTiming(360, {
-                duration: 20000,
-                easing: Easing.linear,
-            }),
-            -1, // Infinite
-            false // Do not reverse
-        );
-
-        // Start Floating effect (breathing)
-        floating.value = withRepeat(
-            withSequence(
-                withTiming(-10, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
-                withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.quad) })
-            ),
-            -1,
-            true // Reverse
-        );
-
-        // Entrance Animations
-        logoScale.value = withTiming(1, { duration: 1000, easing: Easing.out(Easing.back(1.5)) });
-        textOpacity.value = withDelay(500, withTiming(1, { duration: 800 }));
-        textTranslateY.value = withDelay(500, withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) }));
+        AsyncStorage.getItem(WELCOME_SEEN_KEY).then(seen => {
+            setIsFirstVisit(!seen);
+            if (!seen) AsyncStorage.setItem(WELCOME_SEEN_KEY, '1');
+        });
     }, []);
+
+    // Run animations once we know the visit type
+    useEffect(() => {
+        if (isFirstVisit === null) return;
+
+        if (isFirstVisit) {
+            // First visit — full cinematic experience
+            rotation.value = withRepeat(
+                withTiming(360, { duration: 20000, easing: Easing.linear }),
+                -1, false
+            );
+            floating.value = withRepeat(
+                withSequence(
+                    withTiming(-10, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
+                    withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.quad) })
+                ),
+                -1, true
+            );
+            logoScale.value = withTiming(1, { duration: 1000, easing: Easing.out(Easing.back(1.5)) });
+            textOpacity.value = withDelay(500, withTiming(1, { duration: 800 }));
+            textTranslateY.value = withDelay(500, withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) }));
+        } else {
+            // Returning user — snap in fast, skip orbit
+            logoScale.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) });
+            textOpacity.value = withTiming(1, { duration: 350 });
+            textTranslateY.value = withTiming(0, { duration: 350 });
+        }
+    }, [isFirstVisit]);
 
     // Animated Styles
     const logoAnimatedStyle = useAnimatedStyle(() => {
@@ -131,59 +174,10 @@ const WelcomeScreen = () => {
                     <View style={styles.orbitPath} />
                     <View style={[styles.orbitPath, { width: ORBIT_RADIUS * 1.5, height: ORBIT_RADIUS * 1.5, opacity: 0.1, borderColor: '#a78bfa' }]} />
 
-                    {/* Orbiting Icons */}
-                    {ORBIT_ICONS.map((item, index) => {
-                        const angleStep = 360 / ORBIT_ICONS.length;
-                        const initialAngle = index * angleStep;
-
-                        const animatedIconStyle = useAnimatedStyle(() => {
-                            // Calculate current angle in degrees
-                            const currentAngle = rotation.value + initialAngle;
-                            const rad = (currentAngle * Math.PI) / 180;
-
-                            // Position
-                            const translateX = ORBIT_RADIUS * Math.cos(rad);
-                            const translateY = ORBIT_RADIUS * Math.sin(rad);
-
-                            // Counter-rotation to keep icon upright
-                            // We rotate the container by 'currentAngle', so we rotate the icon by '-currentAngle' to stabilize it
-                            // However, we are positioning with X/Y translate, so no container rotation needed actually.
-                            // But if we want to add 3D depth scale:
-                            const scale = interpolate(
-                                Math.sin(rad),
-                                [-1, 1],
-                                [0.8, 1.1], // Items at bottom (front) larger, top (back) smaller
-                                Extrapolation.CLAMP
-                            );
-
-                            const zIndex = Math.sin(rad) > 0 ? 10 : 1; // Front items on top
-                            const opacity = interpolate(
-                                Math.sin(rad),
-                                [-1, 1],
-                                [0.6, 1],
-                                Extrapolation.CLAMP
-                            );
-
-                            return {
-                                transform: [
-                                    { translateX },
-                                    { translateY },
-                                    { scale }
-                                ],
-                                zIndex,
-                                opacity
-                            };
-                        });
-
-                        return (
-                            <Animated.View key={index} style={[styles.orbitIconContainer, animatedIconStyle]}>
-                                <View style={styles.orbitIconCircle}>
-                                    {/* Using clones for simplicity in reanimated loop */}
-                                    <item.Component name={item.name as any} size={20} color={index % 2 === 0 ? "#8B5CF6" : "#3B82F6"} />
-                                </View>
-                            </Animated.View>
-                        );
-                    })}
+                    {/* Orbiting Icons — first-visit only */}
+                    {isFirstVisit && ORBIT_ICONS.map((item, index) => (
+                        <OrbitIcon key={index} item={item} index={index} rotation={rotation} />
+                    ))}
 
                     {/* Central Logo */}
                     <Animated.View style={[styles.logoWrapper, logoAnimatedStyle]}>

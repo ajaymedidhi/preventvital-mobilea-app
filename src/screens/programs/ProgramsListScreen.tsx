@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import client from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
+import { Gradients, Colors } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -130,14 +131,14 @@ const ProgramsListScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#6366F1" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.gradientStart} />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 bounces={true}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
             >
                 {/* ── Header ──────────────────────────────────────── */}
-                <LinearGradient colors={['#6366F1', '#8B5CF6', '#F5F3FF']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
+                <LinearGradient colors={Gradients.brandFade} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
                     <SafeAreaView edges={['top']}>
                         <View style={styles.headerContent}>
                             <Text style={styles.headerTitle}>Wellness Programs</Text>
@@ -245,11 +246,21 @@ const ProgramsListScreen = () => {
                     </View>
 
                     {loading ? (
-                        <ActivityIndicator size="large" color="#6366F1" style={{ marginVertical: 40 }} />
+                        <ActivityIndicator size="large" color={Colors.gradientStart} style={{ marginVertical: 40 }} />
                     ) : filteredPrograms.length === 0 ? (
                         <View style={styles.emptyState}>
                             <Text style={styles.emptyEmoji}>📭</Text>
-                            <Text style={styles.emptyText}>No programs found</Text>
+                            <Text style={styles.emptyText}>
+                                {searchQuery ? 'No programs match your search' : 'No programs available'}
+                            </Text>
+                            <Text style={styles.emptySub}>
+                                {searchQuery ? 'Try a different keyword or clear the search' : 'Check back soon — more programs are on the way'}
+                            </Text>
+                            {searchQuery ? (
+                                <TouchableOpacity style={styles.emptyBtn} onPress={() => setSearchQuery('')}>
+                                    <Text style={styles.emptyBtnText}>Clear Search</Text>
+                                </TouchableOpacity>
+                            ) : null}
                         </View>
                     ) : (
                         <View style={{ paddingHorizontal: 20 }}>
@@ -368,7 +379,7 @@ const styles = StyleSheet.create({
     filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', marginRight: 10 },
     filterChipActive: { backgroundColor: '#FFF' },
     filterChipText: { fontSize: 12, fontWeight: '600', color: '#E0E7FF' },
-    filterChipTextActive: { color: '#6366F1' },
+    filterChipTextActive: { color: Colors.gradientStart },
 
     // ── Section ──
     section: { marginTop: 20 },
@@ -419,9 +430,12 @@ const styles = StyleSheet.create({
     enrollBtnText: { fontSize: 11, fontWeight: '700', color: '#7C3AED' },
 
     // ── Empty ──
-    emptyState: { alignItems: 'center', paddingVertical: 40 },
-    emptyEmoji: { fontSize: 40, marginBottom: 8 },
-    emptyText: { fontSize: 14, color: '#94A3B8', fontWeight: '500' },
+    emptyState: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
+    emptyEmoji: { fontSize: 48, marginBottom: 12 },
+    emptyText: { fontSize: 16, fontWeight: '800', color: '#1E293B', textAlign: 'center' },
+    emptySub: { fontSize: 13, color: '#94A3B8', marginTop: 6, textAlign: 'center', lineHeight: 19 },
+    emptyBtn: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 12, backgroundColor: Colors.gradientStart },
+    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });
 
 export default ProgramsListScreen;

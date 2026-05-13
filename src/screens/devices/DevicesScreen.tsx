@@ -10,12 +10,15 @@ import client from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { syncVitals } from '../../api/vitalsSync';
 import { initializeAppleHealth } from '../../api/appleHealthService';
+import { Gradients, Colors } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
 const DevicesScreen = () => {
     const { user } = useAuth();
     const navigation = useNavigation<any>();
+
+    const [showComingSoon, setShowComingSoon] = useState(false);
 
     // Connection states
     const [googleFitConnected, setGoogleFitConnected] = useState(false);
@@ -165,7 +168,7 @@ const DevicesScreen = () => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
             >
                 {/* ── Header ──────────────────────────────────────── */}
                 <View style={styles.header}>
@@ -173,8 +176,8 @@ const DevicesScreen = () => {
                         <Text style={styles.headerTitle}>Connected Devices</Text>
                         <Text style={styles.headerSub}>Sync health data from your wearables</Text>
                     </View>
-                    <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
-                        <Ionicons name="refresh" size={20} color="#6366F1" />
+                    <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh} accessibilityLabel="Refresh devices" accessibilityRole="button">
+                        <Ionicons name="refresh" size={20} color={Colors.gradientStart} />
                     </TouchableOpacity>
                 </View>
 
@@ -183,6 +186,8 @@ const DevicesScreen = () => {
                     style={styles.liveAccessCard}
                     onPress={() => navigation.navigate('WearableDashboard')}
                     activeOpacity={0.8}
+                    accessibilityLabel="Live Monitoring — view real-time telemetry"
+                    accessibilityRole="button"
                 >
                     <View style={styles.liveAccessIconBox}>
                         <Ionicons name="pulse" size={24} color="#EF4444" />
@@ -197,7 +202,7 @@ const DevicesScreen = () => {
 
                 {/* ── Status Hero ──────────────────────────────────── */}
                 <LinearGradient
-                    colors={anyConnected ? ['#6366F1', '#8B5CF6'] : ['#64748B', '#94A3B8']}
+                    colors={anyConnected ? Gradients.brand : ['#64748B', '#94A3B8']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.heroCard}
@@ -223,12 +228,12 @@ const DevicesScreen = () => {
                         </View>
                     </View>
                     {anyConnected && (
-                        <TouchableOpacity style={styles.syncBtn} onPress={syncNow} disabled={syncing}>
+                        <TouchableOpacity style={styles.syncBtn} onPress={syncNow} disabled={syncing} accessibilityLabel="Sync health data now" accessibilityRole="button">
                             {syncing ? (
-                                <ActivityIndicator size="small" color="#6366F1" />
+                                <ActivityIndicator size="small" color={Colors.gradientStart} />
                             ) : (
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                    <Ionicons name="sync" size={16} color="#6366F1" />
+                                    <Ionicons name="sync" size={16} color={Colors.gradientStart} />
                                     <Text style={styles.syncBtnText}>Sync Now</Text>
                                 </View>
                             )}
@@ -258,7 +263,7 @@ const DevicesScreen = () => {
                             </TouchableOpacity>
                         ) : (
                             <TouchableOpacity style={styles.connectBtn} onPress={connectGoogleFit}>
-                                <LinearGradient colors={['#6366F1', '#8B5CF6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.connectBtnInner}>
+                                <LinearGradient colors={Gradients.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.connectBtnInner}>
                                     <Ionicons name="link" size={14} color="#FFF" />
                                     <Text style={styles.connectBtnText}>Connect</Text>
                                 </LinearGradient>
@@ -294,7 +299,7 @@ const DevicesScreen = () => {
                             </Text>
                         </View>
                         <Switch
-                            trackColor={{ false: "#E2E8F0", true: "#6366F1" }}
+                            trackColor={{ false: "#E2E8F0", true: Colors.gradientStart }}
                             thumbColor="#FFF"
                             ios_backgroundColor="#E2E8F0"
                             value={appleHealthConnected}
@@ -425,31 +430,44 @@ const DevicesScreen = () => {
                 )}
 
                 {/* ── Other Integrations ──────────────────────────── */}
-                <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Other Integrations</Text>
+                <TouchableOpacity
+                    style={styles.comingSoonToggle}
+                    onPress={() => setShowComingSoon(v => !v)}
+                    activeOpacity={0.8}
+                    accessibilityLabel={showComingSoon ? 'Hide upcoming integrations' : 'See upcoming integrations'}
+                    accessibilityRole="button"
+                >
+                    <Text style={styles.comingSoonToggleText}>
+                        {showComingSoon ? 'Hide upcoming integrations' : 'See upcoming integrations (4)'}
+                    </Text>
+                    <Ionicons
+                        name={showComingSoon ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color={Colors.gradientStart}
+                    />
+                </TouchableOpacity>
 
-                {
-                    [
-                        { name: 'Fitbit', emoji: '📟', desc: 'Charge, Sense, Versa' },
-                        { name: 'Garmin Connect', emoji: '⛰️', desc: 'Forerunner, Venu, Fenix' },
-                        { name: 'boAt Watch', emoji: '🛥️', desc: 'Via Google Fit / Apple Health' },
-                        { name: 'Oura Ring', emoji: '💍', desc: 'Gen 3, Gen 4' },
-                    ].map((item, i) => (
-                        <View key={i} style={styles.deviceCard}>
-                            <View style={styles.deviceRow}>
-                                <View style={[styles.deviceIconBox, { backgroundColor: '#F8FAFC' }]}>
-                                    <Text style={{ fontSize: 24 }}>{item.emoji}</Text>
-                                </View>
-                                <View style={styles.deviceInfo}>
-                                    <Text style={styles.deviceName}>{item.name}</Text>
-                                    <Text style={styles.deviceMeta}>{item.desc}</Text>
-                                </View>
-                                <View style={styles.comingSoonBadge}>
-                                    <Text style={styles.comingSoonText}>Coming Soon</Text>
-                                </View>
+                {showComingSoon && [
+                    { name: 'Fitbit', emoji: '📟', desc: 'Charge, Sense, Versa' },
+                    { name: 'Garmin Connect', emoji: '⛰️', desc: 'Forerunner, Venu, Fenix' },
+                    { name: 'boAt Watch', emoji: '🛥️', desc: 'Via Google Fit / Apple Health' },
+                    { name: 'Oura Ring', emoji: '💍', desc: 'Gen 3, Gen 4' },
+                ].map((item, i) => (
+                    <View key={i} style={styles.deviceCard}>
+                        <View style={styles.deviceRow}>
+                            <View style={[styles.deviceIconBox, { backgroundColor: '#F8FAFC' }]}>
+                                <Text style={{ fontSize: 24 }}>{item.emoji}</Text>
+                            </View>
+                            <View style={styles.deviceInfo}>
+                                <Text style={styles.deviceName}>{item.name}</Text>
+                                <Text style={styles.deviceMeta}>{item.desc}</Text>
+                            </View>
+                            <View style={styles.comingSoonBadge}>
+                                <Text style={styles.comingSoonText}>Coming Soon</Text>
                             </View>
                         </View>
-                    ))
-                }
+                    </View>
+                ))}
 
                 {/* ── Info Card ──────────────────────────────────── */}
                 <View style={styles.infoCard}>
@@ -537,7 +555,9 @@ const styles = StyleSheet.create({
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16 },
     headerTitle: { fontSize: 24, fontWeight: '800', color: '#0F172A' },
     headerSub: { fontSize: 12, color: '#64748B', fontWeight: '500', marginTop: 2 },
-    refreshBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' },
+    refreshBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#E0F2F9', justifyContent: 'center', alignItems: 'center' },
+    comingSoonToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginBottom: 4 },
+    comingSoonToggleText: { fontSize: 13, fontWeight: '700', color: Colors.gradientStart },
 
     // Hero
     liveAccessCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#FEE2E2', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },

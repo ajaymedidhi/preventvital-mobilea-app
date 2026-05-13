@@ -52,7 +52,7 @@ const LoginScreen = () => {
                 style={styles.gradientHeader}
             >
                 <SafeAreaView style={styles.headerContent}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Go back" accessibilityRole="button">
                         <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
                 </SafeAreaView>
@@ -112,7 +112,7 @@ const LoginScreen = () => {
                                     onFocus={() => setFocusedInput('password')}
                                     onBlur={() => setFocusedInput(null)}
                                 />
-                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} accessibilityLabel={showPassword ? "Hide password" : "Show password"} accessibilityRole="button">
                                     <Ionicons
                                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}

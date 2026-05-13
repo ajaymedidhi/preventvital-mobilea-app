@@ -11,6 +11,7 @@ import { Image } from 'expo-image';
 import { getProducts } from '../../api/shopApi';
 import { useShop, Product } from '../../context/ShopContext';
 import { getImageUrl } from '../../utils/imageUtils';
+import { Gradients, Colors } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - 50) / 2;
@@ -81,19 +82,21 @@ const ShopScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
+            <StatusBar barStyle="light-content" backgroundColor={Colors.gradientStart} />
             
             {/* Header */}
-            <LinearGradient colors={['#3B82F6', '#2563EB']} style={styles.header}>
+            <LinearGradient colors={Gradients.brand} style={styles.header}>
                 <SafeAreaView edges={['top']}>
                     <View style={styles.headerContent}>
                         <View>
                             <Text style={styles.headerTitle}>Shop</Text>
                             <Text style={styles.headerSub}>Health & Wellness Supplies</Text>
                         </View>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.cartIconContainer}
                             onPress={() => navigation.navigate('Cart')}
+                            accessibilityLabel={cart.length > 0 ? `Cart, ${cart.length} items` : 'Cart'}
+                            accessibilityRole="button"
                         >
                             <Ionicons name="cart-outline" size={28} color="#FFF" />
                             {cart.length > 0 && (
@@ -135,11 +138,27 @@ const ShopScreen = () => {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#3B82F6" />
+                    <ActivityIndicator size="large" color={Colors.gradientStart} />
                 </View>
             ) : filteredProducts.length === 0 ? (
-                <View style={styles.center}>
-                    <Text style={styles.emptyText}>No products found</Text>
+                <View style={styles.emptyState}>
+                    <Ionicons name="storefront-outline" size={72} color="#CBD5E1" />
+                    <Text style={styles.emptyTitle}>
+                        {searchQuery || selectedCategory !== 'All' ? 'No matches found' : 'No products yet'}
+                    </Text>
+                    <Text style={styles.emptySub}>
+                        {searchQuery || selectedCategory !== 'All'
+                            ? 'Try a different search or category'
+                            : 'Check back soon for new arrivals'}
+                    </Text>
+                    {(searchQuery || selectedCategory !== 'All') && (
+                        <TouchableOpacity
+                            style={styles.emptyBtn}
+                            onPress={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                        >
+                            <Text style={styles.emptyBtnText}>Clear Filters</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             ) : (
                 <FlatList
@@ -150,7 +169,7 @@ const ShopScreen = () => {
                     contentContainerStyle={styles.productList}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />
                     }
                 />
             )}
@@ -208,7 +227,7 @@ const styles = StyleSheet.create({
     },
     filterChipActive: { backgroundColor: '#FFF' },
     filterChipText: { fontSize: 12, fontWeight: '600', color: '#BFDBFE' },
-    filterChipTextActive: { color: '#2563EB' },
+    filterChipTextActive: { color: Colors.gradientStart },
     
     productList: { padding: 15 },
     productCard: {
@@ -240,11 +259,16 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: '#3B82F6',
+        backgroundColor: Colors.gradientStart,
         justifyContent: 'center',
         alignItems: 'center'
     },
-    emptyText: { fontSize: 16, color: '#94A3B8', fontWeight: '500' }
+    emptyText: { fontSize: 16, color: '#94A3B8', fontWeight: '500' },
+    emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, paddingVertical: 60 },
+    emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginTop: 20, textAlign: 'center' },
+    emptySub: { fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center', lineHeight: 20 },
+    emptyBtn: { marginTop: 28, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, backgroundColor: Colors.gradientStart },
+    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 }
 });
 
 export default ShopScreen;

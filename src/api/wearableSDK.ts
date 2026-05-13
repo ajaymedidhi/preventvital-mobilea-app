@@ -40,19 +40,28 @@ export class WearableSDK {
         });
     }
 
-    // 2. Cloud Integrations (Fitbit)
-    static async connectFitbit(code: string) {
+    // 3. Google Fit (Server-to-Server via OAuth)
+    static async getGoogleFitAuthUrl() {
         try {
-            // Exchanges code for token on backend which then fetches data
-            const response = await client.post('/api/wearables/oauth/fitbit/token', { code });
-            return response.data;
+            const response = await client.get('/api/wearables/oauth/googlefit/login');
+            return response.data.url;
         } catch (error) {
-            console.error('Fitbit linking failed', error);
+            console.error('Failed to get Google Fit login URL', error);
             throw error;
         }
     }
 
-    // 3. Backend Sync
+    static async syncGoogleFit() {
+        try {
+            const response = await client.post('/api/wearables/sync/googlefit');
+            return response.data;
+        } catch (error) {
+            console.error('Google Fit sync failed', error);
+            throw error;
+        }
+    }
+
+    // 4. Backend Sync
     static async syncWithBackend(vitals: any[]) {
         try {
             const response = await client.post('/api/wearables/ingest', { vitals });

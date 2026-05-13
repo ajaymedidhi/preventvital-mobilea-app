@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../auth/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { fetchMySubscription } from '../../api/subscriptionApi';
+import { Gradients } from '../../theme/colors';
 
 const UserProfileScreen = () => {
     const navigation = useNavigation();
@@ -50,7 +51,7 @@ const UserProfileScreen = () => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {/* Header Gradient Area */}
                 <LinearGradient
-                    colors={['#8A88E1', '#8551C7']} // Match gradient from mockup
+                    colors={Gradients.brand}
                     style={[styles.headerGradient, { paddingTop: insets.top + 20 }]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 0, y: 1 }}

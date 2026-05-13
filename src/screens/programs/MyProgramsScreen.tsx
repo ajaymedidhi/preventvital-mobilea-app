@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dim
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Gradients } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -53,7 +54,7 @@ const MyProgramsScreen = () => {
                                 onPress={() => navigation.navigate('ProgramDayView', { programId: '1' })}
                             >
                                 <LinearGradient
-                                    colors={['#6366f1', '#a855f7']}
+                                    colors={Gradients.brand}
                                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                                     style={styles.continueButtonBackground}
                                 >

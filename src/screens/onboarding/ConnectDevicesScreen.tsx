@@ -6,7 +6,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../auth/AuthContext';
 
+import * as WebBrowser from 'expo-web-browser';
 import { updateOnboarding } from '../../api/authApi';
+import { WearableSDK } from '../../api/wearableSDK';
 
 const ConnectDevicesScreen = () => {
     const navigation = useNavigation<any>();
@@ -15,6 +17,31 @@ const ConnectDevicesScreen = () => {
 
     // In a real app, we might save profile data here using an API call with the token
     const { setAuthToken, refreshUser } = useAuth();
+
+    const handleGoogleFitConnect = async () => {
+        try {
+            const authUrl = await WearableSDK.getGoogleFitAuthUrl();
+            if (authUrl) {
+                // Open the auth URL in the system browser
+                await WebBrowser.openBrowserAsync(authUrl);
+                
+                // After returning from the browser, trigger an immediate sync
+                Alert.alert("Connecting", "Authorization complete. Syncing your vitals now...");
+                
+                try {
+                    const syncResult = await WearableSDK.syncGoogleFit();
+                    console.log("Sync Result:", syncResult);
+                    Alert.alert("Success", "Google Fit connected and data synced!");
+                } catch (syncError) {
+                    console.warn("Initial sync failed, but account is linked:", syncError);
+                    Alert.alert("Connected", "Google Fit is linked! Data will appear in your profile shortly.");
+                }
+            }
+        } catch (error: any) {
+            console.error("Google Fit Connect Error:", error);
+            Alert.alert("Error", "Could not initiate Google Fit connection. " + error.message);
+        }
+    };
 
     const handleComplete = async () => {
         try {
@@ -100,8 +127,14 @@ const ConnectDevicesScreen = () => {
 
                     <View style={{ height: 40 }} />
 
-                    <TouchableOpacity style={styles.primaryButton} onPress={() => Alert.alert("Connect", "Device scanning would start here...")}>
-                        <Text style={styles.primaryButtonText}>I have a wearable device</Text>
+                    <TouchableOpacity 
+                        style={[styles.primaryButton, { backgroundColor: '#fff', borderColor: '#4285F4' }]} 
+                        onPress={handleGoogleFitConnect}
+                    >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="logo-google" size={20} color="#4285F4" style={{ marginRight: 10 }} />
+                            <Text style={[styles.primaryButtonText, { color: '#4285F4' }]}>Connect Google Fit</Text>
+                        </View>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.secondaryButton} onPress={handleComplete}>

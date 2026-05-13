@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { useShop, CartItem } from '../../context/ShopContext';
 import { getImageUrl } from '../../utils/imageUtils';
+import { Gradients } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -25,7 +26,7 @@ const CartScreen = () => {
         return (
             <View style={styles.container}>
                 <SafeAreaView style={styles.header} edges={['top']}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityLabel="Go back" accessibilityRole="button">
                         <Ionicons name="chevron-back" size={24} color="#1E293B" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>My Cart</Text>
@@ -79,9 +80,11 @@ const CartScreen = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.removeBtn}
                             onPress={() => removeFromCart(item._id)}
+                            accessibilityLabel={`Remove ${item.name} from cart`}
+                            accessibilityRole="button"
                         >
                             <Ionicons name="trash-outline" size={20} color="#EF4444" />
                         </TouchableOpacity>
@@ -110,7 +113,7 @@ const CartScreen = () => {
                         onPress={handleCheckout}
                     >
                         <LinearGradient
-                            colors={['#3B82F6', '#2563EB']}
+                            colors={Gradients.brand}
                             style={styles.btnGradient}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}

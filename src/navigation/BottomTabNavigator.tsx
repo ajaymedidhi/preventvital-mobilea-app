@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screens
@@ -10,7 +10,6 @@ import ProgramsListScreen from '../screens/programs/ProgramsListScreen';
 import UserProfileScreen from '../screens/auth/UserProfileScreen';
 import DevicesScreen from '../screens/devices/DevicesScreen';
 import ShopScreen from '../screens/shop/ShopScreen';
-import ActivityScreen from '../screens/activity/ActivityScreen';
 import VIDAChatbot from '../components/VIDAChatbot';
 
 const Tab = createBottomTabNavigator();
@@ -27,7 +26,7 @@ const BottomTabNavigator = () => {
                         height: (Platform.OS === 'ios' ? 88 : 70) + (insets.bottom > 0 ? insets.bottom : 5),
                         paddingBottom: (insets.bottom > 0 ? insets.bottom : 10)
                     }],
-                    tabBarActiveTintColor: '#3B82F6',
+                    tabBarActiveTintColor: '#51A6CB',
                     tabBarInactiveTintColor: '#94A3B8',
                     tabBarShowLabel: true,
                     tabBarLabelStyle: {
@@ -42,7 +41,8 @@ const BottomTabNavigator = () => {
                     name="Home"
                     component={HealthDashboardScreen}
                     options={{
-                        tabBarIcon: ({ color, size }) => (
+                        tabBarAccessibilityLabel: 'Home',
+                        tabBarIcon: ({ color }) => (
                             <Ionicons name="home-outline" size={24} color={color} />
                         ),
                     }}
@@ -51,7 +51,8 @@ const BottomTabNavigator = () => {
                     name="Programs"
                     component={ProgramsListScreen}
                     options={{
-                        tabBarIcon: ({ color, size }) => (
+                        tabBarAccessibilityLabel: 'Wellness Programs',
+                        tabBarIcon: ({ color }) => (
                             <Ionicons name="documents-outline" size={24} color={color} />
                         ),
                     }}
@@ -60,7 +61,8 @@ const BottomTabNavigator = () => {
                     name="Shop"
                     component={ShopScreen}
                     options={{
-                        tabBarIcon: ({ color, size }) => (
+                        tabBarAccessibilityLabel: 'Shop',
+                        tabBarIcon: ({ color }) => (
                             <Ionicons name="cart-outline" size={24} color={color} />
                         ),
                     }}
@@ -69,17 +71,9 @@ const BottomTabNavigator = () => {
                     name="Devices"
                     component={DevicesScreen}
                     options={{
-                        tabBarIcon: ({ color, size }) => (
-                            <Ionicons name="watch-outline" size={24} color={color} />
-                        ),
-                    }}
-                />
-                <Tab.Screen
-                    name="Activity"
-                    component={ActivityScreen}
-                    options={{
-                        tabBarIcon: ({ color, size }) => (
-                            <Ionicons name="clipboard-outline" size={24} color={color} />
+                        tabBarAccessibilityLabel: 'Connected Devices',
+                        tabBarIcon: ({ color }) => (
+                            <Ionicons name="hardware-chip-outline" size={24} color={color} />
                         ),
                     }}
                 />
@@ -87,7 +81,8 @@ const BottomTabNavigator = () => {
                     name="Profile"
                     component={UserProfileScreen}
                     options={{
-                        tabBarIcon: ({ color, size }) => (
+                        tabBarAccessibilityLabel: 'My Profile',
+                        tabBarIcon: ({ color }) => (
                             <Ionicons name="person-outline" size={24} color={color} />
                         ),
                     }}

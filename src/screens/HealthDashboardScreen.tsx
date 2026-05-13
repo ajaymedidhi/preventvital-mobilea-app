@@ -10,6 +10,7 @@ import YoutubeIframe from 'react-native-youtube-iframe';
 import { getVitals } from '../api/vitalsSync';
 import { NormalizedHealthData } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -58,11 +59,7 @@ const HealthDashboardScreen = ({ route }: any) => {
     );
 
     if (loading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator size="large" color="#2563EB" />
-            </View>
-        );
+        return <DashboardSkeleton />;
     }
 
     const wellnessScore = user?.healthProfile?.cvitalScore || user?.profile?.healthScore || 0;
@@ -97,7 +94,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                     <View style={styles.headerGreetingCol}>
                         <Text style={styles.greeting}>{getGreeting()}</Text>
                         <Text style={styles.userName}>
-                            {user?.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : 'Patient'}
+                            {user?.profile?.firstName || 'Patient'}
                         </Text>
                     </View>
                     <View style={styles.headerActions}>
@@ -108,10 +105,10 @@ const HealthDashboardScreen = ({ route }: any) => {
                             <Ionicons name="fitness" size={18} color="#FFF" />
                             <Text style={styles.headerActionText}>Assess</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconButton}>
+                        <TouchableOpacity style={styles.iconButton} accessibilityLabel="Notifications" accessibilityRole="button">
                             <Ionicons name="notifications-outline" size={22} color="#FFF" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.avatarButton}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.avatarButton} accessibilityLabel="View profile" accessibilityRole="button">
                             {user?.profile?.firstName ? (
                                 <View style={styles.avatarFallback}>
                                     <Text style={styles.avatarText}>
@@ -233,7 +230,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                                 <View style={styles.videoPlayerContainer}>
                                     <View style={styles.videoPlayerHeader}>
                                         <Text style={styles.videoPlayerTitle}>Clinical Stream</Text>
-                                        <TouchableOpacity onPress={() => setPlayingVideoId(null)}>
+                                        <TouchableOpacity onPress={() => setPlayingVideoId(null)} accessibilityLabel="Close video" accessibilityRole="button">
                                             <Ionicons name="close" size={24} color="#64748B" />
                                         </TouchableOpacity>
                                     </View>
@@ -304,7 +301,7 @@ const styles = StyleSheet.create({
     // Header
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingHorizontal: 4 },
     headerGreetingCol: { flex: 1 },
-    greeting: { fontSize: 13, fontWeight: '600', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+    greeting: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
     userName: { fontSize: 24, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     headerActionButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },

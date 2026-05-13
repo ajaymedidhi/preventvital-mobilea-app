@@ -32,9 +32,11 @@ const SignUpScreen = () => {
         special: false,
     });
     const [allValid, setAllValid] = useState(false);
+    const [passwordTouched, setPasswordTouched] = useState(false);
 
     // Update validation on password change
     const validatePassword = (pass: string) => {
+        if (pass.length > 0) setPasswordTouched(true);
         const newState = {
             length: pass.length >= 8,
             uppercase: /[A-Z]/.test(pass),
@@ -90,7 +92,7 @@ const SignUpScreen = () => {
                 style={styles.gradientHeader}
             >
                 <SafeAreaView style={styles.headerContent}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Go back" accessibilityRole="button">
                         <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
                 </SafeAreaView>
@@ -174,7 +176,7 @@ const SignUpScreen = () => {
                                     onFocus={() => setFocusedInput('password')}
                                     onBlur={() => setFocusedInput(null)}
                                 />
-                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} accessibilityLabel={showPassword ? "Hide password" : "Show password"} accessibilityRole="button">
                                     <Ionicons
                                         name={showPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}
@@ -182,14 +184,16 @@ const SignUpScreen = () => {
                                     />
                                 </TouchableOpacity>
                             </View>
-                            {/* Password Requirements List */}
-                            <View style={styles.requirementsContainer}>
-                                <RequirementItem fulfilled={isPasswordValid.length} text="At least 8 characters" />
-                                <RequirementItem fulfilled={isPasswordValid.uppercase} text="One uppercase letter" />
-                                <RequirementItem fulfilled={isPasswordValid.lowercase} text="One lowercase letter" />
-                                <RequirementItem fulfilled={isPasswordValid.number} text="One number" />
-                                <RequirementItem fulfilled={isPasswordValid.special} text="One special character" />
-                            </View>
+                            {/* Password Requirements — only shown after first keystroke */}
+                            {passwordTouched && (
+                                <View style={styles.requirementsContainer}>
+                                    <RequirementItem fulfilled={isPasswordValid.length} text="At least 8 characters" />
+                                    <RequirementItem fulfilled={isPasswordValid.uppercase} text="One uppercase letter" />
+                                    <RequirementItem fulfilled={isPasswordValid.lowercase} text="One lowercase letter" />
+                                    <RequirementItem fulfilled={isPasswordValid.number} text="One number" />
+                                    <RequirementItem fulfilled={isPasswordValid.special} text="One special character" />
+                                </View>
+                            )}
                         </View>
 
                         <View style={styles.inputContainer}>
@@ -214,7 +218,7 @@ const SignUpScreen = () => {
                                     onFocus={() => setFocusedInput('confirmPassword')}
                                     onBlur={() => setFocusedInput(null)}
                                 />
-                                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} accessibilityLabel={showConfirmPassword ? "Hide confirm password" : "Show confirm password"} accessibilityRole="button">
                                     <Ionicons
                                         name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                                         size={20}
