@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -8,8 +8,52 @@ import { useAuth } from '../../auth/AuthContext';
 
 const WellnessScoreScreen = () => {
     const navigation = useNavigation<any>();
-    const { user, refreshUser, isLoading } = useAuth();
+    const { user, refreshUser, isLoading, currentPlan } = useAuth();
     const [refreshing, setRefreshing] = React.useState(false);
+    const [showInfo, setShowInfo] = useState(false);
+
+    const handleShare = async () => {
+        const date = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+        const nextSteps = score >= 80
+            ? ['Maintain your current exercise and diet routine', 'Re-assess every 3 months to track trends', 'Connect a wearable to monitor vitals daily']
+            : score >= 60
+            ? ['Aim for 150 min of moderate exercise per week', 'Monitor your blood pressure weekly', 'Reduce sodium intake and processed foods']
+            : score >= 40
+            ? ['Consult a healthcare professional about your risk', 'Start a cardiac wellness or breathing program', 'Reduce sedentary time — take breaks every hour']
+            : score > 0
+            ? ['Speak to a doctor — your risk is elevated', 'Start the Cardiac Rehabilitation program', 'Track vitals daily with a connected wearable']
+            : ['Complete the health assessment to get your score'];
+
+        const report = [
+            '━━━━━━━━━━━━━━━━━━━━━━━━',
+            'PREVENTVITAL HEALTH REPORT',
+            '━━━━━━━━━━━━━━━━━━━━━━━━',
+            `Generated: ${date}`,
+            '',
+            `CVITAL™ Score: ${score > 0 ? score : 'Not assessed'} — ${statusText}`,
+            '',
+            '── Cardiovascular Profile ──',
+            ascvdScore > 0 ? `• ASCVD Risk:     ${ascvdScore}%` : null,
+            bodyFat > 0    ? `• Body Fat:       ${bodyFat}%` : null,
+            vascularAge > 0 ? `• Vascular Age:  ${vascularAge} yrs` : null,
+            metabolicScore > 0 ? `• Metabolic Age: ${metabolicScore} yrs` : null,
+            '',
+            '── Score Bands ──',
+            '• 80–100  Excellent  (Low risk)',
+            '• 60–79   Good       (Moderate-low risk)',
+            '• 40–59   Fair       (Moderate risk)',
+            '•  1–39   At Risk    (High risk)',
+            '',
+            '── Recommended Next Steps ──',
+            ...nextSteps.map(s => `• ${s}`),
+            '',
+            'Powered by PreventVital',
+            'preventvital.com',
+            '━━━━━━━━━━━━━━━━━━━━━━━━',
+        ].filter(line => line !== null).join('\n');
+
+        await Share.share({ message: report, title: 'My PreventVital Health Report' });
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -95,10 +139,10 @@ const WellnessScoreScreen = () => {
                     <Text style={styles.scoreSub}>Out Of 100</Text>
                 </View>
 
-                {/* Labels positioned around the arc */}
-                <Text style={[styles.gaugeLabel, { top: 20, alignSelf: 'center' }]}>MEDIUM</Text>
-                <Text style={[styles.gaugeLabel, { bottom: 20, left: 30 }]}>LOW</Text>
-                <Text style={[styles.gaugeLabel, { bottom: 20, right: 30 }]}>HIGH</Text>
+                {/* Scale markers */}
+                <Text style={[styles.gaugeLabel, { top: 20, alignSelf: 'center' }]}>50</Text>
+                <Text style={[styles.gaugeLabel, { bottom: 20, left: 30 }]}>0</Text>
+                <Text style={[styles.gaugeLabel, { bottom: 20, right: 30 }]}>100</Text>
             </View>
         );
     };
@@ -111,9 +155,72 @@ const WellnessScoreScreen = () => {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Your Vital Score</Text>
                 <View style={{ width: 40, alignItems: 'center', justifyContent: 'center' }}>
-                    {refreshing && <ActivityIndicator size="small" color="#6366F1" />}
+                    {refreshing
+                        ? <ActivityIndicator size="small" color="#6366F1" />
+                        : <TouchableOpacity onPress={() => setShowInfo(true)} accessibilityLabel="What is my CVITAL score?" accessibilityRole="button">
+                            <Ionicons name="information-circle-outline" size={26} color="#6366F1" />
+                        </TouchableOpacity>
+                    }
                 </View>
             </View>
+
+            {/* CVITAL Info Modal */}
+            <Modal visible={showInfo} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowInfo(false)}>
+                <SafeAreaView style={styles.modalContainer}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Understanding CVITAL</Text>
+                        <TouchableOpacity onPress={() => setShowInfo(false)} accessibilityLabel="Close" accessibilityRole="button">
+                            <Ionicons name="close" size={24} color="#64748B" />
+                        </TouchableOpacity>
+                    </View>
+                    <ScrollView contentContainerStyle={styles.modalBody} showsVerticalScrollIndicator={false}>
+                        <Text style={styles.modalSectionLabel}>What is CVITAL?</Text>
+                        <Text style={styles.modalText}>
+                            CVITAL is a composite cardiovascular health score from 0–100. It combines your blood pressure, cholesterol, weight, lifestyle, family history, and biomarkers to estimate your overall heart health risk in a single number.
+                        </Text>
+
+                        <Text style={styles.modalSectionLabel}>Score bands</Text>
+                        {[
+                            { range: '80 – 100', label: 'Excellent', color: '#10B981', bg: '#ECFDF5', desc: 'Low cardiovascular risk. Keep up your current lifestyle.' },
+                            { range: '60 – 79', label: 'Good', color: '#3B82F6', bg: '#EFF6FF', desc: 'Moderate-low risk. Small improvements can push you to Excellent.' },
+                            { range: '40 – 59', label: 'Fair', color: '#F59E0B', bg: '#FFFBEB', desc: 'Moderate risk. Lifestyle changes are recommended.' },
+                            { range: '1 – 39', label: 'At Risk', color: '#EF4444', bg: '#FEF2F2', desc: 'High cardiovascular risk. Medical consultation is advised.' },
+                        ].map(b => (
+                            <View key={b.label} style={[styles.bandRow, { backgroundColor: b.bg }]}>
+                                <View style={[styles.bandDot, { backgroundColor: b.color }]} />
+                                <View style={{ flex: 1 }}>
+                                    <View style={styles.bandTitleRow}>
+                                        <Text style={[styles.bandLabel, { color: b.color }]}>{b.label}</Text>
+                                        <Text style={styles.bandRange}>{b.range}</Text>
+                                    </View>
+                                    <Text style={styles.bandDesc}>{b.desc}</Text>
+                                </View>
+                            </View>
+                        ))}
+
+                        <Text style={styles.modalSectionLabel}>
+                            {score === 0 ? 'Get started' : `Your score is ${score} — what to focus on`}
+                        </Text>
+                        {(score === 0
+                            ? ['Complete your health assessment (takes ~5 min)', 'Answer questions about your measurements and lifestyle', 'Get your full cardiovascular risk profile']
+                            : score >= 80
+                            ? ['Maintain your current exercise and diet routine', 'Re-assess every 3 months to track trends', 'Connect a wearable to monitor vitals daily']
+                            : score >= 60
+                            ? ['Aim for 150 min of moderate exercise per week', 'Monitor your blood pressure weekly', 'Reduce sodium intake and processed foods']
+                            : score >= 40
+                            ? ['Consult a healthcare professional about your risk', 'Start a cardiac wellness or breathing program', 'Reduce sedentary time — take breaks every hour']
+                            : ['Speak to a doctor — your risk is elevated', 'Start the Cardiac Rehabilitation program in the app', 'Track vitals daily with a connected wearable']
+                        ).map((tip, i) => (
+                            <View key={i} style={styles.tipRow}>
+                                <View style={[styles.tipNum, { backgroundColor: statusColor + '20' }]}>
+                                    <Text style={[styles.tipNumText, { color: statusColor }]}>{i + 1}</Text>
+                                </View>
+                                <Text style={styles.tipText}>{tip}</Text>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </SafeAreaView>
+            </Modal>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
@@ -129,22 +236,53 @@ const WellnessScoreScreen = () => {
                 </View>
 
                 <View style={styles.breakdownContainer}>
-                    <ScoreRow label="CVITAL Score" value={score} color={statusColor} maxValue={100} />
-                    <ScoreRow label="ASCVD Risk" value={ascvdScore} color={ascvdScore > 7.5 ? "#EF4444" : "#3B82F6"} maxValue={100} unit="%" />
-                    <ScoreRow label="Body Fat" value={bodyFat} color={bodyFat > 25 ? "#F59E0B" : "#10B981"} maxValue={60} unit="%" />
+                    {score > 0 && <ScoreRow label="CVITAL Score" value={score} color={statusColor} maxValue={100} />}
+                    {ascvdScore > 0 && <ScoreRow label="ASCVD Risk" value={ascvdScore} color={ascvdScore > 7.5 ? "#EF4444" : "#3B82F6"} maxValue={100} unit="%" />}
+                    {bodyFat > 0 && <ScoreRow label="Body Fat" value={bodyFat} color={bodyFat > 25 ? "#F59E0B" : "#10B981"} maxValue={60} unit="%" />}
                     {vascularAge > 0 && <ScoreRow label="Vascular Age" value={vascularAge} color="#8B5CF6" maxValue={100} unit=" yrs" />}
                     {metabolicScore > 0 && <ScoreRow label="Metabolic Age" value={metabolicScore} color="#8B5CF6" maxValue={100} unit=" yrs" />}
-                    <ScoreRow label="Respiratory" value={90} color="#2563EB" maxValue={100} />
-                    <ScoreRow label="Mental wellness" value={85} color="#3B82F6" maxValue={100} />
+                    {score === 0 && (
+                        <View style={styles.noDataRow}>
+                            <Ionicons name="information-circle-outline" size={16} color="#94A3B8" />
+                            <Text style={styles.noDataText}>Complete a health assessment to see your detailed breakdown</Text>
+                        </View>
+                    )}
                 </View>
 
-                <TouchableOpacity 
-                    style={styles.historyButton}
-                    onPress={() => navigation.navigate('AssessmentHistory')}
+                {currentPlan === 'free' ? (
+                    <TouchableOpacity
+                        style={styles.historyButtonLocked}
+                        onPress={() => navigation.navigate('Subscription')}
+                    >
+                        <Ionicons name="lock-closed" size={18} color="#D97706" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.historyButtonTextLocked}>View Assessment History</Text>
+                            <Text style={styles.historyButtonSubLocked}>Score trend history is a Gold feature</Text>
+                        </View>
+                        <View style={styles.goldBadge}>
+                            <Text style={styles.goldBadgeText}>Gold</Text>
+                        </View>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity
+                        style={styles.historyButton}
+                        onPress={() => navigation.navigate('AssessmentHistory')}
+                    >
+                        <Ionicons name="time-outline" size={20} color="#6366F1" />
+                        <Text style={styles.historyButtonText}>View Assessment History</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#6366F1" />
+                    </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                    style={styles.shareButton}
+                    onPress={handleShare}
+                    accessibilityLabel="Share health report"
+                    accessibilityRole="button"
                 >
-                    <Ionicons name="time-outline" size={20} color="#6366F1" />
-                    <Text style={styles.historyButtonText}>View Assessment History</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#6366F1" />
+                    <Ionicons name="share-outline" size={20} color="#0F172A" />
+                    <Text style={styles.shareButtonText}>Share Report with Doctor</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
                 </TouchableOpacity>
 
             </ScrollView>
@@ -312,7 +450,46 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: 'bold',
         color: '#4F46E5',
-    }
+    },
+    noDataRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+    noDataText: { flex: 1, fontSize: 13, color: '#94A3B8', lineHeight: 20 },
+
+    // Info Modal
+    modalContainer: { flex: 1, backgroundColor: '#fff' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+    modalTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+    modalBody: { padding: 20, paddingBottom: 48 },
+    modalSectionLabel: { fontSize: 13, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 24, marginBottom: 12 },
+    modalText: { fontSize: 14, color: '#475569', lineHeight: 22 },
+    bandRow: { flexDirection: 'row', alignItems: 'flex-start', borderRadius: 12, padding: 14, marginBottom: 10 },
+    bandDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4, marginRight: 12, flexShrink: 0 },
+    bandTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    bandLabel: { fontSize: 14, fontWeight: '700' },
+    bandRange: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
+    bandDesc: { fontSize: 13, color: '#64748B', lineHeight: 19 },
+    tipRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
+    tipNum: { width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center', marginRight: 12, flexShrink: 0 },
+    tipNumText: { fontSize: 13, fontWeight: '800' },
+    tipText: { flex: 1, fontSize: 14, color: '#334155', lineHeight: 21 },
+    shareButton: {
+        flexDirection: 'row', alignItems: 'center',
+        paddingVertical: 16, paddingHorizontal: 20,
+        backgroundColor: '#F8FAFC', borderRadius: 16,
+        width: '100%', marginTop: 12, gap: 12,
+        borderWidth: 1, borderColor: '#E2E8F0',
+    },
+    shareButtonText: { flex: 1, fontSize: 15, fontWeight: 'bold', color: '#0F172A' },
+    historyButtonLocked: {
+        flexDirection: 'row', alignItems: 'center',
+        paddingVertical: 16, paddingHorizontal: 20,
+        backgroundColor: '#FFFBEB', borderRadius: 16,
+        width: '100%', marginTop: 24, gap: 12,
+        borderWidth: 1, borderColor: '#FDE68A',
+    },
+    historyButtonTextLocked: { fontSize: 15, fontWeight: 'bold', color: '#92400E' },
+    historyButtonSubLocked: { fontSize: 11, color: '#D97706', marginTop: 2 },
+    goldBadge: { backgroundColor: '#FDE68A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+    goldBadgeText: { fontSize: 11, fontWeight: '800', color: '#92400E' },
 });
 
 export default WellnessScoreScreen;

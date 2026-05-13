@@ -11,46 +11,30 @@ export default function WearableDashboardScreen({ navigation }: any) {
     const [vitals, setVitals] = useState<any>({});
     const [logs, setLogs] = useState<any[]>([]);
     const [history, setHistory] = useState<any>({ hr: [], spo2: [] });
+    const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
+    const hasRealConnection = devices.apple || devices.google;
+
+    const formatSyncTime = (date: Date | null): string => {
+        if (!date) return '';
+        const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+        if (diffMin < 1) return 'Synced just now';
+        if (diffMin === 1) return 'Synced 1 min ago';
+        if (diffMin < 60) return `Synced ${diffMin} min ago`;
+        const diffHr = Math.floor(diffMin / 60);
+        return diffHr === 1 ? 'Synced 1 hr ago' : `Synced ${diffHr} hrs ago`;
+    };
 
     useEffect(() => {
-        // Fetch historical vitals on load
         client.get('/api/wearables/history').then(res => {
             if (res.data.data) {
                 const hrData = res.data.data.filter((d: any) => d.vitalType === 'heart_rate').map((d: any) => d.value).reverse();
                 const spo2Data = res.data.data.filter((d: any) => d.vitalType === 'spo2').map((d: any) => d.value).reverse();
                 setHistory({ hr: hrData, spo2: spo2Data });
+                setLastSyncedAt(new Date());
             }
         });
     }, []);
-
-    // Simulated Real-Time Data Stream
-    useEffect(() => {
-        let interval: any;
-        const isAnyConnected = devices.apple || devices.fitbit || devices.google || devices.boat;
-
-        if (isAnyConnected) {
-            interval = setInterval(() => {
-                // Generate realistic fluctuations
-                const newHr = Math.floor(65 + Math.random() * 15); // 65-80 bpm
-                const newSpo2 = Math.floor(95 + Math.random() * 5); // 95-99%
-
-                setVitals((prev: any) => ({ ...prev, heartRate: newHr, spo2: newSpo2 }));
-
-                // Update history for sparklines
-                setHistory((prev: any) => ({
-                    hr: [...prev.hr.slice(-19), newHr], // keep last 20 points
-                    spo2: [...prev.spo2.slice(-19), newSpo2]
-                }));
-
-                // Add occasional log
-                if (Math.random() > 0.7) {
-                    addLog('STREAM', `Live update: HR ${newHr} bpm, SpO2 ${newSpo2}%`);
-                }
-            }, 3000); // Update every 3 seconds
-        }
-
-        return () => clearInterval(interval);
-    }, [devices]);
 
     const connectAppleHealth = async () => {
         if (Platform.OS !== 'ios') {
@@ -105,15 +89,7 @@ export default function WearableDashboardScreen({ navigation }: any) {
 
                     {/* Fitbit */}
                     <TouchableOpacity style={[styles.deviceCard, devices.fitbit && styles.connectedCard]} onPress={() => {
-                        Alert.alert('Fitbit OAuth', 'Redirecting to fitbit.com to authorize...', [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                                text: 'Simulate Auth', onPress: () => {
-                                    setDevices(prev => ({ ...prev, fitbit: true }));
-                                    addLog('FITBIT', 'OAuth token received. Syncing history...');
-                                }
-                            }
-                        ]);
+                        Alert.alert('Fitbit — Coming Soon', 'Direct Fitbit OAuth integration is coming in the next release. In the meantime, sync your Fitbit data via Google Fit on Android or Apple Health on iOS.');
                     }}>
                         <View style={[styles.deviceIcon, { backgroundColor: 'rgba(0,179,136,0.1)' }]}>
                             <Text>📟</Text>
@@ -182,7 +158,23 @@ export default function WearableDashboardScreen({ navigation }: any) {
                     </TouchableOpacity>
                 </ScrollView>
 
-                <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Vitals Stream</Text>
+                <View style={styles.vitalsHeader}>
+                    <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 0 }]}>Vitals Stream</Text>
+                    {lastSyncedAt && (
+                        <Text style={styles.syncLabel}>{formatSyncTime(lastSyncedAt)}</Text>
+                    )}
+                </View>
+
+                {!hasRealConnection && (
+                    <View style={styles.demoBanner}>
+                        <Ionicons name="information-circle-outline" size={18} color="#F59E0B" />
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                            <Text style={styles.demoBannerTitle}>No device connected</Text>
+                            <Text style={styles.demoBannerDesc}>Connect Apple Health or Google Fit above to see your real live readings here.</Text>
+                        </View>
+                    </View>
+                )}
+
                 <View style={styles.vitalGrid}>
                     <View style={styles.vitalCard}>
                         <View style={styles.vitalHeader}>
@@ -238,6 +230,11 @@ const styles = StyleSheet.create({
     deviceIcon: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     deviceName: { fontSize: 14, fontWeight: '600', color: '#e4e8f5' },
     deviceStatus: { fontSize: 12, color: '#5b6380' },
+    vitalsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 24, marginBottom: 12 },
+    syncLabel: { fontSize: 11, color: '#5b6380', fontWeight: '500' },
+    demoBanner: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', borderRadius: 12, padding: 14, marginBottom: 14 },
+    demoBannerTitle: { fontSize: 13, fontWeight: '700', color: '#F59E0B', marginBottom: 2 },
+    demoBannerDesc: { fontSize: 12, color: '#9ca3af', lineHeight: 17 },
     vitalGrid: { flexDirection: 'row', gap: 14 },
     vitalCard: { flex: 1, backgroundColor: '#0c0f1a', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: 20 },
     vitalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

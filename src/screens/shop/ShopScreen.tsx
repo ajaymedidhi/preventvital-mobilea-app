@@ -53,32 +53,49 @@ const ShopScreen = () => {
         return true;
     });
 
-    const renderProductItem = ({ item }: { item: Product }) => (
-        <TouchableOpacity
-            style={styles.productCard}
-            onPress={() => navigation.navigate('ProductDetail', { product: item })}
-            activeOpacity={0.9}
-        >
-            <Image
-                source={getImageUrl(item.image, item.images)}
-                style={styles.productImage}
-                contentFit="contain"
-            />
-            <View style={styles.productInfo}>
-                <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.productCategory}>{item.category}</Text>
-                <View style={styles.priceRow}>
-                    <Text style={styles.productPrice}>₹{item.price}</Text>
-                    <TouchableOpacity
-                        style={styles.addToCartBtn}
-                        onPress={() => addToCart(item)}
-                    >
-                        <Ionicons name="add" size={20} color="#FFF" />
-                    </TouchableOpacity>
+    const getHealthBenefit = (category: string): { label: string; color: string; bg: string } => {
+        switch (category) {
+            case 'wearables':    return { label: '❤️ Supports Heart Health',     color: '#DC2626', bg: '#FEF2F2' };
+            case 'test_kits':    return { label: '🔬 Know Your Risk Profile',     color: '#2563EB', bg: '#EFF6FF' };
+            case 'supplements':  return { label: '💊 Supports Metabolic Health', color: '#059669', bg: '#ECFDF5' };
+            default:             return { label: '🛡️ Supports Wellness',          color: '#7C3AED', bg: '#F5F3FF' };
+        }
+    };
+
+    const renderProductItem = ({ item }: { item: Product }) => {
+        const benefit = getHealthBenefit(item.category);
+        return (
+            <TouchableOpacity
+                style={styles.productCard}
+                onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                activeOpacity={0.9}
+            >
+                <Image
+                    source={getImageUrl(item.image, item.images)}
+                    style={styles.productImage}
+                    contentFit="contain"
+                />
+                <View style={styles.productInfo}>
+                    <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.productCategory}>{item.category}</Text>
+                    <View style={[styles.healthTag, { backgroundColor: benefit.bg }]}>
+                        <Text style={[styles.healthTagText, { color: benefit.color }]} numberOfLines={1}>
+                            {benefit.label}
+                        </Text>
+                    </View>
+                    <View style={styles.priceRow}>
+                        <Text style={styles.productPrice}>₹{item.price}</Text>
+                        <TouchableOpacity
+                            style={styles.addToCartBtn}
+                            onPress={() => addToCart(item)}
+                        >
+                            <Ionicons name="add" size={20} color="#FFF" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -268,7 +285,9 @@ const styles = StyleSheet.create({
     emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginTop: 20, textAlign: 'center' },
     emptySub: { fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center', lineHeight: 20 },
     emptyBtn: { marginTop: 28, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12, backgroundColor: Colors.gradientStart },
-    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 }
+    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+    healthTag: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3, marginBottom: 8, alignSelf: 'flex-start' },
+    healthTagText: { fontSize: 10, fontWeight: '700' },
 });
 
 export default ShopScreen;

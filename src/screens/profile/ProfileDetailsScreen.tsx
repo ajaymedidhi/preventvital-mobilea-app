@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,7 +43,20 @@ const ProfileDetailsScreen = () => {
     const [country, setCountry] = useState(user?.profile?.country || '');
     const [height, setHeight] = useState(user?.profile?.height?.toString() || '');
     const [weight, setWeight] = useState(user?.profile?.weight?.toString() || '');
+    const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    const handlePickPhoto = () => {
+        Alert.alert(
+            'Profile Photo',
+            'Choose how to set your profile photo.',
+            [
+                { text: 'Camera', onPress: () => Alert.alert('Coming Soon', 'Camera upload will be available in the next update.') },
+                { text: 'Choose from Library', onPress: () => Alert.alert('Coming Soon', 'Photo library will be available in the next update.') },
+                { text: 'Cancel', style: 'cancel' },
+            ]
+        );
+    };
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [dateObj, setDateObj] = useState(user?.profile?.dateOfBirth ? new Date(user.profile.dateOfBirth) : new Date(2000, 0, 1));
 
@@ -140,6 +153,25 @@ const ProfileDetailsScreen = () => {
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Personal Information</Text>
                     <View style={{ width: 40 }} />
+                </View>
+
+                <View style={styles.avatarSection}>
+                    <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} style={styles.avatarTouchable}>
+                        <View style={styles.avatarCircle}>
+                            {photoUri ? (
+                                <Image source={{ uri: photoUri }} style={styles.avatarImage} />
+                            ) : (
+                                <Text style={styles.avatarInitials}>
+                                    {(firstName?.[0] || user?.name?.[0] || 'U').toUpperCase()}
+                                </Text>
+                            )}
+                        </View>
+                        <View style={styles.cameraIconBadge}>
+                            <Ionicons name="camera" size={13} color="#fff" />
+                        </View>
+                    </TouchableOpacity>
+                    <Text style={styles.avatarName}>{firstName} {lastName}</Text>
+                    <Text style={styles.avatarHint}>Tap photo to change</Text>
                 </View>
             </LinearGradient>
 
@@ -533,6 +565,60 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    avatarSection: {
+        alignItems: 'center',
+        paddingTop: 20,
+        paddingBottom: 8,
+    },
+    avatarTouchable: {
+        position: 'relative',
+        marginBottom: 10,
+    },
+    avatarCircle: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        borderWidth: 3,
+        borderColor: 'rgba(255,255,255,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    avatarImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+    },
+    avatarInitials: {
+        fontSize: 30,
+        fontWeight: '800',
+        color: '#fff',
+    },
+    cameraIconBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: '#6366F1',
+        borderWidth: 2,
+        borderColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 2,
+    },
+    avatarHint: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.65)',
+        fontWeight: '500',
     },
 });
 

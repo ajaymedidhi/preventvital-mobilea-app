@@ -1,11 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View, Text, TouchableOpacity, TextInput,
     FlatList, Modal, StyleSheet, KeyboardAvoidingView,
     Platform, ActivityIndicator, Image
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../api/client';
+
+const VIDA_INTRO_KEY = 'pv_vida_intro_shown';
 
 const SUGGESTIONS = [
     '📊 My health score',
@@ -23,7 +26,18 @@ export default function VIDAChatbot() {
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
+    const [showTooltip, setShowTooltip] = useState(false);
     const listRef = useRef<FlatList>(null);
+
+    useEffect(() => {
+        AsyncStorage.getItem(VIDA_INTRO_KEY).then(seen => {
+            if (!seen) {
+                setShowTooltip(true);
+                AsyncStorage.setItem(VIDA_INTRO_KEY, '1');
+                setTimeout(() => setShowTooltip(false), 5000);
+            }
+        });
+    }, []);
 
     const send = async (text?: string) => {
         const msg = text || input.trim();
@@ -54,16 +68,28 @@ export default function VIDAChatbot() {
 
     return (
         <>
+            {/* First-launch tooltip */}
+            {showTooltip && (
+                <TouchableOpacity
+                    style={[styles.tooltip, { bottom: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom + 84, right: 16 }]}
+                    onPress={() => setShowTooltip(false)}
+                    activeOpacity={0.9}
+                >
+                    <Text style={styles.tooltipText}>👋 Hi! I'm VIDA, your AI health assistant. Tap me!</Text>
+                    <View style={styles.tooltipArrow} />
+                </TouchableOpacity>
+            )}
+
             {/* Floating button — always visible */}
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={[
-                    styles.fab, 
-                    { 
+                    styles.fab,
+                    {
                         bottom: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom + 16,
-                        right: 16 
+                        right: 16
                     }
-                ]} 
-                onPress={() => setOpen(true)} 
+                ]}
+                onPress={() => { setOpen(true); setShowTooltip(false); }}
                 activeOpacity={0.8}
             >
                 <Image 
@@ -197,4 +223,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     sendIcon: { color: '#fff', fontSize: 18 },
+    tooltip: { position: 'absolute', right: 16, backgroundColor: '#0F172A', borderRadius: 12, padding: 12, maxWidth: 220, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 },
+    tooltipText: { color: '#fff', fontSize: 13, fontWeight: '600', lineHeight: 18 },
+    tooltipArrow: { position: 'absolute', bottom: -7, right: 22, width: 14, height: 14, backgroundColor: '#0F172A', transform: [{ rotate: '45deg' }] },
 });

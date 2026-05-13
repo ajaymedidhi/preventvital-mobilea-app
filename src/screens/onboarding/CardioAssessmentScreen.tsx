@@ -5,8 +5,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateAssessmentScore, updateOnboarding } from '../../api/authApi';
 import { useAuth } from '../../auth/AuthContext';
+
+const DRAFT_KEY = 'pv_assessment_draft';
 
 const { width } = Dimensions.get('window');
 
@@ -37,6 +40,35 @@ export default function CardioAssessmentScreen() {
             easing: Easing.out(Easing.quad)
         });
     }, [currentStep]);
+
+    // Load saved draft on mount
+    useEffect(() => {
+        AsyncStorage.getItem(DRAFT_KEY).then(saved => {
+            if (!saved) return;
+            try {
+                const { formData: savedForm, currentStep: savedStep } = JSON.parse(saved);
+                Alert.alert(
+                    'Resume Assessment',
+                    `You have an unfinished assessment (Section ${savedStep + 1} of ${SECTIONS.length}). Continue where you left off?`,
+                    [
+                        { text: 'Start Fresh', style: 'destructive', onPress: () => AsyncStorage.removeItem(DRAFT_KEY) },
+                        { text: 'Continue', onPress: () => { setFormData(savedForm); setCurrentStep(savedStep); } },
+                    ]
+                );
+            } catch (_) {}
+        });
+    }, []);
+
+    const saveDraft = (step: number, data: typeof formData) => {
+        AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ formData: data, currentStep: step })).catch(() => {});
+    };
+
+    const clearDraft = () => AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+
+    const saveAndExit = async () => {
+        saveDraft(currentStep, formData);
+        navigation.reset({ index: 0, routes: [{ name: 'Main', params: { screen: 'Home', params: { skippedAssessment: true } } }] });
+    };
 
     const animatedProgressStyle = useAnimatedStyle(() => {
         return {
@@ -174,17 +206,16 @@ export default function CardioAssessmentScreen() {
         if (!validateStep()) return;
 
         if (currentStep < SECTIONS.length - 1) {
-            setCurrentStep(curr => curr + 1);
+            const next = currentStep + 1;
+            setCurrentStep(next);
+            saveDraft(next, formData);
         } else {
             const effectiveToken = token || userToken;
             try {
+                clearDraft();
                 if (effectiveToken) {
-                    // Auto-calculate body fat if not manually provided
                     const calculatedBF = calcBodyFat();
-                    const submissionData = {
-                        ...formData,
-                        bodyFat: formData.bodyFat || calculatedBF
-                    };
+                    const submissionData = { ...formData, bodyFat: formData.bodyFat || calculatedBF };
                     const scoreData = await calculateAssessmentScore(submissionData, effectiveToken);
                     navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData: submissionData, scoreData });
                 } else {
@@ -192,13 +223,17 @@ export default function CardioAssessmentScreen() {
                 }
             } catch (e) {
                 console.error(e);
-                navigation.navigate('AssessmentResults', { token: effectiveToken, user, formData });
+                navigation.navigate('AssessmentResults', { token: effectiveToken || null, user, formData });
             }
         }
     };
 
     const prevStep = () => {
-        if (currentStep > 0) setCurrentStep(curr => curr - 1);
+        if (currentStep > 0) {
+            const prev = currentStep - 1;
+            setCurrentStep(prev);
+            saveDraft(prev, formData);
+        }
     };
 
     const skipAssessment = async () => {
@@ -538,8 +573,16 @@ export default function CardioAssessmentScreen() {
                             <View style={styles.logoBadge} />
                         </View>
 
-                        <View style={styles.stepBadge}>
-                            <Text style={styles.stepBadgeText}>{currentStep + 1}/{SECTIONS.length}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            {currentStep > 0 && (
+                                <TouchableOpacity onPress={saveAndExit} style={styles.saveExitBtn}>
+                                    <Ionicons name="bookmark-outline" size={13} color="rgba(255,255,255,0.9)" />
+                                    <Text style={styles.saveExitText}>Save</Text>
+                                </TouchableOpacity>
+                            )}
+                            <View style={styles.stepBadge}>
+                                <Text style={styles.stepBadgeText}>{currentStep + 1}/{SECTIONS.length}</Text>
+                            </View>
                         </View>
                     </View>
 
@@ -672,4 +715,6 @@ const styles = StyleSheet.create({
         height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center'
     },
     gradientButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    saveExitBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+    saveExitText: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontWeight: '600' },
 });

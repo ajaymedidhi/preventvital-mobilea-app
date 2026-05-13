@@ -4,11 +4,46 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gradients } from '../../theme/colors';
+import { useAuth } from '../../auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
+const getRecommendation = (score: number): { title: string; desc: string } => {
+    if (score === 0) return {
+        title: 'Complete your assessment first',
+        desc: 'Take the 5-min health assessment to get a personalised program recommendation based on your cardiovascular profile.',
+    };
+    if (score < 40) return {
+        title: 'Cardiac Rehabilitation Program',
+        desc: `Your CVITAL score of ${score} is in the At Risk range. This program is designed to help reduce cardiovascular risk through guided exercises and diet changes.`,
+    };
+    if (score < 60) return {
+        title: 'Hypertension Control Program',
+        desc: `Based on your score of ${score}, managing blood pressure is your top priority. This 30-day program combines breathing, diet, and light cardio.`,
+    };
+    if (score < 80) return {
+        title: 'Heart Health Boost Program',
+        desc: `Your score of ${score} is Good — this program will help push you into the Excellent band with targeted cardio and stress-reduction sessions.`,
+    };
+    return {
+        title: 'Advanced Cardiovascular Fitness',
+        desc: `Excellent score of ${score}! Maintain your momentum with this advanced program focused on longevity and peak heart performance.`,
+    };
+};
+
 const MyProgramsScreen = () => {
     const navigation = useNavigation<any>();
+    const { user } = useAuth();
+
+    const cvitalScore = (user as any)?.healthProfile?.cvitalScore || (user as any)?.profile?.healthScore || 0;
+    const rec = getRecommendation(cvitalScore);
+
+    // Active programs would come from the API; empty array until user enrolls
+    const activePrograms: any[] = [];
+
+    const completedPrograms = [
+        { id: '1', title: 'Hypertension Control Program', completedOn: 'Dec 1, 2025' },
+    ];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -27,64 +62,94 @@ const MyProgramsScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Active</Text>
 
-                    <View style={styles.activeCard}>
-                        <View style={styles.cardTopRow}>
-                            <View style={[styles.iconContainer, { backgroundColor: '#FEE2E2' }]}>
-                                <Ionicons name="pulse" size={24} color="#EF4444" />
+                    {activePrograms.length === 0 ? (
+                        <View style={styles.emptyCard}>
+                            <View style={styles.emptyIconWrap}>
+                                <Ionicons name="ribbon-outline" size={32} color="#6366F1" />
                             </View>
-                            <View style={styles.cardHeaderInfo}>
-                                <Text style={styles.programTitle}>Diabetes Management Program</Text>
-                                <Text style={styles.programSubtitle}>Day 12 of 30</Text>
-                                <View style={styles.remainingBadgeRow}>
-                                    <View style={styles.redDot} />
-                                    <Text style={styles.remainingText}>2 Sessions remaining today</Text>
-                                </View>
-                            </View>
-                        </View>
-
-                        <View style={styles.progressContainer}>
-                            <View style={styles.progressBarTrack}>
-                                <View style={[styles.progressBarFill, { width: '40%' }]} />
-                            </View>
-                        </View>
-
-                        <View style={styles.actionRow}>
+                            <Text style={styles.emptyTitle}>
+                                {cvitalScore > 0
+                                    ? `Based on your CVITAL score of ${cvitalScore}, we recommend:`
+                                    : 'No active programs yet'}
+                            </Text>
+                            <Text style={styles.emptyRecTitle}>{rec.title}</Text>
+                            <Text style={styles.emptyDesc}>{rec.desc}</Text>
                             <TouchableOpacity
-                                style={styles.continueButtonContainer}
-                                onPress={() => navigation.navigate('ProgramDayView', { programId: '1' })}
+                                onPress={() => navigation.navigate('Programs')}
+                                style={styles.emptyCtaWrap}
                             >
                                 <LinearGradient
                                     colors={Gradients.brand}
                                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                                    style={styles.continueButtonBackground}
+                                    style={styles.emptyCta}
                                 >
-                                    <Text style={styles.continueButtonText}>Continue</Text>
+                                    <Ionicons name="search-outline" size={16} color="#fff" />
+                                    <Text style={styles.emptyCtaText}>Browse Programs</Text>
                                 </LinearGradient>
                             </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.progressButtonContainer}>
-                                <Text style={styles.progressButtonText}>Progress</Text>
-                            </TouchableOpacity>
                         </View>
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Completed</Text>
-
-                    <View style={styles.completedCard}>
-                        <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
-                            <Ionicons name="trophy-outline" size={24} color="#22C55E" />
-                        </View>
-                        <View style={styles.cardHeaderInfo}>
-                            <Text style={styles.programTitle}>Hypertension Control Program</Text>
-                            <Text style={styles.programSubtitle}>Completed on Dec 1, 2025</Text>
-                            <View style={styles.completedBadge}>
-                                <Text style={styles.completedBadgeText}>Completed</Text>
+                    ) : (
+                        activePrograms.map((prog) => (
+                            <View key={prog.id} style={styles.activeCard}>
+                                <View style={styles.cardTopRow}>
+                                    <View style={[styles.iconContainer, { backgroundColor: '#FEE2E2' }]}>
+                                        <Ionicons name="pulse" size={24} color="#EF4444" />
+                                    </View>
+                                    <View style={styles.cardHeaderInfo}>
+                                        <Text style={styles.programTitle}>{prog.title}</Text>
+                                        <Text style={styles.programSubtitle}>Day {prog.currentDay} of {prog.totalDays}</Text>
+                                        <View style={styles.remainingBadgeRow}>
+                                            <View style={styles.redDot} />
+                                            <Text style={styles.remainingText}>{prog.remainingSessions} Sessions remaining today</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                                <View style={styles.progressContainer}>
+                                    <View style={styles.progressBarTrack}>
+                                        <View style={[styles.progressBarFill, { width: `${prog.progress}%` }]} />
+                                    </View>
+                                </View>
+                                <View style={styles.actionRow}>
+                                    <TouchableOpacity
+                                        style={styles.continueButtonContainer}
+                                        onPress={() => navigation.navigate('ProgramDayView', { programId: prog.id })}
+                                    >
+                                        <LinearGradient
+                                            colors={Gradients.brand}
+                                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                            style={styles.continueButtonBackground}
+                                        >
+                                            <Text style={styles.continueButtonText}>Continue</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.progressButtonContainer}>
+                                        <Text style={styles.progressButtonText}>Progress</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
-                    </View>
+                        ))
+                    )}
                 </View>
+
+                {completedPrograms.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Completed</Text>
+                        {completedPrograms.map((prog) => (
+                            <View key={prog.id} style={styles.completedCard}>
+                                <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
+                                    <Ionicons name="trophy-outline" size={24} color="#22C55E" />
+                                </View>
+                                <View style={styles.cardHeaderInfo}>
+                                    <Text style={styles.programTitle}>{prog.title}</Text>
+                                    <Text style={styles.programSubtitle}>Completed on {prog.completedOn}</Text>
+                                    <View style={styles.completedBadge}>
+                                        <Text style={styles.completedBadgeText}>Completed</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                )}
 
             </ScrollView>
         </SafeAreaView>
@@ -256,7 +321,69 @@ const styles = StyleSheet.create({
         color: '#16a34a',
         fontSize: 10,
         fontWeight: '600',
-    }
+    },
+    emptyCard: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 24,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#EEF2FF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    emptyIconWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#EEF2FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    emptyTitle: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#94A3B8',
+        textAlign: 'center',
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    emptyRecTitle: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: '#0F172A',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    emptyDesc: {
+        fontSize: 13,
+        color: '#64748B',
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 20,
+    },
+    emptyCtaWrap: {
+        width: '100%',
+        borderRadius: 14,
+        overflow: 'hidden',
+    },
+    emptyCta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        gap: 8,
+    },
+    emptyCtaText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+    },
 });
 
 export default MyProgramsScreen;

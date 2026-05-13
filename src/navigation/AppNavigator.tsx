@@ -53,6 +53,7 @@ import WellnessScoreScreen from '../screens/health/WellnessScoreScreen';
 import WearableDashboardScreen from '../screens/health/WearableDashboardScreen';
 import AllVitalsScreen from '../screens/health/AllVitalsScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import ProgramDetailsScreen from '../screens/programs/ProgramDetailsScreen';
 import MyProgramsScreen from '../screens/programs/MyProgramsScreen';
 import ProgramDayViewScreen from '../screens/programs/ProgramDayViewScreen';
@@ -75,6 +76,7 @@ function AppStack() {
             <Stack.Screen name="WearableDashboard" component={WearableDashboardScreen} />
             <Stack.Screen name="AllVitals" component={AllVitalsScreen} />
             <Stack.Screen name="ContactUs" component={ContactUsScreen} />
+            <Stack.Screen name="Notifications" component={NotificationsScreen} />
             <Stack.Screen name="ProgramDetails" component={ProgramDetailsScreen} />
             <Stack.Screen name="MyPrograms" component={MyProgramsScreen} />
             <Stack.Screen name="ProgramDayView" component={ProgramDayViewScreen} />
