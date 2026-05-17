@@ -21,11 +21,11 @@ const PLANS = [
         buttonText: 'Select Plan'
     },
     {
-        id: 'silver',
-        name: 'Silver',
-        monthlyPrice: 499,
-        annualPrice: 4999,
-        features: ['Basic Health Tracking', 'Community Access', 'Priority Support', 'Ad - free Experience'],
+        id: 'premium',
+        name: 'Premium',
+        monthlyPrice: 299,
+        annualPrice: 2999,
+        features: ['Basic Health Tracking', 'Community Access', 'Priority Support', 'Ad-free Experience'],
         backgroundColor: '#EBEBEB',
         headerColor: '#6b7280',
         buttonGradient: null,
@@ -33,11 +33,11 @@ const PLANS = [
         buttonText: 'Upgrade Now'
     },
     {
-        id: 'gold',
-        name: 'Gold',
-        monthlyPrice: 999,
-        annualPrice: 9999,
-        features: ['All Silver Features', 'Advanced Analytics', '1 Free Consultation/mo', 'Device Sync'],
+        id: 'pro',
+        name: 'Pro',
+        monthlyPrice: 499,
+        annualPrice: 4999,
+        features: ['All Premium Features', 'Advanced Analytics', '1 Free Consultation/mo', 'Device Sync'],
         backgroundColor: '#FFF8CE',
         headerColor: '#E6A800',
         buttonGradient: null,
@@ -45,11 +45,11 @@ const PLANS = [
         buttonText: 'Upgrade Now'
     },
     {
-        id: 'platinum',
-        name: 'Platinum',
-        monthlyPrice: 2499,
-        annualPrice: 24999,
-        features: ['All Gold Features', 'Unlimited Consultations', 'Family Plan ( up to 4)', 'Personal Health Coach'],
+        id: 'family',
+        name: 'Family',
+        monthlyPrice: 999,
+        annualPrice: 9999,
+        features: ['All Pro Features', 'Unlimited Consultations', 'Family Plan (up to 4)', 'Personal Health Coach'],
         backgroundColor: '#DBFBFF',
         headerColor: '#1774A0',
         buttonGradient: null,
@@ -196,8 +196,8 @@ const SubscriptionScreen = () => {
                             style={[
                                 styles.planCard,
                                 { backgroundColor: plan.backgroundColor },
-                                plan.id === 'gold' && { borderColor: '#EAB308', borderWidth: 1 },
-                                plan.id === 'platinum' && { borderColor: '#38bdf8', borderWidth: 1 }
+                                plan.id === 'pro' && { borderColor: '#EAB308', borderWidth: 1 },
+                                plan.id === 'family' && { borderColor: '#38bdf8', borderWidth: 1 }
                             ]}
                             activeOpacity={0.9}
                             onPress={() => {
@@ -213,7 +213,7 @@ const SubscriptionScreen = () => {
                                 <Text style={[styles.planName, { color: plan.headerColor }]}>{plan.name}</Text>
                                 <View style={styles.priceContainer}>
                                     <Text style={styles.priceValue}>
-                                        {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                                        ₹{isAnnual ? plan.annualPrice : plan.monthlyPrice}
                                     </Text>
                                     <Text style={styles.pricePeriod}>
                                         /{isAnnual ? 'yr' : 'mo'}

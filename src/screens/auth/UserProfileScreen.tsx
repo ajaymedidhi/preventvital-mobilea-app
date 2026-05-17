@@ -121,7 +121,6 @@ const UserProfileScreen = () => {
                         iconColor="#3b82f6"
                         onPress={() => (navigation as any).navigate('ContactUs')}
                     />
-
                     <MenuItem
                         icon="document-text-outline"
                         label="Terms & Conditions"
@@ -134,6 +133,70 @@ const UserProfileScreen = () => {
                         iconColor="#3b82f6"
                         onPress={() => (navigation as any).navigate('AssessmentHistory')}
                     />
+                </View>
+
+                {/* ── Health & Wellness ── */}
+                <Text style={styles.sectionLabel}>Health &amp; Wellness</Text>
+                <View style={styles.menuContainer}>
+                    <MenuItem
+                        icon="create-outline"
+                        label="Log Vitals &amp; Medications"
+                        iconColor="#10B981"
+                        onPress={() => (navigation as any).navigate('ManualVitalsEntry')}
+                    />
+                    <MenuItem
+                        icon="videocam-outline"
+                        label="Book a Consultation"
+                        iconColor="#EF4444"
+                        onPress={() => (navigation as any).navigate('Consultation')}
+                    />
+                    <MenuItem
+                        icon="analytics-outline"
+                        label="ASCVD Risk Explainer"
+                        iconColor="#6366F1"
+                        onPress={() => (navigation as any).navigate('ASCVDExplainer')}
+                    />
+                </View>
+
+                {/* ── Premium Features ── */}
+                <Text style={styles.sectionLabel}>Premium Features</Text>
+                <View style={styles.menuContainer}>
+                    <MenuItem
+                        icon="people-outline"
+                        label="Family Plan"
+                        iconColor="#8B5CF6"
+                        onPress={() => (navigation as any).navigate('FamilyPlan')}
+                    />
+                    <MenuItem
+                        icon="person-circle-outline"
+                        label="Health Coach"
+                        iconColor="#8B5CF6"
+                        onPress={() => (navigation as any).navigate('HealthCoach')}
+                    />
+                    {(user?.role === 'corporate_admin' || user?.role === 'admin' || user?.role === 'super_admin') && (
+                        <MenuItem
+                            icon="business-outline"
+                            label="Corporate Dashboard"
+                            iconColor="#3B82F6"
+                            onPress={() => (navigation as any).navigate('CorporateDashboard')}
+                        />
+                    )}
+                </View>
+
+                {/* ── Achievements ── */}
+                <Text style={styles.sectionLabel}>Community</Text>
+                <View style={styles.menuContainer}>
+                    <MenuItem
+                        icon="trophy-outline"
+                        label="Achievements &amp; Badges"
+                        iconColor="#F59E0B"
+                        onPress={() => (navigation as any).navigate('Achievements')}
+                    />
+                </View>
+
+                {/* ── Account ── */}
+                <Text style={styles.sectionLabel}>Account</Text>
+                <View style={styles.menuContainer}>
                     <MenuItem
                         icon="log-out-outline"
                         label="Sign Out"
@@ -217,9 +280,20 @@ const styles = StyleSheet.create({
         color: '#fff',
         marginLeft: 4,
     },
+    sectionLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#94A3B8',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        paddingHorizontal: 20,
+        paddingTop: 24,
+        paddingBottom: 6,
+        backgroundColor: '#F5F5F5',
+    },
     menuContainer: {
         paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingTop: 0,
         backgroundColor: '#F5F5F5',
     },
     menuItem: {

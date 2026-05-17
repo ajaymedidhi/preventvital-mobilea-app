@@ -9,9 +9,9 @@ import client from '../../api/client';
 
 const PLAN_COLORS: Record<string, string[]> = {
     free: ['#9CA3AF', '#6B7280'],
-    silver: ['#94A3B8', '#64748B'],
-    gold: ['#FBBF24', '#D97706'],
-    platinum: ['#C084FC', '#9333EA'],
+    premium: ['#94A3B8', '#64748B'],
+    pro: ['#FBBF24', '#D97706'],
+    family: ['#C084FC', '#9333EA'],
     trial: ['#34D399', '#059669'],
     standard: ['#60A5FA', '#2563EB'],
     growth: ['#A78BFA', '#7C3AED'],

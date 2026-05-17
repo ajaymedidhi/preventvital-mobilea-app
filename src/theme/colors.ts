@@ -28,9 +28,9 @@ export const Colors = {
 
   // Plan tiers
   planFree: { bg: '#F3F4F6', text: '#6B7280' },
-  planSilver: { bg: '#DBEAFE', text: '#2563EB' },
-  planGold: { bg: '#FEF3C7', text: '#D97706' },
-  planPlatinum: { bg: '#EDE9FE', text: '#7C3AED' },
+  planPremium: { bg: '#DBEAFE', text: '#2563EB' },
+  planPro: { bg: '#FEF3C7', text: '#D97706' },
+  planFamily: { bg: '#EDE9FE', text: '#7C3AED' },
 };
 
 export const Gradients = {

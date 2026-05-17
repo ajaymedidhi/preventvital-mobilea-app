@@ -199,6 +199,52 @@ export default function WearableDashboardScreen({ navigation }: any) {
                     </View>
                 </View>
 
+                {/* Deep Metrics (HRV, VO₂Max, Sleep, Resting HR) */}
+                <Text style={[styles.sectionTitle, { marginTop: 28, marginBottom: 12 }]}>Deep Metrics</Text>
+                <View style={styles.deepGrid}>
+                    {[
+                        { label: 'HRV', value: vitals.hrv ? `${Math.round(vitals.hrv)} ms` : '—', icon: '💓', desc: 'Heart Rate Variability', color: '#10d98a', tip: 'Higher = better stress recovery' },
+                        { label: 'VO₂ Max', value: vitals.vo2max ? `${vitals.vo2max.toFixed(1)}` : '—', icon: '🫁', desc: 'mL/kg/min', color: '#4f8ef0', tip: 'Cardiorespiratory fitness' },
+                        { label: 'Resting HR', value: vitals.restingHR ? `${Math.round(vitals.restingHR)} bpm` : '—', icon: '❤️', desc: 'Last 7 days avg', color: '#f87171', tip: '60–70 is ideal at rest' },
+                        { label: 'Sleep', value: vitals.sleepHours ? `${vitals.sleepHours.toFixed(1)} h` : '—', icon: '😴', desc: 'Last night', color: '#a78bfa', tip: '7–9 hrs optimal' },
+                    ].map((m, i) => (
+                        <View key={i} style={styles.deepCard}>
+                            <Text style={styles.deepIcon}>{m.icon}</Text>
+                            <Text style={styles.deepValue} numberOfLines={1}>{m.value}</Text>
+                            <Text style={styles.deepLabel}>{m.label}</Text>
+                            <Text style={styles.deepTip}>{m.tip}</Text>
+                        </View>
+                    ))}
+                </View>
+
+                {/* Sleep breakdown if available */}
+                {(vitals.sleepDeep || vitals.sleepREM || vitals.sleepLight) ? (
+                    <View style={styles.sleepCard}>
+                        <Text style={styles.logTitle}>Sleep Stages</Text>
+                        {[
+                            { stage: 'Deep', value: vitals.sleepDeep, color: '#6366F1' },
+                            { stage: 'REM', value: vitals.sleepREM, color: '#8B5CF6' },
+                            { stage: 'Light', value: vitals.sleepLight, color: '#A78BFA' },
+                        ].map(s => {
+                            const total = (vitals.sleepDeep || 0) + (vitals.sleepREM || 0) + (vitals.sleepLight || 0);
+                            const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+                            return (
+                                <View key={s.stage} style={styles.sleepRow}>
+                                    <Text style={styles.sleepStageLabel}>{s.stage}</Text>
+                                    <View style={styles.sleepBarBg}>
+                                        <View style={[styles.sleepBarFill, { width: `${pct}%`, backgroundColor: s.color }]} />
+                                    </View>
+                                    <Text style={[styles.sleepPct, { color: s.color }]}>{pct}%</Text>
+                                </View>
+                            );
+                        })}
+                    </View>
+                ) : (
+                    <View style={[styles.sleepCard, { alignItems: 'center', paddingVertical: 20 }]}>
+                        <Text style={styles.logMsg}>Sleep stage data requires Apple Watch or compatible wearable</Text>
+                    </View>
+                )}
+
                 {/* Event Log */}
                 <View style={styles.logCard}>
                     <Text style={styles.logTitle}>Live Event Log</Text>
@@ -249,4 +295,16 @@ const styles = StyleSheet.create({
     logSrcBadge: { backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginRight: 8 },
     logSrcText: { color: '#e4e8f5', fontSize: 10, fontWeight: 'bold' },
     logMsg: { color: '#e4e8f5', fontSize: 12, flex: 1 },
+    deepGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    deepCard: { width: '47%', backgroundColor: '#0c0f1a', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: 16, gap: 4 },
+    deepIcon: { fontSize: 22 },
+    deepValue: { fontSize: 24, fontWeight: '800', color: '#e4e8f5', marginTop: 4 },
+    deepLabel: { fontSize: 12, color: '#5b6380', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+    deepTip: { fontSize: 11, color: '#5b6380', marginTop: 2 },
+    sleepCard: { backgroundColor: '#0c0f1a', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: 16, marginTop: 12 },
+    sleepRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+    sleepStageLabel: { fontSize: 13, color: '#5b6380', fontWeight: '600', width: 40 },
+    sleepBarBg: { flex: 1, height: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' },
+    sleepBarFill: { height: '100%', borderRadius: 4 },
+    sleepPct: { fontSize: 12, fontWeight: '700', width: 36, textAlign: 'right' },
 });

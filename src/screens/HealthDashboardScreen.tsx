@@ -12,6 +12,7 @@ import { NormalizedHealthData } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 import client from '../api/client';
+import DailyCheckInCard from '../components/DailyCheckInCard';
 
 const { width } = Dimensions.get('window');
 
@@ -274,6 +275,9 @@ const HealthDashboardScreen = ({ route }: any) => {
                     );
                 })()}
 
+                {/* Daily Check-In — after score context, natural "how do you feel?" moment */}
+                <DailyCheckInCard />
+
                 {/* Abnormal Reading Alerts */}
                 {abnormalAlerts.map(alert => (
                     <View key={alert.key} style={[styles.abnormalAlert, { backgroundColor: alert.bg }]}>
@@ -288,6 +292,27 @@ const HealthDashboardScreen = ({ route }: any) => {
                         </TouchableOpacity>
                     </View>
                 ))}
+
+                {/* Quick Actions — above the data, triggers action on what they're about to see */}
+                <View style={styles.quickActionsRow}>
+                    {[
+                        { icon: 'create-outline',        label: 'Log Vitals', screen: 'ManualVitalsEntry', color: '#10B981', bg: '#ECFDF5' },
+                        { icon: 'videocam-outline',       label: 'Consult',    screen: 'Consultation',      color: '#EF4444', bg: '#FEF2F2' },
+                        { icon: 'person-circle-outline',  label: 'Coach',      screen: 'HealthCoach',       color: '#8B5CF6', bg: '#EDE9FE' },
+                        { icon: 'trophy-outline',         label: 'Badges',     screen: 'Achievements',      color: '#F59E0B', bg: '#FFFBEB' },
+                    ].map(({ icon, label, screen, color, bg }) => (
+                        <TouchableOpacity
+                            key={screen}
+                            style={styles.quickActionBtn}
+                            onPress={() => navigation.navigate(screen)}
+                        >
+                            <View style={[styles.quickActionIcon, { backgroundColor: bg }]}>
+                                <Ionicons name={icon as any} size={20} color={color} />
+                            </View>
+                            <Text style={styles.quickActionLabel}>{label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
 
                 {/* Vitals Grid */}
                 <View style={{ marginBottom: 16, marginTop: 8 }}>
@@ -505,6 +530,10 @@ const styles = StyleSheet.create({
     videoWrapper: { width: '100%', height: 200, backgroundColor: '#000' },
     abnormalAlert: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, padding: 14, marginBottom: 12 },
     abnormalAlertText: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '500', color: '#1E293B' },
+    quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 12, gap: 8 },
+    quickActionBtn: { flex: 1, alignItems: 'center', gap: 6 },
+    quickActionIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+    quickActionLabel: { fontSize: 11, fontWeight: '600', color: '#475569', textAlign: 'center' },
 });
 
 export default HealthDashboardScreen;

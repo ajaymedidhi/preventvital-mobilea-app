@@ -3,15 +3,14 @@ import { getToken } from './storage';
 import { Platform } from 'react-native';
 
 // Production URL (Set this to your GCP Cloud Run URL once deployed)
-const PROD_URL = 'https://preventvital-api-988713182018.asia-south1.run.app'; // Fallback to Render for now
-// const LOCAL_IP = '192.168.31.86';
+const PROD_URL = 'https://preventvital-api-988713182018.asia-south1.run.app';
 
-// export const API_URL = __DEV__
-//     ? (Platform.OS === 'android' ? 'http://10.0.2.2:5001' : `http://${LOCAL_IP}:5001`)
-//     : PROD_URL;
+const API_URL = __DEV__
+    ? (Platform.OS === 'android' ? 'http://10.0.2.2:5001' : 'http://localhost:5001')
+    : PROD_URL;
 
 const client = axios.create({
-    baseURL: PROD_URL,
+    baseURL: API_URL,
     timeout: 60000,
     headers: {
         'Content-Type': 'application/json',

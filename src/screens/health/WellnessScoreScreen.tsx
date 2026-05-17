@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Share, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useAuth } from '../../auth/AuthContext';
+import client from '../../api/client';
 
 const WellnessScoreScreen = () => {
     const navigation = useNavigation<any>();
@@ -13,17 +14,22 @@ const WellnessScoreScreen = () => {
     const [showInfo, setShowInfo] = useState(false);
 
     const handleShare = async () => {
-        const date = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-        const nextSteps = score >= 80
-            ? ['Maintain your current exercise and diet routine', 'Re-assess every 3 months to track trends', 'Connect a wearable to monitor vitals daily']
-            : score >= 60
-            ? ['Aim for 150 min of moderate exercise per week', 'Monitor your blood pressure weekly', 'Reduce sodium intake and processed foods']
-            : score >= 40
-            ? ['Consult a healthcare professional about your risk', 'Start a cardiac wellness or breathing program', 'Reduce sedentary time — take breaks every hour']
-            : score > 0
-            ? ['Speak to a doctor — your risk is elevated', 'Start the Cardiac Rehabilitation program', 'Track vitals daily with a connected wearable']
-            : ['Complete the health assessment to get your score'];
+        if (['pro', 'family'].includes(currentPlan)) {
+            // Pro+ users get a link to the HTML report
+            try {
+                const reportUrl = `${client.defaults.baseURL}/api/vitals/report-html`;
+                await Share.share({
+                    message: `My PreventVital Health Report\n\nCVITAL Score: ${score} — ${statusText}\nView full report: ${reportUrl}`,
+                    title: 'My PreventVital Health Report',
+                });
+            } catch {
+                Alert.alert('Share failed', 'Unable to share report. Please try again.');
+            }
+            return;
+        }
 
+        // Free/Premium: text-only report
+        const date = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
         const report = [
             '━━━━━━━━━━━━━━━━━━━━━━━━',
             'PREVENTVITAL HEALTH REPORT',
@@ -31,26 +37,13 @@ const WellnessScoreScreen = () => {
             `Generated: ${date}`,
             '',
             `CVITAL™ Score: ${score > 0 ? score : 'Not assessed'} — ${statusText}`,
+            ascvdScore > 0 ? `ASCVD Risk: ${ascvdScore}%` : null,
+            bodyFat > 0    ? `Body Fat: ${bodyFat}%` : null,
+            vascularAge > 0 ? `Vascular Age: ${vascularAge} yrs` : null,
             '',
-            '── Cardiovascular Profile ──',
-            ascvdScore > 0 ? `• ASCVD Risk:     ${ascvdScore}%` : null,
-            bodyFat > 0    ? `• Body Fat:       ${bodyFat}%` : null,
-            vascularAge > 0 ? `• Vascular Age:  ${vascularAge} yrs` : null,
-            metabolicScore > 0 ? `• Metabolic Age: ${metabolicScore} yrs` : null,
-            '',
-            '── Score Bands ──',
-            '• 80–100  Excellent  (Low risk)',
-            '• 60–79   Good       (Moderate-low risk)',
-            '• 40–59   Fair       (Moderate risk)',
-            '•  1–39   At Risk    (High risk)',
-            '',
-            '── Recommended Next Steps ──',
-            ...nextSteps.map(s => `• ${s}`),
-            '',
-            'Powered by PreventVital',
-            'preventvital.com',
+            'Powered by PreventVital · preventvital.com',
             '━━━━━━━━━━━━━━━━━━━━━━━━',
-        ].filter(line => line !== null).join('\n');
+        ].filter(Boolean).join('\n');
 
         await Share.share({ message: report, title: 'My PreventVital Health Report' });
     };
@@ -257,10 +250,10 @@ const WellnessScoreScreen = () => {
                         <Ionicons name="lock-closed" size={18} color="#D97706" />
                         <View style={{ flex: 1 }}>
                             <Text style={styles.historyButtonTextLocked}>View Assessment History</Text>
-                            <Text style={styles.historyButtonSubLocked}>Score trend history is a Gold feature</Text>
+                            <Text style={styles.historyButtonSubLocked}>Score trend history is a Pro feature</Text>
                         </View>
-                        <View style={styles.goldBadge}>
-                            <Text style={styles.goldBadgeText}>Gold</Text>
+                        <View style={styles.proBadge}>
+                            <Text style={styles.proBadgeText}>Pro</Text>
                         </View>
                     </TouchableOpacity>
                 ) : (
@@ -274,14 +267,46 @@ const WellnessScoreScreen = () => {
                     </TouchableOpacity>
                 )}
 
+                {/* Consultation CTA for at-risk / fair users */}
+                {score > 0 && score < 60 && (
+                    <TouchableOpacity
+                        style={styles.consultationButton}
+                        onPress={() => navigation.navigate('Consultation')}
+                    >
+                        <Ionicons name="videocam-outline" size={20} color="#fff" />
+                        <Text style={styles.consultationButtonText}>Book a Doctor Consultation</Text>
+                        <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
+                    </TouchableOpacity>
+                )}
+
+                {/* ASCVD Explainer */}
+                {ascvdScore > 0 && (
+                    <TouchableOpacity
+                        style={styles.ascvdButton}
+                        onPress={() => navigation.navigate('ASCVDExplainer', { ascvdScore, score })}
+                    >
+                        <Ionicons name="analytics-outline" size={20} color="#6366F1" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.ascvdButtonText}>Understand Your ASCVD Risk</Text>
+                            <Text style={styles.ascvdButtonSub}>See what drives your {ascvdScore}% score</Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={16} color="#6366F1" />
+                    </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
                     style={styles.shareButton}
                     onPress={handleShare}
                     accessibilityLabel="Share health report"
                     accessibilityRole="button"
                 >
-                    <Ionicons name="share-outline" size={20} color="#0F172A" />
-                    <Text style={styles.shareButtonText}>Share Report with Doctor</Text>
+                    <Ionicons name={['pro','family'].includes(currentPlan) ? 'document-text-outline' : 'share-outline'} size={20} color="#0F172A" />
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.shareButtonText}>Share Report with Doctor</Text>
+                        {!['pro','family'].includes(currentPlan) && (
+                            <Text style={styles.shareButtonSub}>Upgrade to Pro for full PDF report</Text>
+                        )}
+                    </View>
                     <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
                 </TouchableOpacity>
 
@@ -488,8 +513,25 @@ const styles = StyleSheet.create({
     },
     historyButtonTextLocked: { fontSize: 15, fontWeight: 'bold', color: '#92400E' },
     historyButtonSubLocked: { fontSize: 11, color: '#D97706', marginTop: 2 },
-    goldBadge: { backgroundColor: '#FDE68A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-    goldBadgeText: { fontSize: 11, fontWeight: '800', color: '#92400E' },
+    proBadge: { backgroundColor: '#FDE68A', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+    proBadgeText: { fontSize: 11, fontWeight: '800', color: '#92400E' },
+    consultationButton: {
+        flexDirection: 'row', alignItems: 'center',
+        paddingVertical: 16, paddingHorizontal: 20,
+        backgroundColor: '#EF4444', borderRadius: 16,
+        width: '100%', marginTop: 12, gap: 12,
+    },
+    consultationButtonText: { flex: 1, fontSize: 15, fontWeight: '700', color: '#fff' },
+    ascvdButton: {
+        flexDirection: 'row', alignItems: 'center',
+        paddingVertical: 14, paddingHorizontal: 20,
+        backgroundColor: '#EEF2FF', borderRadius: 16,
+        width: '100%', marginTop: 12, gap: 12,
+        borderWidth: 1, borderColor: '#E0E7FF',
+    },
+    ascvdButtonText: { fontSize: 15, fontWeight: '700', color: '#4338CA' },
+    ascvdButtonSub: { fontSize: 12, color: '#6366F1', marginTop: 2 },
+    shareButtonSub: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
 });
 
 export default WellnessScoreScreen;

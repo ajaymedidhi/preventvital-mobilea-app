@@ -38,9 +38,9 @@ const ScoreTrendChart = ({ history, isLocked, onUpgrade }: { history: any[]; isL
             <View style={chartStyles.headerRow}>
                 <Text style={chartStyles.title}>Score Trend</Text>
                 {isLocked ? (
-                    <View style={chartStyles.goldBadge}>
+                    <View style={chartStyles.proBadge}>
                         <Ionicons name="lock-closed" size={11} color="#D97706" />
-                        <Text style={chartStyles.goldBadgeText}>Gold+</Text>
+                        <Text style={chartStyles.proBadgeText}>Pro+</Text>
                     </View>
                 ) : (
                     <Text style={[chartStyles.diff, { color: diffColor }]}>{diffLabel}</Text>
@@ -57,10 +57,10 @@ const ScoreTrendChart = ({ history, isLocked, onUpgrade }: { history: any[]; isL
                     </View>
                     <View style={chartStyles.lockOverlay}>
                         <Ionicons name="lock-closed" size={24} color="#D97706" />
-                        <Text style={chartStyles.lockTitle}>Score trend history is a Gold feature</Text>
+                        <Text style={chartStyles.lockTitle}>Score trend history is a Pro feature</Text>
                         <Text style={chartStyles.lockDesc}>Upgrade to see your 3-month progress and track improvements over time.</Text>
                         <TouchableOpacity onPress={onUpgrade} style={chartStyles.upgradeBtn}>
-                            <Text style={chartStyles.upgradeBtnText}>Upgrade to Gold →</Text>
+                            <Text style={chartStyles.upgradeBtnText}>Upgrade to Pro →</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -93,8 +93,8 @@ const chartStyles = StyleSheet.create({
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
     title: { fontSize: 14, fontWeight: '700', color: '#1E293B' },
     diff: { fontSize: 13, fontWeight: '700' },
-    goldBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-    goldBadgeText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
+    proBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FEF3C7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+    proBadgeText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
     summary: { fontSize: 12, color: '#64748B', lineHeight: 18, marginTop: 2 },
     lockedBody: { height: 120, borderRadius: 12, overflow: 'hidden', marginTop: 8, position: 'relative' },
     blurredChart: { position: 'absolute', inset: 0, flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 8, opacity: 0.15 },
@@ -111,7 +111,7 @@ export default function AssessmentHistoryScreen() {
     const { currentPlan } = useAuth();
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const isChartLocked = currentPlan === 'free' || currentPlan === 'silver';
+    const isChartLocked = currentPlan === 'free' || currentPlan === 'premium';
 
     useEffect(() => {
         const fetchHistory = async () => {

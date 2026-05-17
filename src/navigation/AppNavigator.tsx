@@ -61,6 +61,15 @@ import SessionPlayerScreen from '../screens/programs/SessionPlayerScreen';
 import SubscriptionScreen from '../screens/subscription/SubscriptionScreen';
 import ProfileDetailsScreen from '../screens/profile/ProfileDetailsScreen';
 
+// Section 6 — New Feature Screens
+import ConsultationScreen from '../screens/consultation/ConsultationScreen';
+import FamilyPlanScreen from '../screens/profile/FamilyPlanScreen';
+import ManualVitalsEntryScreen from '../screens/health/ManualVitalsEntryScreen';
+import HealthCoachScreen from '../screens/coach/HealthCoachScreen';
+import CorporateDashboardScreen from '../screens/corporate/CorporateDashboardScreen';
+import ASCVDExplainerScreen from '../screens/health/ASCVDExplainerScreen';
+import AchievementsScreen from '../screens/community/AchievementsScreen';
+
 // Shop Screens
 import ProductDetailScreen from '../screens/shop/ProductDetailScreen';
 import CartScreen from '../screens/shop/CartScreen';
@@ -98,6 +107,15 @@ function AppStack() {
             <Stack.Screen name="PrivacyOverview" component={PrivacyOverviewScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyPolicyLanding" component={PrivacyPolicyLandingScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="PrivacyDetail" component={PrivacyDetailScreen} options={{ presentation: 'modal' }} />
+
+            {/* Section 6 — New Feature Screens */}
+            <Stack.Screen name="Consultation" component={ConsultationScreen} />
+            <Stack.Screen name="FamilyPlan" component={FamilyPlanScreen} />
+            <Stack.Screen name="ManualVitalsEntry" component={ManualVitalsEntryScreen} />
+            <Stack.Screen name="HealthCoach" component={HealthCoachScreen} />
+            <Stack.Screen name="CorporateDashboard" component={CorporateDashboardScreen} />
+            <Stack.Screen name="ASCVDExplainer" component={ASCVDExplainerScreen} />
+            <Stack.Screen name="Achievements" component={AchievementsScreen} />
         </Stack.Navigator>
     );
 }

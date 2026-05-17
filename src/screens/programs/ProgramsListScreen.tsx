@@ -63,9 +63,9 @@ const RECOMMENDED_PROGRAMS = [
 
 const PLAN_BADGE: Record<string, { bg: string; text: string }> = {
     free: { bg: '#F3F4F6', text: '#6B7280' },
-    silver: { bg: '#DBEAFE', text: '#2563EB' },
-    gold: { bg: '#FEF3C7', text: '#D97706' },
-    platinum: { bg: '#EDE9FE', text: '#7C3AED' },
+    premium: { bg: '#DBEAFE', text: '#2563EB' },
+    pro: { bg: '#FEF3C7', text: '#D97706' },
+    family: { bg: '#EDE9FE', text: '#7C3AED' },
 };
 
 const CAT_EMOJI: Record<string, string> = {
@@ -82,7 +82,7 @@ const ProgramsListScreen = () => {
     const [expandedRec, setExpandedRec] = useState<string | null>(null);
 
     const userPlan = currentPlan;
-    const planHierarchy = ['free', 'silver', 'gold', 'platinum'];
+    const planHierarchy = ['free', 'premium', 'pro', 'family'];
     const userPlanRank = planHierarchy.indexOf(userPlan);
 
     // API state
