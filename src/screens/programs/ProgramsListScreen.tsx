@@ -95,8 +95,8 @@ const ProgramsListScreen = () => {
         try {
             const res = await client.get('/api/programs?limit=50');
             setPrograms(res.data?.data?.programs || []);
-        } catch (err) {
-            console.error('Failed to fetch programs', err);
+        } catch {
+            // Programs will show empty state
         }
         setLoading(false);
         setRefreshing(false);

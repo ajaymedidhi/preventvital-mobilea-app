@@ -3,73 +3,58 @@ import client from './client';
 export const preWarmBackend = async (): Promise<void> => {
     try {
         await client.get('/api/public/ping');
-        console.log('[DEBUG] Backend pre-warmed successfully');
-    } catch (e) {
-        // Silently fail as this is just a background warm-up
-        console.log('[DEBUG] Backend pre-warm ping failed (could be offline or slow)');
+    } catch {
+        // Silent — pre-warm is best-effort only
     }
 };
 
-export const login = async (email: string, password: string): Promise<{ token: string; user: any }> => {
+export const login = async (email: string, password: string): Promise<{ token: string; user: unknown }> => {
     try {
         const response = await client.post('/api/auth/login', { email, password });
         return { token: response.data.token, user: response.data.data.user };
-    } catch (error: any) {
-        const msg = error.response?.data?.message || error.message;
-        console.log('Login error:', msg);
+    } catch (error: unknown) {
+        const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Login failed');
     }
 };
 
-export const signup = async (userData: any): Promise<{ token: string; user: any }> => {
+export const signup = async (userData: unknown): Promise<{ token: string; user: unknown }> => {
     try {
         const response = await client.post('/api/auth/signup', userData);
         return { token: response.data.token, user: response.data.data.user };
-    } catch (error: any) {
-        const msg = error.response?.data?.message || error.message;
-        console.log('Signup error:', msg);
+    } catch (error: unknown) {
+        const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Signup failed');
     }
 };
 
-export const fetchMe = async (): Promise<any> => {
+export const fetchMe = async (): Promise<unknown> => {
     try {
-        // According to routes, /api/users/me returns { data: { user, vitalScore } }
         const response = await client.get('/api/users/me');
         return response.data.data.user;
-    } catch (error: any) {
-        const msg = error.response?.data?.message || error.message;
-        console.log('Fetch Me error:', msg);
+    } catch (error: unknown) {
+        const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Failed to fetch user data');
     }
 };
 
-export const updateOnboarding = async (userData: any): Promise<void> => {
+export const updateOnboarding = async (userData: unknown): Promise<void> => {
     try {
         await client.put('/api/users/profile/onboarding', userData);
-    } catch (error: any) {
-        const msg = error.response?.data?.message || error.message;
-        console.log('Onboarding Update error:', msg);
+    } catch (error: unknown) {
+        const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Failed to update profile');
     }
 };
 
-// Deprecated: sendOtp/verifyOtp (Removed or kept for reference if needed, but switching to Email/Password)
-// If we strictly follow the new plan which implies Email/Password for the web backend:
-
-export const calculateAssessmentScore = async (formData: any, token: string): Promise<any> => {
+export const calculateAssessmentScore = async (formData: unknown, token: string): Promise<unknown> => {
     try {
         const response = await client.post('/api/vitals/calculate-score', formData, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+            headers: { Authorization: `Bearer ${token}` },
         });
         return response.data.data;
-    } catch (error: any) {
-        const msg = error.response?.data?.message || error.message;
-        console.log('Scoring error:', msg);
+    } catch (error: unknown) {
+        const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Failed to calculate score');
     }
 };
-
-

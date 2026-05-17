@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Dimensions, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateAssessmentScore, updateOnboarding } from '../../api/authApi';
 import { useAuth } from '../../auth/AuthContext';
 
 const DRAFT_KEY = 'pv_assessment_draft';
-
-const { width } = Dimensions.get('window');
 
 const SECTIONS = [
     { id: 1, icon: 'person', title: 'Personal Demographics', desc: 'Basic Patient Profile' },
@@ -28,7 +26,6 @@ const SECTIONS = [
 export default function CardioAssessmentScreen() {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
-    const insets = useSafeAreaInsets();
     const { userToken, setAuthToken } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
 
@@ -150,36 +147,101 @@ export default function CardioAssessmentScreen() {
         return '—';
     };
 
+    const inRange = (val: string, min: number, max: number) => {
+        const n = parseFloat(val);
+        return !isNaN(n) && n >= min && n <= max;
+    };
+
     const validateStep = () => {
-        let isValid = true;
         switch (currentStep) {
             case 0:
-                if (!formData.age || !formData.sex || !formData.race) isValid = false;
+                if (!formData.age || !formData.sex || !formData.race) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
+                if (!inRange(formData.age, 18, 100)) {
+                    Alert.alert('Invalid Value', 'Age must be between 18 and 100.');
+                    return false;
+                }
                 break;
             case 1:
-                if (!formData.height || !formData.weight || !formData.waist) isValid = false;
+                if (!formData.height || !formData.weight || !formData.waist) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
+                if (!inRange(formData.height, 100, 250)) {
+                    Alert.alert('Invalid Value', 'Height must be between 100 and 250 cm.');
+                    return false;
+                }
+                if (!inRange(formData.weight, 20, 300)) {
+                    Alert.alert('Invalid Value', 'Weight must be between 20 and 300 kg.');
+                    return false;
+                }
                 break;
             case 2:
-                if (!formData.sbp || !formData.htnStatus || !formData.bpMeds) isValid = false;
+                if (!formData.sbp || !formData.htnStatus || !formData.bpMeds) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
+                if (!inRange(formData.sbp, 50, 300)) {
+                    Alert.alert('Invalid Value', 'Systolic BP must be between 50 and 300 mmHg.');
+                    return false;
+                }
+                if (formData.dbp && !inRange(formData.dbp, 30, 200)) {
+                    Alert.alert('Invalid Value', 'Diastolic BP must be between 30 and 200 mmHg.');
+                    return false;
+                }
                 break;
             case 3:
-                if (!formData.tc || !formData.hdl) isValid = false;
+                if (!formData.tc || !formData.hdl) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
+                if (!inRange(formData.tc, 50, 500)) {
+                    Alert.alert('Invalid Value', 'Total Cholesterol must be between 50 and 500 mg/dL.');
+                    return false;
+                }
+                if (!inRange(formData.hdl, 10, 150)) {
+                    Alert.alert('Invalid Value', 'HDL must be between 10 and 150 mg/dL.');
+                    return false;
+                }
+                if (formData.ldl && !inRange(formData.ldl, 10, 400)) {
+                    Alert.alert('Invalid Value', 'LDL must be between 10 and 400 mg/dL.');
+                    return false;
+                }
+                if (formData.trig && !inRange(formData.trig, 20, 2000)) {
+                    Alert.alert('Invalid Value', 'Triglycerides must be between 20 and 2000 mg/dL.');
+                    return false;
+                }
                 break;
             case 4:
-                if (!formData.dmStatus) isValid = false;
+                if (!formData.dmStatus) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
+                if (formData.hba1c && !inRange(formData.hba1c, 2, 20)) {
+                    Alert.alert('Invalid Value', 'HbA1c must be between 2 and 20 %.');
+                    return false;
+                }
+                if (formData.fbg && !inRange(formData.fbg, 40, 600)) {
+                    Alert.alert('Invalid Value', 'Fasting Glucose must be between 40 and 600 mg/dL.');
+                    return false;
+                }
                 break;
             case 5:
-                if (!formData.cvdHist || !formData.fhCvd) isValid = false;
+                if (!formData.cvdHist || !formData.fhCvd) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
                 break;
             case 6:
-                if (!formData.smoking || !formData.alcohol || !formData.activity || !formData.diet) isValid = false;
+                if (!formData.smoking || !formData.alcohol || !formData.activity || !formData.diet) {
+                    Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
+                    return false;
+                }
                 break;
         }
-
-        if (!isValid) {
-            Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
-        }
-        return isValid;
+        return true;
     };
 
     const calcBodyFat = () => {
@@ -221,8 +283,7 @@ export default function CardioAssessmentScreen() {
                 } else {
                     navigation.navigate('AssessmentResults', { token: null, user, formData });
                 }
-            } catch (e) {
-                console.error(e);
+            } catch {
                 navigation.navigate('AssessmentResults', { token: effectiveToken || null, user, formData });
             }
         }
@@ -243,8 +304,8 @@ export default function CardioAssessmentScreen() {
             const updatedUser = { ...user, profile: updatedProfile };
             try {
                 await updateOnboarding({ healthScore: -1 });
-            } catch (e) {
-                console.warn('Could not sync skip status to backend', e);
+            } catch {
+                // Non-fatal — skip status stored locally
             }
             await setAuthToken(effectiveToken, updatedUser);
         }

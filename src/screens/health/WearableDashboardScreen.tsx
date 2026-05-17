@@ -114,9 +114,8 @@ export default function WearableDashboardScreen({ navigation }: any) {
                                             setDevices(prev => ({ ...prev, google: true }));
                                             addLog('GOOGLE', 'Redirecting to browser for OAuth...');
                                         }
-                                    } catch (err) {
+                                    } catch {
                                         Alert.alert('Error', 'Could not reach backend for Google Auth');
-                                        console.error(err);
                                     }
                                 }
                             }

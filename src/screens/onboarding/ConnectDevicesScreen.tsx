@@ -29,24 +29,19 @@ const ConnectDevicesScreen = () => {
                 Alert.alert("Connecting", "Authorization complete. Syncing your vitals now...");
                 
                 try {
-                    const syncResult = await WearableSDK.syncGoogleFit();
-                    console.log("Sync Result:", syncResult);
+                    await WearableSDK.syncGoogleFit();
                     Alert.alert("Success", "Google Fit connected and data synced!");
-                } catch (syncError) {
-                    console.warn("Initial sync failed, but account is linked:", syncError);
+                } catch {
                     Alert.alert("Connected", "Google Fit is linked! Data will appear in your profile shortly.");
                 }
             }
         } catch (error: any) {
-            console.error("Google Fit Connect Error:", error);
             Alert.alert("Error", "Could not initiate Google Fit connection. " + error.message);
         }
     };
 
     const handleComplete = async () => {
         try {
-            // 1. Submit collected data to backend (profile update)
-            console.log("Submitting Onboarding Data:", { personalInfo, healthConditions, healthGoals });
 
             if (token && setAuthToken) {
                 // Store token first
@@ -71,7 +66,6 @@ const ConnectDevicesScreen = () => {
                 navigation.navigate('SignIn');
             }
         } catch (error: any) {
-            console.error("Onboarding Error:", error);
             Alert.alert("Error", "Failed to save profile. " + error.message);
             // Optionally navigate to Home anyway if it's non-critical
         }

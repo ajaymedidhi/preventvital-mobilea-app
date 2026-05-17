@@ -89,8 +89,8 @@ const ProgramDetailsScreen = () => {
                 try {
                     const res = await client.get(`/api/programs/${programId}`);
                     setProgram(res.data?.data?.program || null);
-                } catch (err) {
-                    console.error('Failed to fetch program', err);
+                } catch {
+                    // Program details will show error state
                 }
                 setLoading(false);
             };

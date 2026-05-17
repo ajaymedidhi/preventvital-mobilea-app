@@ -25,8 +25,7 @@ const ContactUsScreen = () => {
                 'Thanks for reaching us! We will get back to you soon.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }]
             );
-        } catch (error: any) {
-            console.error(error);
+        } catch {
             Alert.alert('Error', 'Failed to send message. Please try again later.');
         } finally {
             setLoading(false);

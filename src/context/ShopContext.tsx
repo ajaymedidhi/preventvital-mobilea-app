@@ -46,16 +46,16 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (savedCart) {
                 setCart(JSON.parse(savedCart));
             }
-        } catch (error) {
-            console.error('Failed to load cart:', error);
+        } catch {
+            // Non-fatal — start with empty cart
         }
     };
 
     const saveCart = async () => {
         try {
             await AsyncStorage.setItem('shopping_cart', JSON.stringify(cart));
-        } catch (error) {
-            console.error('Failed to save cart:', error);
+        } catch {
+            // Non-fatal — cart persists in memory for this session
         }
     };
 

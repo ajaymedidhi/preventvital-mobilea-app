@@ -29,8 +29,8 @@ const ShopScreen = () => {
         try {
             const res = await getProducts();
             setProducts(res.data?.products || []);
-        } catch (err) {
-            console.error('Failed to fetch products', err);
+        } catch {
+            // Products will show empty state
         }
         setLoading(false);
         setRefreshing(false);

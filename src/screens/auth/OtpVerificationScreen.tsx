@@ -1,3 +1,8 @@
+/**
+ * DEPRECATED — This screen is NOT wired into AppNavigator.
+ * OTP verification is mocked and must not be used in production.
+ * Wire a real SMS gateway (MSG91 / Twilio) and remove this file before launch.
+ */
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 // Mocking OTP verification for now

@@ -1,17 +1,11 @@
 import axios from 'axios';
-import { getToken } from './storage';
-import { Platform } from 'react-native';
+import { getToken, deleteToken } from './storage';
 
-// Production URL (Set this to your GCP Cloud Run URL once deployed)
-const PROD_URL = 'https://preventvital-api-988713182018.asia-south1.run.app';
-
-const API_URL = __DEV__
-    ? (Platform.OS === 'android' ? 'http://10.0.2.2:5001' : 'http://localhost:5001')
-    : PROD_URL;
+const API_URL = 'https://preventvital-api-988713182018.asia-south1.run.app';
 
 const client = axios.create({
     baseURL: API_URL,
-    timeout: 60000,
+    timeout: 20000,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -25,7 +19,15 @@ client.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
+    (error) => Promise.reject(error)
+);
+
+client.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            await deleteToken('userToken');
+        }
         return Promise.reject(error);
     }
 );

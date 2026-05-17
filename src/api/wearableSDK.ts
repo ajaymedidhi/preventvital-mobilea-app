@@ -5,7 +5,6 @@ import client from './client';
 const { CVitalHealthKitBridge } = NativeModules;
 const healthKitEmitter = CVitalHealthKitBridge ? new NativeEventEmitter(CVitalHealthKitBridge) : null;
 
-// Normalizer
 export const normalizeVital = (rawData: any, source: string) => {
     return {
         timestamp: rawData.timestamp || new Date().toISOString(),
@@ -23,7 +22,6 @@ export const normalizeVital = (rawData: any, source: string) => {
 };
 
 export class WearableSDK {
-    // 1. HealthKit (iOS Only)
     static async requestHealthKitPermissions() {
         if (Platform.OS !== 'ios' || !CVitalHealthKitBridge) {
             throw new Error('HealthKit is only available on iOS');
@@ -40,35 +38,21 @@ export class WearableSDK {
         });
     }
 
-    // 3. Google Fit (Server-to-Server via OAuth)
     static async getGoogleFitAuthUrl() {
-        try {
-            const response = await client.get('/api/wearables/oauth/googlefit/login');
-            return response.data.url;
-        } catch (error) {
-            console.error('Failed to get Google Fit login URL', error);
-            throw error;
-        }
+        const response = await client.get('/api/wearables/oauth/googlefit/login');
+        return response.data.url;
     }
 
     static async syncGoogleFit() {
-        try {
-            const response = await client.post('/api/wearables/sync/googlefit');
-            return response.data;
-        } catch (error) {
-            console.error('Google Fit sync failed', error);
-            throw error;
-        }
+        const response = await client.post('/api/wearables/sync/googlefit');
+        return response.data;
     }
 
-    // 4. Backend Sync
     static async syncWithBackend(vitals: any[]) {
         try {
             const response = await client.post('/api/wearables/ingest', { vitals });
             return response.data;
-        } catch (error) {
-            // Offline caching logic
-            console.warn('Sync failed, caching offline', error);
+        } catch {
             const cached = await AsyncStorage.getItem('@cvital_offline');
             const parsed = cached ? JSON.parse(cached) : [];
             await AsyncStorage.setItem('@cvital_offline', JSON.stringify([...parsed, ...vitals]));
@@ -83,8 +67,8 @@ export class WearableSDK {
             try {
                 await client.post('/api/wearables/ingest', { vitals });
                 await AsyncStorage.removeItem('@cvital_offline');
-            } catch (error) {
-                console.error('Failed to sync offline data', error);
+            } catch {
+                // Will retry on next sync
             }
         }
     }

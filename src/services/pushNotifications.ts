@@ -1,14 +1,12 @@
 /**
  * Push Notifications Service
- * Requires: npx expo install expo-notifications
- * Until installed, all functions are no-ops.
+ * Package: expo-notifications (already installed)
  */
 
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import client from '../api/client';
 
-// Dynamic require so TS doesn't need the package installed to compile
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let N: any = null;
 try { N = require('expo-notifications'); } catch { /* package not installed */ }
 
@@ -27,6 +25,15 @@ if (N) {
 export async function registerForPushNotifications(): Promise<string | null> {
     if (!N) return null;
 
+    if (Platform.OS === 'android') {
+        await N.setNotificationChannelAsync('default', {
+            name: 'PreventVital',
+            importance: N.AndroidImportance?.HIGH ?? 4,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#51A6CB',
+        });
+    }
+
     const { status: existing } = await N.getPermissionsAsync();
     let finalStatus = existing;
     if (existing !== 'granted') {
@@ -35,24 +42,18 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
     if (finalStatus !== 'granted') return null;
 
-    const tokenData = await N.getExpoPushTokenAsync();
-    const token: string = tokenData.data;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    if (!projectId) return null;
 
     try {
+        const tokenData = await N.getExpoPushTokenAsync({ projectId });
+        const token: string = tokenData.data;
+
         await client.post('/api/users/push-token', { token, platform: Platform.OS });
-    } catch (e) {
-        console.warn('Failed to register push token', e);
+        return token;
+    } catch {
+        return null;
     }
-
-    if (Platform.OS === 'android') {
-        await N.setNotificationChannelAsync('default', {
-            name: 'PreventVital',
-            importance: N.AndroidImportance?.HIGH,
-            vibrationPattern: [0, 250, 250, 250],
-        });
-    }
-
-    return token;
 }
 
 export async function scheduleDailyVitalsReminder(): Promise<void> {
@@ -68,12 +69,10 @@ export async function scheduleDailyVitalsReminder(): Promise<void> {
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useNotificationListener(onReceive: (n: any) => void): any {
     return N?.addNotificationReceivedListener(onReceive) ?? null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useNotificationResponseListener(onResponse: (r: any) => void): any {
     return N?.addNotificationResponseReceivedListener(onResponse) ?? null;
 }

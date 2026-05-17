@@ -36,7 +36,7 @@ export const ConsentProvider = ({ children }: { children: ReactNode }) => {
         setHasConsented(true);
         if (Platform.OS === 'android') {
             // Google Fit initialization is now handled via the backend OAuth flow in DevicesScreen
-            console.log('Consent given: Google Fit sync will be active once linked in Devices.');
+            // Google Fit sync is activated via backend OAuth in DevicesScreen
         }
     };
 

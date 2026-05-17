@@ -25,8 +25,8 @@ const ActivityScreen = () => {
             let historyRes = { data: { success: false, history: [] } };
             try {
                 historyRes = await client.get('/api/wearables/history/googlefit');
-            } catch (e) {
-                console.log('[ACTIVITY] History not available');
+            } catch {
+                // History endpoint not yet available — skip silently
             }
 
             const userRes = await client.get('/api/users/me');
@@ -44,8 +44,8 @@ const ActivityScreen = () => {
                     activeTime: 15 // Placeholder
                 });
             }
-        } catch (error) {
-            console.error('[ACTIVITY] Failed to load data:', error);
+        } catch {
+            // Non-fatal — activity screen shows empty state
         } finally {
             setLoading(false);
             setRefreshing(false);

@@ -29,16 +29,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const loadUserAndSubscription = async () => {
         try {
-            // Parallelize these calls to cut loading time in half
             const [fetchedUser, subData] = await Promise.all([
                 fetchMe(),
                 fetchMySubscription()
             ]);
-            
             setUser(fetchedUser);
-            setSubscription(subData?.subscription || null);
-        } catch (e) {
-            console.error("Failed to fetch user or subscription:", e);
+            setSubscription((subData as any)?.subscription || null);
+        } catch {
+            // Non-fatal — user stays on last known state
         }
     };
 
@@ -50,8 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 if (token) {
                     await loadUserAndSubscription();
                 }
-            } catch (e) {
-                console.error("Failed to bootstrap auth:", e);
+            } catch {
                 token = null;
                 await deleteToken('userToken');
             }
@@ -68,17 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signIn = async (email: string, password?: string) => {
-        if (password) {
-            const { token, user: loggedInUser } = await login(email, password);
-            await setToken('userToken', token);
-            setUserToken(token);
-            setUser(loggedInUser);
-            
-            // Fire and forget - don't block the UI transition with subscription fetch
-            refreshSubscription();
-        } else {
-            console.warn("Using unsafe/mock signIn");
-        }
+        if (!password) throw new Error('Password required');
+        const { token, user: loggedInUser } = await login(email, password);
+        await setToken('userToken', token);
+        setUserToken(token);
+        setUser(loggedInUser);
+        refreshSubscription();
     };
 
     const signUp = async (userData: any) => {

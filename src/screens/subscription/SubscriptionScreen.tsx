@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { createSubscription, verifySubscription, fetchMySubscription } from '../../api/subscriptionApi';
+// createSubscription / verifySubscription will be used once native Razorpay is integrated
 import { useAuth } from '../../auth/AuthContext';
 
 const PLANS = [
@@ -60,7 +60,7 @@ const PLANS = [
 
 const SubscriptionScreen = () => {
     const navigation = useNavigation();
-    const { subscription, currentPlan, refreshSubscription, refreshUser, user } = useAuth();
+    const { subscription, currentPlan, user } = useAuth();
     const [isAnnual, setIsAnnual] = useState(false);
     const [loading, setLoading] = useState(false);
     const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
@@ -80,72 +80,14 @@ const SubscriptionScreen = () => {
         setLoading(true);
         setProcessingPlanId(plan.id);
 
-        try {
-            // 1. Create Subscription on Backend
-            console.log(`Creating subscription for ${plan.name} (${isAnnual ? 'Annual' : 'Monthly'})...`);
-            const subscription = await createSubscription(plan.id, isAnnual ? 'annual' : 'monthly');
-            console.log("Subscription Created:", subscription);
-
-            // 2. Mock Payment Flow (Since native modules are tricky in Expo Go)
-            // In production, integrate 'react-native-razorpay' or WebView here.
-
-            // Simulating user payment interaction...
-            Alert.alert(
-                "Confirm Payment",
-                `Pay ₹${isAnnual ? plan.annualPrice : plan.monthlyPrice} for ${plan.name}? (Mock Payment)`,
-                [
-                    {
-                        text: "Cancel",
-                        onPress: () => {
-                            setLoading(false);
-                            setProcessingPlanId(null);
-                        },
-                        style: "cancel"
-                    },
-                    {
-                        text: "Pay Now",
-                        onPress: async () => {
-                            await finalizeMockPayment(subscription, plan.id);
-                        }
-                    }
-                ]
-            );
-
-        } catch (error: any) {
-            Alert.alert("Error", error.message);
-            setLoading(false);
-            setProcessingPlanId(null);
-        }
-    };
-
-    const finalizeMockPayment = async (subscription: any, planId: string) => {
-        try {
-            // 3. Verify on Backend
-            const paymentData = {
-                razorpay_payment_id: `pay_mock_${Date.now()}`,
-                razorpay_subscription_id: subscription.id,
-                razorpay_signature: 'mock_signature', // Backend needs to allow this for dev/test
-                planId: planId
-            };
-
-            console.log("Verifying payment...", paymentData);
-            const response = await verifySubscription(paymentData);
-
-            // Update global user state with new subscription details
-            await refreshSubscription();
-            if (refreshUser) {
-                await refreshUser();
-            }
-
-            Alert.alert("Success", "Subscription active! Welcome to " + PLANS.find(p => p.id === planId)?.name);
-            navigation.goBack(); // Or navigate to Home/Profile
-
-        } catch (error: any) {
-            Alert.alert("Payment Failed", error.message);
-        } finally {
-            setLoading(false);
-            setProcessingPlanId(null);
-        }
+        // TODO: Integrate react-native-razorpay before going live.
+        // Flow: createSubscription → open Razorpay checkout → on success call verifySubscription.
+        // The signature MUST be verified server-side — never bypass in production.
+        Alert.alert(
+            'Payment Not Configured',
+            'Native Razorpay integration is required for production subscriptions. Please integrate react-native-razorpay before releasing.',
+            [{ text: 'OK', onPress: () => { setLoading(false); setProcessingPlanId(null); } }]
+        );
     };
 
     return (

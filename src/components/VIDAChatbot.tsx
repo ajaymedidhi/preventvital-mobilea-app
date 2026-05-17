@@ -57,8 +57,7 @@ export default function VIDAChatbot() {
             { role: 'model', parts: [{ text: data.reply }] }
             ]);
         } catch (e: any) {
-            console.error('Chatbot API Error:', e);
-            const errMsg = e.response?.data?.message || e.message || "Sorry, I'm having trouble connecting to AI. Try again.";
+            const errMsg = e.response?.data?.message || e.message || "Sorry, I'm having trouble connecting. Try again.";
             setMsgs(prev => [...prev, {
                 id: 'err-' + Date.now().toString(), role: 'vita', text: errMsg
             }]);

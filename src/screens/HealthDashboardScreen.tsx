@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -26,6 +26,7 @@ const HealthDashboardScreen = ({ route }: any) => {
     const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
     const [syncedAt, setSyncedAt] = useState<Date | null>(null);
     const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+    const lastFetchedAt = useRef<number>(0);
 
     const formatSyncTime = (date: Date | null): string => {
         if (!date) return '';
@@ -37,7 +38,9 @@ const HealthDashboardScreen = ({ route }: any) => {
         return diffHr === 1 ? 'Synced 1 hr ago' : `Synced ${diffHr} hrs ago`;
     };
 
-    const loadData = async () => {
+    const loadData = async (force = false) => {
+        const STALE_MS = 2 * 60 * 1000;
+        if (!force && Date.now() - lastFetchedAt.current < STALE_MS) return;
         setLoading(true);
         try {
             const vitals = await getVitals();
@@ -65,9 +68,10 @@ const HealthDashboardScreen = ({ route }: any) => {
                     routes: [{ name: 'CardioAssessment' }],
                 });
             }
-        } catch (error) {
-            console.error("Error loading vitals:", error);
+        } catch {
+            // Non-fatal — dashboard shows cached state
         } finally {
+            lastFetchedAt.current = Date.now();
             setLoading(false);
         }
     };
@@ -82,6 +86,7 @@ const HealthDashboardScreen = ({ route }: any) => {
     useFocusEffect(
         useCallback(() => {
             loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [])
     );
 
@@ -206,7 +211,7 @@ const HealthDashboardScreen = ({ route }: any) => {
                                         <Stop offset="1" stopColor={accentColor} stopOpacity="1" />
                                     </SvgGradient>
                                 </Defs>
-                                <G rotation="-90" origin="55, 55">
+                                <G transform="rotate(-90, 55, 55)">
                                     <Circle cx="55" cy="55" r={circleRadius} stroke="#F1F5F9" strokeWidth="8" fill="transparent" />
                                     <Circle
                                         cx="55" cy="55" r={circleRadius}

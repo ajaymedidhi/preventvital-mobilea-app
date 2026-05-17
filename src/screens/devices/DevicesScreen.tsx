@@ -44,8 +44,8 @@ const DevicesScreen = () => {
             if (profile?.wearableIntegrations?.appleHealth?.connected && Platform.OS === 'ios') {
                 setAppleHealthConnected(true);
             }
-        } catch (err) {
-            console.log('Could not check integration status');
+        } catch {
+            // Non-fatal — connection status will show as disconnected
         }
     }, []);
 
@@ -67,8 +67,8 @@ const DevicesScreen = () => {
             if (histRes.data?.data) {
                 setVitalHistory(histRes.data.data);
             }
-        } catch (err) {
-            console.log('Could not load health data');
+        } catch {
+            // Non-fatal — vitals will show as unavailable
         }
     }, []);
 
@@ -112,7 +112,6 @@ const DevicesScreen = () => {
                     }
                 ]
             );
-            console.error(err);
         }
     };
 

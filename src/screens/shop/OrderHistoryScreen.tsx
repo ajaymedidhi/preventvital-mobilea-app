@@ -25,8 +25,8 @@ const OrderHistoryScreen = () => {
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
             setOrders(sortedOrders);
-        } catch (err) {
-            console.error('Failed to fetch orders', err);
+        } catch {
+            // Orders will show empty state
         } finally {
             setLoading(false);
             setRefreshing(false);

@@ -8,7 +8,7 @@ export const setToken = async (key: string, value: string) => {
         try {
             localStorage.setItem(key, value);
         } catch (e) {
-            console.warn('LocalStorage failed:', e);
+            // localStorage unavailable
         }
     } else {
         await SecureStore.setItemAsync(key, value);
@@ -32,7 +32,7 @@ export const deleteToken = async (key: string) => {
         try {
             localStorage.removeItem(key);
         } catch (e) {
-            console.warn('LocalStorage failed:', e);
+            // localStorage unavailable
         }
     } else {
         await SecureStore.deleteItemAsync(key);

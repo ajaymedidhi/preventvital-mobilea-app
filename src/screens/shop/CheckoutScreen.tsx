@@ -8,13 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useShop } from '../../context/ShopContext';
-import { createOrder, verifyPayment } from '../../api/shopApi';
-import { useAuth } from '../../auth/AuthContext';
+import { createOrder } from '../../api/shopApi';
 
 const CheckoutScreen = () => {
     const navigation = useNavigation<any>();
-    const { cart, totalAmount, clearCart } = useShop();
-    const { user } = useAuth();
+    const { cart, totalAmount } = useShop();
     
     const [loading, setLoading] = useState(false);
     const [address, setAddress] = useState({
@@ -35,52 +33,23 @@ const CheckoutScreen = () => {
         setLoading(true);
         try {
             // 1. Create Order on Backend
-            const orderRes = await createOrder({
+            await createOrder({
                 items: cart.map(item => ({ product: item._id, quantity: item.quantity })),
                 shippingAddress: address
             });
 
-            console.log("Order Created:", orderRes);
-            const { order } = orderRes;
-
-            // 2. MOCK PAYMENT FLOW (Since no native Razorpay is available)
-            // In a real app with native Razorpay, we would open the Razorpay checkout here.
-            // For now, we'll simulate a successful payment verification.
-            
+            // TODO: Integrate native Razorpay SDK before going live.
+            // orderRes.order contains the Razorpay order_id needed for checkout.
+            // Install: npm install react-native-razorpay
+            // Then open the Razorpay checkout with the order details and on success call verifyPayment.
+            // The signature MUST be verified server-side — never bypass in production.
             Alert.alert(
-                'Payment Simulation',
-                'Since this is a development build without native Razorpay, we will simulate a successful payment.',
-                [
-                    {
-                        text: 'PROCEED',
-                        onPress: async () => {
-                            try {
-                                const verifyRes = await verifyPayment({
-                                    razorpay_order_id: order.id,
-                                    razorpay_payment_id: `pay_mock_${Date.now()}`,
-                                    razorpay_signature: 'bypass', // Backend logic allows 'bypass' if in dev mode
-                                    items: cart,
-                                    totalAmount: totalAmount,
-                                    shippingAddress: address
-                                });
-
-                                if (verifyRes.status === 'success') {
-                                    clearCart();
-                                    navigation.navigate('OrderSuccess', { orderId: verifyRes.order.orderId });
-                                } else {
-                                    Alert.alert('Error', 'Payment verification failed');
-                                }
-                            } catch (err: any) {
-                                console.error("Verification Error:", err);
-                                Alert.alert('Error', err.response?.data?.message || 'Verification failed');
-                            }
-                        }
-                    }
-                ]
+                'Payment Not Configured',
+                'Native Razorpay integration is required for production payments. Please integrate the react-native-razorpay SDK before releasing.',
+                [{ text: 'OK' }]
             );
 
         } catch (err: any) {
-            console.error("Order Creation Error:", err);
             Alert.alert('Error', err.response?.data?.message || 'Failed to create order');
         } finally {
             setLoading(false);

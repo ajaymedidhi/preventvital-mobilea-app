@@ -32,8 +32,8 @@ const ProductDetailScreen = () => {
             
             // Explicit confirmation as requested
             Alert.alert('Success', `${product.name} added to cart!`);
-        } catch (error) {
-            console.error("Add to cart failed:", error);
+        } catch {
+            Alert.alert('Error', 'Could not add item to cart. Please try again.');
         }
     };
 
