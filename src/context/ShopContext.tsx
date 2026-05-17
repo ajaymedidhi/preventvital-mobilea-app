@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../auth/AuthContext';
 
 export interface Product {
     _id: string;
@@ -28,36 +29,40 @@ interface ShopContextType {
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user } = useAuth();
     const [cart, setCart] = useState<CartItem[]>([]);
+    // Tracks which user's cart is currently loaded — null means "between users, don't save"
+    const activeCartKey = useRef<string | null>(null);
 
-    // Load cart from AsyncStorage on mount
+    // Reload cart whenever the logged-in user changes (login, logout, user switch)
     useEffect(() => {
-        loadCart();
-    }, []);
+        const userId = user?._id || user?.id || null;
+        const newKey = userId ? `cart_${userId}` : null;
 
-    // Save cart to AsyncStorage whenever it changes
+        if (newKey === activeCartKey.current) return;
+
+        // Clear in-memory cart and disable saving until the new user's cart is loaded
+        setCart([]);
+        activeCartKey.current = null;
+
+        if (newKey) {
+            AsyncStorage.getItem(newKey)
+                .then(saved => {
+                    activeCartKey.current = newKey;
+                    setCart(saved ? JSON.parse(saved) : []);
+                })
+                .catch(() => {
+                    activeCartKey.current = newKey;
+                });
+        }
+        // If newKey is null (logged out), leave activeCartKey.current as null — cart stays empty, nothing is saved
+    }, [user?._id, user?.id]);
+
+    // Persist cart on every change, but only for the currently active user key
     useEffect(() => {
-        saveCart();
+        if (!activeCartKey.current) return;
+        AsyncStorage.setItem(activeCartKey.current, JSON.stringify(cart)).catch(() => {});
     }, [cart]);
-
-    const loadCart = async () => {
-        try {
-            const savedCart = await AsyncStorage.getItem('shopping_cart');
-            if (savedCart) {
-                setCart(JSON.parse(savedCart));
-            }
-        } catch {
-            // Non-fatal — start with empty cart
-        }
-    };
-
-    const saveCart = async () => {
-        try {
-            await AsyncStorage.setItem('shopping_cart', JSON.stringify(cart));
-        } catch {
-            // Non-fatal — cart persists in memory for this session
-        }
-    };
 
     const addToCart = (product: Product) => {
         setCart((prevCart) => {

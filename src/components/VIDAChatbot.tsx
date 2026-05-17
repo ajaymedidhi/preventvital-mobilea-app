@@ -21,7 +21,7 @@ export default function VIDAChatbot() {
     const insets = useSafeAreaInsets();
     const [open, setOpen] = useState(false);
     const [msgs, setMsgs] = useState<any[]>([
-        { id: '1', role: 'vita', text: "Hi! I'm VIDA 👋 Ask me anything about your health." }
+        { id: '1', role: 'vita', text: "Hi! I'm VITA 👋 Ask me anything about your health." }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -74,7 +74,7 @@ export default function VIDAChatbot() {
                     onPress={() => setShowTooltip(false)}
                     activeOpacity={0.9}
                 >
-                    <Text style={styles.tooltipText}>👋 Hi! I'm VIDA, your AI health assistant. Tap me!</Text>
+                    <Text style={styles.tooltipText}>👋 Hi! I'm VITA, your AI health assistant. Tap me!</Text>
                     <View style={styles.tooltipArrow} />
                 </TouchableOpacity>
             )}
@@ -92,7 +92,7 @@ export default function VIDAChatbot() {
                 activeOpacity={0.8}
             >
                 <Image 
-                    source={require('../../assets/images/vida_bot.png')} 
+                    source={require('../../assets/images/vita_bot.png')} 
                     style={styles.fabImg} 
                 />
             </TouchableOpacity>
@@ -107,12 +107,12 @@ export default function VIDAChatbot() {
                     <View style={styles.header}>
                         <View style={styles.avatar}>
                             <Image 
-                                source={require('../../assets/images/vida_bot.png')} 
+                                source={require('../../assets/images/vita_bot.png')} 
                                 style={styles.headerImg} 
                             />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.vitaName}>VIDA AI</Text>
+                            <Text style={styles.vitaName}>VITA AI</Text>
                             <Text style={styles.vitaStatus}>● Online · Gemini</Text>
                         </View>
                         <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
@@ -157,7 +157,7 @@ export default function VIDAChatbot() {
                             style={styles.input}
                             value={input}
                             onChangeText={setInput}
-                            placeholder="Ask VIDA..."
+                            placeholder="Ask VITA..."
                             onSubmitEditing={() => send()}
                         />
                         <TouchableOpacity style={styles.sendBtn} onPress={() => send()}>

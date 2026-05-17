@@ -1,19 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity,
-    Dimensions, StatusBar
+    StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useShop } from '../../context/ShopContext';
 
-const { width } = Dimensions.get('window');
 
 const OrderSuccessScreen = () => {
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { orderId } = route.params || { orderId: 'N/A' };
+    const { clearCart } = useShop();
+
+    useEffect(() => {
+        clearCart();
+    }, []);
 
     return (
         <View style={styles.container}>
