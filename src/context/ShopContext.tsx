@@ -7,10 +7,14 @@ export interface Product {
     name: string;
     description: string;
     price: number;
+    originalPrice?: number;
+    discount?: number;
     image?: string;
     images?: string[];
     category: string;
     stock: number;
+    averageRating?: number;
+    reviewCount?: number;
 }
 
 export interface CartItem extends Product {

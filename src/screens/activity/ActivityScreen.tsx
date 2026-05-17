@@ -1,506 +1,388 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+    View, Text, StyleSheet, ScrollView, TouchableOpacity,
+    Dimensions, ActivityIndicator, RefreshControl,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import client from '../../api/client';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import client from '../../api/client';
 
 const { width } = Dimensions.get('window');
+const CARD_W = (width - 52) / 2;
+const STEP_GOAL = 10_000;
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+type StatItem = { label: string; value: string; unit: string; icon: string; color: string; bg: string; progress?: number };
+
+const MOCK_LOGS = [
+    { id: '1', title: 'Morning Jog',       type: 'Outdoor Run',  duration: '30 min', calories: 320, icon: 'walk',    color: '#16A34A', bg: '#DCFCE7' },
+    { id: '2', title: 'Yoga Session',       type: 'Flexibility',  duration: '45 min', calories: 180, icon: 'body',    color: '#7C3AED', bg: '#F5F3FF' },
+    { id: '3', title: 'Strength Training',  type: 'Gym',          duration: '60 min', calories: 450, icon: 'barbell', color: '#2563EB', bg: '#EFF6FF' },
+];
 
 const ActivityScreen = () => {
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'today' | 'weekly'>('today');
+    const insets = useSafeAreaInsets();
+    const navigation = useNavigation<any>();
+    const [loading, setLoading]       = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [history, setHistory] = useState<any[]>([]);
-    const [todayStats, setTodayStats] = useState<any>({
-        steps: 0,
-        calories: 0,
-        distance: 0,
-        activeTime: 15 // Mock for now as activeTime is not yet synced
-    });
+    const [filter, setFilter]         = useState<'today' | 'week'>('today');
+    const [history, setHistory]       = useState<any[]>([]);
+    const [todayStats, setTodayStats] = useState({ steps: 0, calories: 0, distance: 0, activeTime: 15 });
 
     const loadData = useCallback(async () => {
         try {
-            let historyRes = { data: { success: false, history: [] } };
+            let hist: any[] = [];
             try {
-                historyRes = await client.get('/api/wearables/history/googlefit');
-            } catch {
-                // History endpoint not yet available — skip silently
-            }
+                const r = await client.get('/api/wearables/history/googlefit');
+                if (r.data.success) hist = r.data.history;
+            } catch { /* endpoint may not be live */ }
 
             const userRes = await client.get('/api/users/me');
-
-            if (historyRes.data.success) {
-                setHistory(historyRes.data.history);
-            }
-
-            const latest = userRes.data?.data?.user?.latestVitals || userRes.data?.user?.latestVitals;
+            const latest  = userRes.data?.data?.user?.latestVitals || userRes.data?.user?.latestVitals;
             if (latest) {
                 setTodayStats({
                     steps: latest.steps || 0,
                     calories: latest.calories || 0,
                     distance: latest.distance || 0,
-                    activeTime: 15 // Placeholder
+                    activeTime: 15,
                 });
             }
-        } catch {
-            // Non-fatal — activity screen shows empty state
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
+            setHistory(hist);
+        } catch { /* non-fatal */ }
+        finally { setLoading(false); setRefreshing(false); }
     }, []);
 
-    useFocusEffect(
-        useCallback(() => {
-            loadData();
-        }, [loadData])
-    );
+    useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
-    const onRefresh = () => {
-        setRefreshing(true);
-        loadData();
-    };
+    const onRefresh = () => { setRefreshing(true); loadData(); };
 
-    // Calculate weekly chart data from real history
-    const weeklyData = history.slice(-7).map(item => ({
-        day: item.dayName,
-        steps: item.steps,
-        max: 10000 // Goal threshold
-    }));
+    // Build 7-day chart data
+    const today = new Date();
+    const weeklyData = Array.from({ length: 7 }, (_, i) => {
+        const d  = new Date(today); d.setDate(today.getDate() - (6 - i));
+        const hit = history.find(h => new Date(h.date).toDateString() === d.toDateString());
+        return { day: DAYS[d.getDay()], steps: hit?.steps || 0, isToday: i === 6 };
+    });
 
-    // Pad with empty data if history is shorter than 7 days
-    while (weeklyData.length < 7 && weeklyData.length > 0) {
-        // Just showing whatever we have for now
-        break;
-    }
+    const avgSteps = history.length
+        ? Math.round(history.reduce((a, b) => a + (b.steps || 0), 0) / history.length)
+        : 0;
 
-    const SummaryCard = ({ title, value, unit, icon, color, bgColor }: any) => (
-        <View style={styles.summaryCard}>
-            <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
-                <Ionicons name={icon} size={24} color={color} />
-            </View>
-            <View>
-                <Text style={styles.summaryValue}>
-                    {value} <Text style={styles.summaryUnit}>{unit}</Text>
-                </Text>
-                <Text style={styles.summaryTitle}>{title}</Text>
-            </View>
-        </View>
-    );
+    const statsToday: StatItem[] = [
+        { label: 'Steps',       value: todayStats.steps.toLocaleString(), unit: '',     icon: 'footsteps-outline', color: '#16A34A', bg: '#DCFCE7', progress: todayStats.steps / STEP_GOAL },
+        { label: 'Calories',    value: String(todayStats.calories),        unit: 'kcal', icon: 'flame-outline',     color: '#EF4444', bg: '#FEE2E2', progress: todayStats.calories / 500 },
+        { label: 'Distance',    value: (todayStats.distance / 1000).toFixed(1), unit: 'km', icon: 'walk-outline',  color: '#2563EB', bg: '#EFF6FF', progress: todayStats.distance / 5000 },
+        { label: 'Active Time', value: String(todayStats.activeTime),      unit: 'min',  icon: 'timer-outline',    color: '#D97706', bg: '#FEF3C7', progress: todayStats.activeTime / 60 },
+    ];
 
-    const WorkoutLog = ({ title, type, duration, calories, date, icon }: any) => (
-        <View style={styles.logCard}>
-            <View style={[styles.logIconContainer, { backgroundColor: '#F1F5F9' }]}>
-                <Ionicons name={icon} size={24} color="#6366F1" />
-            </View>
-            <View style={styles.logInfo}>
-                <Text style={styles.logTitle}>{title}</Text>
-                <Text style={styles.logDetails}>{type} • {date}</Text>
-            </View>
-            <View style={styles.logStats}>
-                <Text style={styles.logDuration}>{duration}</Text>
-                <Text style={styles.logCalories}>{calories} kcal</Text>
-            </View>
-        </View>
-    );
+    const statsWeek: StatItem[] = [
+        { label: 'Avg Steps',   value: avgSteps.toLocaleString(), unit: '',     icon: 'footsteps-outline', color: '#16A34A', bg: '#DCFCE7' },
+        { label: 'Total Cals',  value: history.reduce((a, b) => a + (b.calories || 0), 0).toLocaleString(), unit: 'kcal', icon: 'flame-outline', color: '#EF4444', bg: '#FEE2E2' },
+        { label: 'Total km',    value: (history.reduce((a, b) => a + (b.distance || 0), 0) / 1000).toFixed(1), unit: 'km', icon: 'walk-outline', color: '#2563EB', bg: '#EFF6FF' },
+        { label: 'Active Days', value: String(history.filter(h => h.steps > 1000).length), unit: 'days', icon: 'calendar-outline', color: '#7C3AED', bg: '#F5F3FF' },
+    ];
+
+    const stats = filter === 'today' ? statsToday : statsWeek;
+    const stepProgress = Math.min(todayStats.steps / STEP_GOAL, 1);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-            <View style={{ flex: 1 }}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>My Activity</Text>
-                    <View style={styles.filterTabs}>
-                        <TouchableOpacity
-                            onPress={() => setFilter('today')}
-                            style={[styles.filterTab, filter === 'today' && styles.filterTabActive]}
-                        >
-                            <Text style={[styles.filterTabText, filter === 'today' && styles.filterTextActive]}>Day</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => setFilter('weekly')}
-                            style={[styles.filterTab, filter === 'weekly' && styles.filterTabActive]}
-                        >
-                            <Text style={[styles.filterTabText, filter === 'weekly' && styles.filterTextActive]}>Week</Text>
-                        </TouchableOpacity>
+        <View style={styles.container}>
+            {/* Gradient Header */}
+            <LinearGradient
+                colors={['#4F46E5', '#6366F1', '#818CF8']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={[styles.header, { paddingTop: insets.top + 12 }]}
+            >
+                <View style={styles.headerTop}>
+                    <View>
+                        <Text style={styles.headerGreeting}>
+                            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        </Text>
+                        <Text style={styles.headerTitle}>My Activity</Text>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.deviceBtn}
+                        onPress={() => navigation.navigate('Devices')}
+                        accessibilityLabel="Connect device"
+                    >
+                        <Ionicons name="hardware-chip-outline" size={18} color="#FFF" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Step Goal Ring (visual only) */}
+                <View style={styles.goalCard}>
+                    <View style={styles.goalLeft}>
+                        <Text style={styles.goalLabel}>Daily Step Goal</Text>
+                        <Text style={styles.goalValue}>{todayStats.steps.toLocaleString()}</Text>
+                        <Text style={styles.goalSub}>of {STEP_GOAL.toLocaleString()} steps</Text>
+                        <View style={styles.goalBarBg}>
+                            <View style={[styles.goalBarFill, { width: `${Math.round(stepProgress * 100)}%` as any }]} />
+                        </View>
+                        <Text style={styles.goalPct}>{Math.round(stepProgress * 100)}% complete</Text>
+                    </View>
+                    <View style={styles.goalRight}>
+                        <View style={styles.ringOuter}>
+                            <View style={[styles.ringInner, { borderColor: stepProgress >= 1 ? '#4ADE80' : '#A5B4FC' }]}>
+                                <Ionicons name="footsteps" size={28} color={stepProgress >= 1 ? '#4ADE80' : '#C7D2FE'} />
+                            </View>
+                        </View>
+                        {stepProgress >= 1 && <Text style={styles.goalAchieved}>Goal Hit! 🎉</Text>}
                     </View>
                 </View>
 
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-                >
-                    {loading && !refreshing ? (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: 400 }}>
-                            <ActivityIndicator size="large" color="#6366F1" />
-                            <Text style={{ marginTop: 12, color: '#64748B' }}>Fetching your progress...</Text>
-                        </View>
-                    ) : (
-                        <View style={{ paddingHorizontal: 20 }}>
-                            {/* Daily Summary Grid */}
-                            <Text style={styles.sectionTitle}>{filter === 'today' ? "Today's Overview" : 'Weekly Average'}</Text>
-                            <View style={styles.summaryGrid}>
-                                <SummaryCard
-                                    title="Steps"
-                                    value={filter === 'today' ? todayStats.steps?.toLocaleString() : Math.round(weeklyData.reduce((acc, curr) => acc + curr.steps, 0) / (weeklyData.length || 1)).toLocaleString()}
-                                    unit=""
-                                    icon="footsteps-outline" color="#16A34A" bgColor="#DCFCE7"
-                                />
-                                <SummaryCard
-                                    title="Calories"
-                                    value={filter === 'today' ? todayStats.calories : Math.round(history.reduce((acc, curr) => acc + curr.calories, 0) / (history.length || 1))}
-                                    unit="kcal"
-                                    icon="flame-outline" color="#EF4444" bgColor="#FEE2E2"
-                                />
-                                <SummaryCard
-                                    title="Distance"
-                                    value={filter === 'today' ? (todayStats.distance / 1000).toFixed(2) : (history.reduce((acc, curr) => acc + (curr.distance || 0), 0) / (history.length || 1) / 1000).toFixed(2)}
-                                    unit="km"
-                                    icon="walk-outline" color="#3B82F6" bgColor="#EFF6FF"
-                                />
-                                <SummaryCard
-                                    title="Active Time" value={todayStats.activeTime} unit="min"
-                                    icon="timer-outline" color="#F59E0B" bgColor="#FEF3C7"
-                                />
-                            </View>
+                {/* Toggle */}
+                <View style={styles.filterWrap}>
+                    {(['today', 'week'] as const).map(f => (
+                        <TouchableOpacity
+                            key={f}
+                            onPress={() => setFilter(f)}
+                            style={[styles.filterTab, filter === f && styles.filterTabActive]}
+                        >
+                            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                                {f === 'today' ? 'Today' : 'This Week'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </LinearGradient>
 
-                            {/* Weekly Steps Chart */}
-                            <View style={styles.chartCard}>
-                                <View style={styles.chartHeader}>
-                                    <View>
-                                        <Text style={styles.chartTitle}>Steps</Text>
-                                        <Text style={styles.chartSubtitle}>Weekly Progress</Text>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />}
+            >
+                {loading && !refreshing ? (
+                    <View style={styles.loadingWrap}>
+                        <ActivityIndicator size="large" color="#6366F1" />
+                        <Text style={styles.loadingText}>Fetching your progress...</Text>
+                    </View>
+                ) : (
+                    <>
+                        {/* Stat Cards */}
+                        <View style={styles.gridWrap}>
+                            {stats.map(s => (
+                                <View key={s.label} style={styles.statCard}>
+                                    <View style={[styles.statIcon, { backgroundColor: s.bg }]}>
+                                        <Ionicons name={s.icon as any} size={20} color={s.color} />
                                     </View>
-                                    <Text style={styles.chartTotal}>{todayStats.steps?.toLocaleString()} <Text style={{ fontSize: 14, color: '#94A3B8', fontWeight: '500' }}>today</Text></Text>
+                                    <Text style={styles.statValue}>{s.value}</Text>
+                                    <Text style={styles.statUnit}>{s.unit || ' '}</Text>
+                                    <Text style={styles.statLabel}>{s.label}</Text>
+                                    {s.progress !== undefined && (
+                                        <View style={styles.miniBarBg}>
+                                            <View style={[styles.miniBarFill, { width: `${Math.min(Math.round(s.progress * 100), 100)}%` as any, backgroundColor: s.color }]} />
+                                        </View>
+                                    )}
                                 </View>
-
-                                <View style={styles.barChartContainer}>
-                                    {weeklyData.length === 0 ? (
-                                        <Text style={{ color: '#94A3B8', textAlign: 'center', width: '100%' }}>No activity data found for this week</Text>
-                                    ) : weeklyData.map((data, index) => {
-                                        const heightPercentage = (data.steps / data.max) * 100;
-                                        const isToday = index === weeklyData.length - 1;
-                                        const hitGoal = data.steps >= data.max;
-
-                                        return (
-                                            <View key={index} style={styles.barColumn}>
-                                                <View style={styles.barTrack}>
-                                                    <LinearGradient
-                                                        colors={hitGoal ? ['#22C55E', '#16A34A'] : (isToday ? ['#6366F1', '#8B5CF6'] : ['#94A3B8', '#CBD5E1'])}
-                                                        style={[styles.barFill, { height: `${Math.min(heightPercentage, 100)}%` }]}
-                                                    />
-                                                </View>
-                                                <Text style={[styles.barLabel, isToday && { fontWeight: '700', color: '#1E293B' }]}>
-                                                    {data.day}
-                                                </Text>
-                                            </View>
-                                        );
-                                    })}
-                                </View>
-                            </View>
-
-                            {/* Recent Workouts List */}
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Recent Logs</Text>
-                                <TouchableOpacity>
-                                    <Text style={styles.seeAllText}>See All</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            <WorkoutLog
-                                title="Morning Jog"
-                                type="Outdoor Run"
-                                date="Today, 7:00 AM"
-                                duration="30 min"
-                                calories="320"
-                                icon="walk"
-                            />
-                            <WorkoutLog
-                                title="Yoga Session"
-                                type="Flexibility"
-                                date="Yesterday, 6:30 PM"
-                                duration="45 min"
-                                calories="180"
-                                icon="body"
-                            />
-                            <WorkoutLog
-                                title="Strength Training"
-                                type="Gym"
-                                date="Thu, 5:00 PM"
-                                duration="60 min"
-                                calories="450"
-                                icon="barbell"
-                            />
-
-                            <View style={{ height: 60 }} />
+                            ))}
                         </View>
-                    )}
 
-                </ScrollView>
-            </View>
-        </SafeAreaView>
+                        {/* Weekly Bar Chart */}
+                        <View style={styles.chartCard}>
+                            <View style={styles.chartHeader}>
+                                <View>
+                                    <Text style={styles.chartTitle}>Weekly Steps</Text>
+                                    <Text style={styles.chartSub}>Goal: {STEP_GOAL.toLocaleString()} / day</Text>
+                                </View>
+                                <View style={styles.legendRow}>
+                                    <View style={[styles.legendDot, { backgroundColor: '#6366F1' }]} />
+                                    <Text style={styles.legendText}>Today</Text>
+                                    <View style={[styles.legendDot, { backgroundColor: '#4ADE80', marginLeft: 8 }]} />
+                                    <Text style={styles.legendText}>Goal met</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.barChart}>
+                                {weeklyData.map((d, i) => {
+                                    const pct = Math.min(d.steps / STEP_GOAL, 1);
+                                    const hitGoal = d.steps >= STEP_GOAL;
+                                    return (
+                                        <View key={i} style={styles.barCol}>
+                                            <Text style={styles.barSteps}>
+                                                {d.steps > 0 ? (d.steps >= 1000 ? `${(d.steps / 1000).toFixed(1)}k` : String(d.steps)) : ''}
+                                            </Text>
+                                            <View style={styles.barTrack}>
+                                                <LinearGradient
+                                                    colors={hitGoal ? ['#4ADE80', '#16A34A'] : d.isToday ? ['#818CF8', '#6366F1'] : ['#CBD5E1', '#94A3B8']}
+                                                    style={[styles.barFill, { height: `${Math.max(pct * 100, d.steps > 0 ? 5 : 0)}%` as any }]}
+                                                />
+                                            </View>
+                                            <Text style={[styles.barLabel, d.isToday && styles.barLabelToday]}>{d.day}</Text>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+
+                            {history.length === 0 && (
+                                <View style={styles.noDataWrap}>
+                                    <Ionicons name="hardware-chip-outline" size={28} color="#CBD5E1" />
+                                    <Text style={styles.noDataText}>Connect a wearable to see live data</Text>
+                                    <TouchableOpacity
+                                        style={styles.connectBtn}
+                                        onPress={() => navigation.navigate('Devices')}
+                                    >
+                                        <Text style={styles.connectBtnText}>Connect Device</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+
+                        {/* Recent Logs */}
+                        <View style={styles.logsHeader}>
+                            <Text style={styles.logsTitle}>Recent Logs</Text>
+                            <TouchableOpacity><Text style={styles.seeAll}>See all</Text></TouchableOpacity>
+                        </View>
+
+                        {MOCK_LOGS.map(log => (
+                            <View key={log.id} style={styles.logCard}>
+                                <View style={[styles.logIcon, { backgroundColor: log.bg }]}>
+                                    <Ionicons name={log.icon as any} size={22} color={log.color} />
+                                </View>
+                                <View style={styles.logBody}>
+                                    <Text style={styles.logTitle}>{log.title}</Text>
+                                    <Text style={styles.logSub}>{log.type}</Text>
+                                </View>
+                                <View style={styles.logRight}>
+                                    <View style={styles.logStatRow}>
+                                        <Ionicons name="time-outline" size={11} color="#94A3B8" />
+                                        <Text style={styles.logDuration}>{log.duration}</Text>
+                                    </View>
+                                    <View style={styles.logStatRow}>
+                                        <Ionicons name="flame-outline" size={11} color="#EF4444" />
+                                        <Text style={styles.logCalories}>{log.calories} kcal</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        ))}
+                    </>
+                )}
+            </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#FAFAFA',
+    container: { flex: 1, backgroundColor: '#F1F5F9' },
+
+    // ── Header ──
+    header: { paddingBottom: 0 },
+    headerTop: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+        paddingHorizontal: 20, marginBottom: 16,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: '#fff',
+    headerGreeting: { fontSize: 12, color: '#C7D2FE', fontWeight: '600', letterSpacing: 0.5, marginBottom: 2 },
+    headerTitle: { fontSize: 26, fontWeight: '800', color: '#FFF' },
+    deviceBtn: {
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        justifyContent: 'center', alignItems: 'center',
     },
-    iconButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F8FAFC',
-        justifyContent: 'center',
-        alignItems: 'center',
+
+    // Goal card
+    goalCard: {
+        flexDirection: 'row', alignItems: 'center',
+        marginHorizontal: 16, marginBottom: 16,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 18, padding: 16,
     },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#0f172a',
+    goalLeft: { flex: 1, marginRight: 12 },
+    goalLabel: { fontSize: 11, color: '#C7D2FE', fontWeight: '600', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 },
+    goalValue: { fontSize: 32, fontWeight: '900', color: '#FFF' },
+    goalSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 },
+    goalBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
+    goalBarFill: { height: '100%', backgroundColor: '#818CF8', borderRadius: 3 },
+    goalPct: { fontSize: 11, color: '#C7D2FE', fontWeight: '600' },
+    goalRight: { alignItems: 'center', gap: 8 },
+    ringOuter: {
+        width: 72, height: 72, borderRadius: 36,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        justifyContent: 'center', alignItems: 'center',
     },
-    filterTabs: {
-        flexDirection: 'row',
-        backgroundColor: '#F1F5F9',
-        borderRadius: 12,
-        padding: 4,
+    ringInner: {
+        width: 56, height: 56, borderRadius: 28,
+        borderWidth: 3, justifyContent: 'center', alignItems: 'center',
     },
-    filterTab: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
+    goalAchieved: { fontSize: 10, fontWeight: '700', color: '#4ADE80' },
+
+    // Filter toggle
+    filterWrap: {
+        flexDirection: 'row', marginHorizontal: 16, marginBottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: 3,
     },
-    filterTabActive: {
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+    filterTab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 11 },
+    filterTabActive: { backgroundColor: '#FFF' },
+    filterText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
+    filterTextActive: { color: '#4F46E5' },
+
+    // ── Content ──
+    scroll: { paddingTop: 20, paddingHorizontal: 16 },
+    loadingWrap: { height: 400, justifyContent: 'center', alignItems: 'center', gap: 12 },
+    loadingText: { fontSize: 14, color: '#94A3B8' },
+
+    // Stat Cards
+    gridWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+    statCard: {
+        width: CARD_W, backgroundColor: '#FFF', borderRadius: 18,
+        padding: 16, alignItems: 'flex-start',
+        shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
     },
-    filterTabText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#64748B',
-    },
-    filterTextActive: {
-        color: '#6366F1',
-    },
-    scrollContent: {
-        paddingTop: 10,
-    },
-    dateRibbon: {
-        marginBottom: 24,
-        flexGrow: 0,
-    },
-    dateBubble: {
-        width: 50,
-        height: 64,
-        borderRadius: 25,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
-    },
-    dateBubbleActive: {
-        backgroundColor: '#8B5CF6',
-        borderColor: '#8B5CF6',
-    },
-    dateDayText: {
-        fontSize: 12,
-        color: '#94A3B8',
-        fontWeight: '500',
-        marginBottom: 4,
-    },
-    dateNumText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1E293B',
-    },
-    dateTextActive: {
-        color: '#fff',
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1E293B',
-        marginBottom: 16,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-        marginTop: 8,
-    },
-    seeAllText: {
-        fontSize: 14,
-        color: '#6366F1',
-        fontWeight: '600',
-    },
-    summaryGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginBottom: 24,
-    },
-    summaryCard: {
-        width: (width - 40 - 16) / 2, // 40 horizontal padding total, 16 middle gap
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: '#f1f5f9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 5,
-        elevation: 1,
-    },
-    iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    summaryValue: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#0f172a',
-        marginBottom: 2,
-    },
-    summaryUnit: {
-        fontSize: 14,
-        color: '#64748B',
-        fontWeight: '600',
-    },
-    summaryTitle: {
-        fontSize: 13,
-        color: '#64748B',
-        fontWeight: '500',
-    },
+    statIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
+    statValue: { fontSize: 24, fontWeight: '900', color: '#0F172A' },
+    statUnit: { fontSize: 11, color: '#94A3B8', fontWeight: '600', marginTop: -2, marginBottom: 4 },
+    statLabel: { fontSize: 12, color: '#64748B', fontWeight: '600' },
+    miniBarBg: { width: '100%', height: 4, backgroundColor: '#F1F5F9', borderRadius: 2, marginTop: 8, overflow: 'hidden' },
+    miniBarFill: { height: '100%', borderRadius: 2 },
+
+    // Bar Chart
     chartCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: '#f1f5f9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 2,
+        backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 16,
+        shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
     },
-    chartHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 24,
-    },
-    chartTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1E293B',
-        marginBottom: 2,
-    },
-    chartSubtitle: {
-        fontSize: 13,
-        color: '#64748B',
-    },
-    chartTotal: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#8B5CF6',
-    },
-    barChartContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        height: 140,
-    },
-    barColumn: {
-        alignItems: 'center',
-        width: 30,
-    },
+    chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+    chartTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
+    chartSub: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+    legendRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    legendDot: { width: 8, height: 8, borderRadius: 4 },
+    legendText: { fontSize: 10, color: '#64748B', fontWeight: '600' },
+    barChart: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 130 },
+    barCol: { flex: 1, alignItems: 'center' },
+    barSteps: { fontSize: 8, color: '#94A3B8', fontWeight: '600', marginBottom: 4, textAlign: 'center' },
     barTrack: {
-        width: 8,
-        height: 100,
-        backgroundColor: '#F1F5F9',
-        borderRadius: 4,
-        marginBottom: 8,
-        justifyContent: 'flex-end',
+        width: 14, height: 90, backgroundColor: '#F1F5F9',
+        borderRadius: 7, justifyContent: 'flex-end', overflow: 'hidden', marginBottom: 6,
     },
-    barFill: {
-        width: '100%',
-        borderRadius: 4,
-    },
-    barLabel: {
-        fontSize: 12,
-        color: '#94A3B8',
-        fontWeight: '500',
-    },
+    barFill: { width: '100%', borderRadius: 7 },
+    barLabel: { fontSize: 10, color: '#94A3B8', fontWeight: '600' },
+    barLabelToday: { color: '#6366F1', fontWeight: '800' },
+    noDataWrap: { alignItems: 'center', paddingTop: 20, gap: 8 },
+    noDataText: { fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+    connectBtn: { paddingHorizontal: 20, paddingVertical: 9, borderRadius: 10, backgroundColor: '#EEF2FF', marginTop: 4 },
+    connectBtnText: { fontSize: 13, fontWeight: '700', color: '#6366F1' },
+
+    // Recent Logs
+    logsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    logsTitle: { fontSize: 17, fontWeight: '800', color: '#0F172A' },
+    seeAll: { fontSize: 13, fontWeight: '700', color: '#6366F1' },
     logCard: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#f1f5f9',
+        flexDirection: 'row', alignItems: 'center', gap: 14,
+        backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 10,
+        shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
     },
-    logIconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    logInfo: {
-        flex: 1,
-    },
-    logTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#0f172a',
-        marginBottom: 4,
-    },
-    logDetails: {
-        fontSize: 12,
-        color: '#64748b',
-    },
-    logStats: {
-        alignItems: 'flex-end',
-    },
-    logDuration: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1E293B',
-        marginBottom: 4,
-    },
-    logCalories: {
-        fontSize: 12,
-        color: '#EF4444',
-        fontWeight: '500',
-    },
+    logIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+    logBody: { flex: 1 },
+    logTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 3 },
+    logSub: { fontSize: 12, color: '#94A3B8', fontWeight: '500' },
+    logRight: { alignItems: 'flex-end', gap: 4 },
+    logStatRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    logDuration: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+    logCalories: { fontSize: 12, fontWeight: '600', color: '#EF4444' },
 });
 
 export default ActivityScreen;
