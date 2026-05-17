@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await setToken('userToken', token);
         setUserToken(token);
         setUser(loggedInUser);
-        refreshSubscription();
+        await refreshSubscription();
     };
 
     const signUp = async (userData: any) => {

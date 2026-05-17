@@ -11,6 +11,7 @@ import { getVitals } from '../api/vitalsSync';
 import { NormalizedHealthData } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import DashboardSkeleton from '../components/DashboardSkeleton';
+import { RetryView } from '../components/RetryView';
 import client from '../api/client';
 import DailyCheckInCard from '../components/DailyCheckInCard';
 
@@ -23,6 +24,7 @@ const HealthDashboardScreen = ({ route }: any) => {
     const [data, setData] = useState<NormalizedHealthData | null>(null);
     const [wearableData, setWearableData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
     const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
     const [syncedAt, setSyncedAt] = useState<Date | null>(null);
     const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
@@ -42,6 +44,7 @@ const HealthDashboardScreen = ({ route }: any) => {
         const STALE_MS = 2 * 60 * 1000;
         if (!force && Date.now() - lastFetchedAt.current < STALE_MS) return;
         setLoading(true);
+        setHasError(false);
         try {
             const vitals = await getVitals();
             setData(vitals);
@@ -69,7 +72,8 @@ const HealthDashboardScreen = ({ route }: any) => {
                 });
             }
         } catch {
-            // Non-fatal — dashboard shows cached state
+            // Only surface the error when we have no cached data to show
+            if (!data) setHasError(true);
         } finally {
             lastFetchedAt.current = Date.now();
             setLoading(false);
@@ -92,6 +96,15 @@ const HealthDashboardScreen = ({ route }: any) => {
 
     if (loading) {
         return <DashboardSkeleton />;
+    }
+
+    if (hasError) {
+        return (
+            <RetryView
+                message="Couldn't load your health data. Check your connection and try again."
+                onRetry={() => loadData(true)}
+            />
+        );
     }
 
     const wellnessScore = user?.healthProfile?.cvitalScore || user?.profile?.healthScore || 0;
@@ -408,7 +421,11 @@ const HealthDashboardScreen = ({ route }: any) => {
 };
 
 const VitalCard = ({ icon, color, value, unit, label }: any) => (
-    <View style={styles.vitalCard}>
+    <View
+        style={styles.vitalCard}
+        accessible
+        accessibilityLabel={`${label}: ${value === '—' ? 'no data' : `${value} ${unit}`}`}
+    >
         <View style={styles.vitalHeader}>
             <View style={[styles.vitalIconWrap, { backgroundColor: color + '15' }]}>
                 <Ionicons name={icon} size={16} color={color} />
@@ -423,7 +440,13 @@ const VitalCard = ({ icon, color, value, unit, label }: any) => (
 );
 
 const SessionCard = ({ tag, title, details, image, onPress }: any) => (
-    <TouchableOpacity style={styles.sessionCard} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity
+        style={styles.sessionCard}
+        onPress={onPress}
+        activeOpacity={0.9}
+        accessibilityRole="button"
+        accessibilityLabel={`Play session: ${title}, ${details}`}
+    >
         <Image source={{ uri: image }} style={styles.sessionImage} />
         <View style={styles.sessionOverlay}>
             <LinearGradient
