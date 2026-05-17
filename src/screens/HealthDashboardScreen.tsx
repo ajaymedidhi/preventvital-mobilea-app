@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     videoWrapper: { width: '100%', height: 200, backgroundColor: '#000' },
     abnormalAlert: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, padding: 14, marginBottom: 12 },
     abnormalAlertText: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '500', color: '#1E293B' },
-    quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 16, marginBottom: 12, gap: 8 },
+    quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginLeft: 16, marginRight: 84, marginBottom: 12, gap: 8 },
     quickActionBtn: { flex: 1, alignItems: 'center', gap: 6 },
     quickActionIcon: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
     quickActionLabel: { fontSize: 11, fontWeight: '600', color: '#475569', textAlign: 'center' },

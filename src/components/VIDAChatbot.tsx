@@ -85,7 +85,7 @@ export default function VIDAChatbot() {
                     styles.fab,
                     {
                         bottom: (Platform.OS === 'ios' ? 88 : 60) + insets.bottom + 16,
-                        right: 16
+                        right: 16,
                     }
                 ]}
                 onPress={() => { setOpen(true); setShowTooltip(false); }}

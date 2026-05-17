@@ -1,10 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Screens
 import HealthDashboardScreen from '../screens/HealthDashboardScreen';
 import ProgramsListScreen from '../screens/programs/ProgramsListScreen';
 import UserProfileScreen from '../screens/auth/UserProfileScreen';
@@ -14,36 +13,68 @@ import VIDAChatbot from '../components/VIDAChatbot';
 
 const Tab = createBottomTabNavigator();
 
+type TabIconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_CONFIG: Record<string, { active: TabIconName; inactive: TabIconName; label: string }> = {
+    Home:     { active: 'home',            inactive: 'home-outline',           label: 'Home' },
+    Programs: { active: 'documents',       inactive: 'documents-outline',      label: 'Programs' },
+    Shop:     { active: 'cart',            inactive: 'cart-outline',           label: 'Shop' },
+    Devices:  { active: 'hardware-chip',   inactive: 'hardware-chip-outline',  label: 'Devices' },
+    Profile:  { active: 'person',          inactive: 'person-outline',         label: 'Profile' },
+};
+
+interface TabIconProps {
+    name: string;
+    focused: boolean;
+    color: string;
+}
+
+const TabIcon = ({ name, focused, color }: TabIconProps) => {
+    const cfg = TAB_CONFIG[name];
+    return (
+        <View style={styles.iconWrap}>
+            {focused && <View style={styles.activePill} />}
+            <Ionicons
+                name={focused ? cfg.active : cfg.inactive}
+                size={23}
+                color={color}
+            />
+        </View>
+    );
+};
+
 const BottomTabNavigator = () => {
     const insets = useSafeAreaInsets();
+    const tabBarHeight = Platform.OS === 'ios' ? 56 : 58;
+    const bottomPad = insets.bottom > 0 ? insets.bottom : 8;
 
     return (
         <>
             <Tab.Navigator
-                screenOptions={{
+                screenOptions={({ route }) => ({
                     headerShown: false,
-                    tabBarStyle: [styles.tabBar, { 
-                        height: (Platform.OS === 'ios' ? 88 : 70) + (insets.bottom > 0 ? insets.bottom : 5),
-                        paddingBottom: (insets.bottom > 0 ? insets.bottom : 10)
-                    }],
+                    tabBarStyle: [
+                        styles.tabBar,
+                        { height: tabBarHeight + bottomPad, paddingBottom: bottomPad },
+                    ],
                     tabBarActiveTintColor: '#51A6CB',
                     tabBarInactiveTintColor: '#94A3B8',
                     tabBarShowLabel: true,
-                    tabBarLabelStyle: {
-                        fontSize: 10,
-                        fontWeight: '500',
-                        marginTop: -5,
-                        marginBottom: 5,
-                    }
-                }}
+                    tabBarLabelStyle: styles.label,
+                    tabBarIcon: ({ focused, color }) => (
+                        <TabIcon name={route.name} focused={focused} color={color} />
+                    ),
+                })}
             >
                 <Tab.Screen
                     name="Home"
                     component={HealthDashboardScreen}
                     options={{
                         tabBarAccessibilityLabel: 'Home',
-                        tabBarIcon: ({ color }) => (
-                            <Ionicons name="home-outline" size={24} color={color} />
+                        tabBarLabel: ({ focused, color }) => (
+                            <Text style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                                Home
+                            </Text>
                         ),
                     }}
                 />
@@ -52,8 +83,10 @@ const BottomTabNavigator = () => {
                     component={ProgramsListScreen}
                     options={{
                         tabBarAccessibilityLabel: 'Wellness Programs',
-                        tabBarIcon: ({ color }) => (
-                            <Ionicons name="documents-outline" size={24} color={color} />
+                        tabBarLabel: ({ focused, color }) => (
+                            <Text style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                                Programs
+                            </Text>
                         ),
                     }}
                 />
@@ -62,8 +95,10 @@ const BottomTabNavigator = () => {
                     component={ShopScreen}
                     options={{
                         tabBarAccessibilityLabel: 'Shop',
-                        tabBarIcon: ({ color }) => (
-                            <Ionicons name="cart-outline" size={24} color={color} />
+                        tabBarLabel: ({ focused, color }) => (
+                            <Text style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                                Shop
+                            </Text>
                         ),
                     }}
                 />
@@ -72,8 +107,10 @@ const BottomTabNavigator = () => {
                     component={DevicesScreen}
                     options={{
                         tabBarAccessibilityLabel: 'Connected Devices',
-                        tabBarIcon: ({ color }) => (
-                            <Ionicons name="hardware-chip-outline" size={24} color={color} />
+                        tabBarLabel: ({ focused, color }) => (
+                            <Text style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                                Devices
+                            </Text>
                         ),
                     }}
                 />
@@ -82,8 +119,10 @@ const BottomTabNavigator = () => {
                     component={UserProfileScreen}
                     options={{
                         tabBarAccessibilityLabel: 'My Profile',
-                        tabBarIcon: ({ color }) => (
-                            <Ionicons name="person-outline" size={24} color={color} />
+                        tabBarLabel: ({ focused, color }) => (
+                            <Text style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}>
+                                Profile
+                            </Text>
                         ),
                     }}
                 />
@@ -96,15 +135,33 @@ const BottomTabNavigator = () => {
 
 const styles = StyleSheet.create({
     tabBar: {
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#F1F5F9',
-        paddingTop: 5,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 4,
+        backgroundColor: '#FFFFFF',
+        borderTopWidth: 0,
+        paddingTop: 6,
+        // Strong shadow to clearly separate from screen content
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.10,
+        shadowRadius: 16,
+        elevation: 24,
+    },
+    iconWrap: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 44,
+        height: 30,
+    },
+    activePill: {
+        position: 'absolute',
+        top: 0,
+        width: 28,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#51A6CB',
+    },
+    label: {
+        fontSize: 10,
+        marginTop: 2,
     },
 });
 
