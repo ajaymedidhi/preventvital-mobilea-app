@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import client from '../../api/client';
+import { Colors, Gradients } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 const CARD_W = (width - 52) / 2;
@@ -18,11 +19,6 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 type StatItem = { label: string; value: string; unit: string; icon: string; color: string; bg: string; progress?: number };
 
-const MOCK_LOGS = [
-    { id: '1', title: 'Morning Jog',       type: 'Outdoor Run',  duration: '30 min', calories: 320, icon: 'walk',    color: '#16A34A', bg: '#DCFCE7' },
-    { id: '2', title: 'Yoga Session',       type: 'Flexibility',  duration: '45 min', calories: 180, icon: 'body',    color: '#7C3AED', bg: '#F5F3FF' },
-    { id: '3', title: 'Strength Training',  type: 'Gym',          duration: '60 min', calories: 450, icon: 'barbell', color: '#2563EB', bg: '#EFF6FF' },
-];
 
 const ActivityScreen = () => {
     const insets = useSafeAreaInsets();
@@ -93,8 +89,9 @@ const ActivityScreen = () => {
         <View style={styles.container}>
             {/* Gradient Header */}
             <LinearGradient
-                colors={['#4F46E5', '#6366F1', '#818CF8']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                colors={Gradients.brandFade}
+                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                locations={[0, 0.6, 1]}
                 style={[styles.header, { paddingTop: insets.top + 12 }]}
             >
                 <View style={styles.headerTop}>
@@ -234,30 +231,51 @@ const ActivityScreen = () => {
                         {/* Recent Logs */}
                         <View style={styles.logsHeader}>
                             <Text style={styles.logsTitle}>Recent Logs</Text>
-                            <TouchableOpacity><Text style={styles.seeAll}>See all</Text></TouchableOpacity>
                         </View>
 
-                        {MOCK_LOGS.map(log => (
-                            <View key={log.id} style={styles.logCard}>
-                                <View style={[styles.logIcon, { backgroundColor: log.bg }]}>
-                                    <Ionicons name={log.icon as any} size={22} color={log.color} />
-                                </View>
-                                <View style={styles.logBody}>
-                                    <Text style={styles.logTitle}>{log.title}</Text>
-                                    <Text style={styles.logSub}>{log.type}</Text>
-                                </View>
-                                <View style={styles.logRight}>
-                                    <View style={styles.logStatRow}>
-                                        <Ionicons name="time-outline" size={11} color="#94A3B8" />
-                                        <Text style={styles.logDuration}>{log.duration}</Text>
+                        {history.length > 0 ? (
+                            history.slice(0, 5).map((log: any, i: number) => (
+                                <View key={i} style={styles.logCard}>
+                                    <View style={[styles.logIcon, { backgroundColor: '#EFF6FF' }]}>
+                                        <Ionicons name="walk-outline" size={22} color="#2563EB" />
                                     </View>
-                                    <View style={styles.logStatRow}>
-                                        <Ionicons name="flame-outline" size={11} color="#EF4444" />
-                                        <Text style={styles.logCalories}>{log.calories} kcal</Text>
+                                    <View style={styles.logBody}>
+                                        <Text style={styles.logTitle}>
+                                            {new Date(log.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                        </Text>
+                                        <Text style={styles.logSub}>Wearable sync</Text>
+                                    </View>
+                                    <View style={styles.logRight}>
+                                        {log.steps > 0 && (
+                                            <View style={styles.logStatRow}>
+                                                <Ionicons name="footsteps-outline" size={11} color="#16A34A" />
+                                                <Text style={styles.logDuration}>{log.steps?.toLocaleString()} steps</Text>
+                                            </View>
+                                        )}
+                                        {log.calories > 0 && (
+                                            <View style={styles.logStatRow}>
+                                                <Ionicons name="flame-outline" size={11} color="#EF4444" />
+                                                <Text style={styles.logCalories}>{log.calories} kcal</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
+                            ))
+                        ) : (
+                            <View style={styles.logsEmptyCard}>
+                                <View style={styles.logsEmptyIcon}>
+                                    <Ionicons name="fitness-outline" size={32} color={Colors.gradientStart} />
+                                </View>
+                                <Text style={styles.logsEmptyTitle}>No activity logged yet</Text>
+                                <Text style={styles.logsEmptySub}>
+                                    Connect a wearable to automatically sync your daily steps, calories, and distance.
+                                </Text>
+                                <TouchableOpacity style={styles.logsConnectBtn} onPress={() => navigation.navigate('Devices')}>
+                                    <Ionicons name="hardware-chip-outline" size={14} color="#FFF" />
+                                    <Text style={styles.logsConnectBtnText}>Connect Device</Text>
+                                </TouchableOpacity>
                             </View>
-                        ))}
+                        )}
                     </>
                 )}
             </ScrollView>
@@ -294,7 +312,7 @@ const styles = StyleSheet.create({
     goalValue: { fontSize: 32, fontWeight: '900', color: '#FFF' },
     goalSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 10 },
     goalBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
-    goalBarFill: { height: '100%', backgroundColor: '#818CF8', borderRadius: 3 },
+    goalBarFill: { height: '100%', backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 3 },
     goalPct: { fontSize: 11, color: '#C7D2FE', fontWeight: '600' },
     goalRight: { alignItems: 'center', gap: 8 },
     ringOuter: {
@@ -316,7 +334,7 @@ const styles = StyleSheet.create({
     filterTab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 11 },
     filterTabActive: { backgroundColor: '#FFF' },
     filterText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
-    filterTextActive: { color: '#4F46E5' },
+    filterTextActive: { color: Colors.gradientStart },
 
     // ── Content ──
     scroll: { paddingTop: 20, paddingHorizontal: 16 },
@@ -368,7 +386,19 @@ const styles = StyleSheet.create({
     // Recent Logs
     logsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
     logsTitle: { fontSize: 17, fontWeight: '800', color: '#0F172A' },
-    seeAll: { fontSize: 13, fontWeight: '700', color: '#6366F1' },
+    logsEmptyCard: {
+        backgroundColor: '#FFF', borderRadius: 20, padding: 28, alignItems: 'center',
+        borderWidth: 1, borderColor: '#F1F5F9',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    },
+    logsEmptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#F0FAFF', justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
+    logsEmptyTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+    logsEmptySub: { fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 19, marginBottom: 20 },
+    logsConnectBtn: {
+        flexDirection: 'row', alignItems: 'center', gap: 6,
+        backgroundColor: Colors.gradientStart, paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12,
+    },
+    logsConnectBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
     logCard: {
         flexDirection: 'row', alignItems: 'center', gap: 14,
         backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 10,

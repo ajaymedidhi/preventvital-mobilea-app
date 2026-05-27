@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Platform, Image, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../auth/AuthContext';
+import { Colors, Gradients } from '../../theme/colors';
 import client from '../../api/client';
 
 const PLAN_COLORS: Record<string, string[]> = {
@@ -46,17 +48,8 @@ const ProfileDetailsScreen = () => {
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const handlePickPhoto = () => {
-        Alert.alert(
-            'Profile Photo',
-            'Choose how to set your profile photo.',
-            [
-                { text: 'Camera', onPress: () => Alert.alert('Coming Soon', 'Camera upload will be available in the next update.') },
-                { text: 'Choose from Library', onPress: () => Alert.alert('Coming Soon', 'Photo library will be available in the next update.') },
-                { text: 'Cancel', style: 'cancel' },
-            ]
-        );
-    };
+    // Photo upload not yet available — avatar tap is intentionally a no-op
+    const handlePickPhoto = () => {};
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [dateObj, setDateObj] = useState(user?.profile?.dateOfBirth ? new Date(user.profile.dateOfBirth) : new Date(2000, 0, 1));
 

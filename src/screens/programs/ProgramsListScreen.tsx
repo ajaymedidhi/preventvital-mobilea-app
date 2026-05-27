@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-    FlatList, Dimensions, StatusBar, ActivityIndicator, Linking, Alert, RefreshControl,
+    FlatList, Dimensions, StatusBar, ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { useNavigation } from '@react-navigation/native';
 import client from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
@@ -13,7 +14,7 @@ import { Gradients, Colors } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
-// ── Recommended Demo Programs with YouTube Videos ──────────────────
+// ── Recommended Wellness Programs ──────────────────────────────────────────────
 const RECOMMENDED_PROGRAMS = [
     {
         id: 'rp-1', title: 'Guided Meditation', category: 'Mindfulness', emoji: '🧘',
@@ -74,18 +75,23 @@ const CAT_EMOJI: Record<string, string> = {
     respiratory: '🌬️', mental: '🧘', musculoskeletal: '🦴', preventive: '🛡️',
 };
 
+const DIFFICULTY_COLOR: Record<string, string> = {
+    Beginner: '#10B981',
+    Intermediate: '#F59E0B',
+    Advanced: '#EF4444',
+    'All Levels': '#6366F1',
+};
+
 const ProgramsListScreen = () => {
     const navigation = useNavigation<any>();
-    const { subscription, currentPlan } = useAuth();
+    const { currentPlan } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTag, setSelectedTag] = useState('All');
-    const [expandedRec, setExpandedRec] = useState<string | null>(null);
 
     const userPlan = currentPlan;
     const planHierarchy = ['free', 'premium', 'pro', 'family'];
     const userPlanRank = planHierarchy.indexOf(userPlan);
 
-    // API state
     const [programs, setPrograms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +102,7 @@ const ProgramsListScreen = () => {
             const res = await client.get('/api/programs?limit=50');
             setPrograms(res.data?.data?.programs || []);
         } catch {
-            // Programs will show empty state
+            // will show empty state
         }
         setLoading(false);
         setRefreshing(false);
@@ -117,11 +123,6 @@ const ProgramsListScreen = () => {
         setEnrollingId(null);
     };
 
-    const openYouTube = (videoId: string) => {
-        Linking.openURL(`https://www.youtube.com/watch?v=${videoId}`);
-    };
-
-    // Filters
     const categories = ['All', ...Array.from(new Set(programs.map(p => p.category).filter(Boolean)))];
     const filteredPrograms = programs.filter(p => {
         if (searchQuery && !p.title?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -137,7 +138,7 @@ const ProgramsListScreen = () => {
                 bounces={true}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
             >
-                {/* ── Header ──────────────────────────────────────── */}
+                {/* ── Gradient Header ──────────────────────────────── */}
                 <LinearGradient colors={Gradients.brandFade} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
                     <SafeAreaView edges={['top']}>
                         <View style={styles.headerContent}>
@@ -151,10 +152,15 @@ const ProgramsListScreen = () => {
                             <TextInput
                                 style={styles.searchInput}
                                 placeholder="Search programs..."
-                                placeholderTextColor="#A5B4FC"
+                                placeholderTextColor="rgba(255,255,255,0.5)"
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
                             />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                    <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.6)" />
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         {/* Category Filter */}
@@ -171,11 +177,16 @@ const ProgramsListScreen = () => {
                     </SafeAreaView>
                 </LinearGradient>
 
-                {/* ── Recommended Programs ─────────────────────────── */}
+                {/* ── Recommended Programs ──────────────────────────── */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>🌟 Recommended For You</Text>
-                        <Text style={styles.sectionSub}>Free wellness sessions to get started</Text>
+                        <View>
+                            <Text style={styles.sectionTitle}>Recommended For You</Text>
+                            <Text style={styles.sectionSub}>Free wellness programs to get started</Text>
+                        </View>
+                        <View style={styles.freePill}>
+                            <Text style={styles.freePillText}>FREE</Text>
+                        </View>
                     </View>
 
                     <FlatList
@@ -183,73 +194,94 @@ const ProgramsListScreen = () => {
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingHorizontal: 20 }}
-                        snapToInterval={width * 0.72 + 16}
+                        snapToInterval={width * 0.72 + 14}
                         decelerationRate="fast"
                         keyExtractor={item => item.id}
                         renderItem={({ item: prog }) => (
-                            <View style={{ width: width * 0.72, marginRight: 16 }}>
-                                <TouchableOpacity
-                                    activeOpacity={0.9}
-                                    onPress={() => navigation.navigate('ProgramDetails', {
-                                        programId: prog.id,
-                                        program: {
-                                            _id: prog.id,
-                                            title: prog.title,
-                                            category: prog.category,
-                                            description: prog.description,
-                                            difficulty: prog.difficulty,
-                                            durationWeeks: parseInt(prog.duration) || 4,
-                                            totalSessions: prog.sessions.length,
-                                            accessiblePlans: ['free'],
-                                            enrollmentRequired: false,
-                                            enrollmentCount: 0,
-                                            locked: false,
-                                            isRecommended: true,
-                                            emoji: prog.emoji,
-                                            gradientColors: prog.colors,
-                                            youtubeSessions: prog.sessions,
-                                        }
-                                    })}
-                                >
-                                    <LinearGradient colors={prog.colors} style={styles.recCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                                        <View style={styles.recCardInner}>
+                            <TouchableOpacity
+                                style={{ width: width * 0.72, marginRight: 14 }}
+                                activeOpacity={0.9}
+                                onPress={() => navigation.navigate('ProgramDetails', {
+                                    programId: prog.id,
+                                    program: {
+                                        _id: prog.id,
+                                        title: prog.title,
+                                        category: prog.category,
+                                        description: prog.description,
+                                        difficulty: prog.difficulty,
+                                        durationWeeks: parseInt(prog.duration) || 4,
+                                        totalSessions: prog.sessions.length,
+                                        accessiblePlans: ['free'],
+                                        enrollmentRequired: false,
+                                        enrollmentCount: 0,
+                                        locked: false,
+                                        isRecommended: true,
+                                        emoji: prog.emoji,
+                                        gradientColors: prog.colors,
+                                        youtubeSessions: prog.sessions,
+                                    }
+                                })}
+                            >
+                                <LinearGradient colors={prog.colors} style={styles.recCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                                    {/* Top row */}
+                                    <View style={styles.recCardTop}>
+                                        <View style={styles.recEmojiWrap}>
                                             <Text style={styles.recEmoji}>{prog.emoji}</Text>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.recTitle}>{prog.title}</Text>
-                                                <Text style={styles.recCat}>{prog.category}</Text>
-                                            </View>
                                         </View>
-                                        <Text style={styles.recDesc} numberOfLines={2}>{prog.description}</Text>
-                                        <View style={styles.recMeta}>
-                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>{prog.difficulty}</Text></View>
-                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>⏱ {prog.duration}</Text></View>
-                                            <View style={styles.recBadge}><Text style={styles.recBadgeText}>{prog.sessions.length} Sessions</Text></View>
+                                        <View style={styles.recFreeTag}>
+                                            <Text style={styles.recFreeTagText}>Free</Text>
                                         </View>
-                                        <View style={styles.recFooter}>
-                                            <View style={styles.freeBadge}><Text style={styles.freeBadgeText}>🆓 Free</Text></View>
-                                            <Text style={styles.viewSessions}>
-                                                View Details ▸
-                                            </Text>
+                                    </View>
+
+                                    <Text style={styles.recTitle}>{prog.title}</Text>
+                                    <Text style={styles.recCat}>{prog.category.toUpperCase()}</Text>
+                                    <Text style={styles.recDesc} numberOfLines={2}>{prog.description}</Text>
+
+                                    <View style={styles.recDivider} />
+
+                                    <View style={styles.recFooter}>
+                                        <View style={styles.recMetaItem}>
+                                            <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.7)" />
+                                            <Text style={styles.recMetaText}>{prog.duration}</Text>
                                         </View>
-                                    </LinearGradient>
-                                </TouchableOpacity>
-                            </View>
+                                        <View style={styles.recMetaItem}>
+                                            <Ionicons name="book-outline" size={12} color="rgba(255,255,255,0.7)" />
+                                            <Text style={styles.recMetaText}>{prog.sessions.length} sessions</Text>
+                                        </View>
+                                        <View style={styles.recArrow}>
+                                            <Ionicons name="arrow-forward" size={14} color="#FFF" />
+                                        </View>
+                                    </View>
+                                </LinearGradient>
+                            </TouchableOpacity>
                         )}
                     />
                 </View>
 
-                {/* ── All Programs from API ────────────────────────── */}
+                {/* ── All Programs from API ──────────────────────────── */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>📋 All Programs</Text>
-                        <Text style={styles.sectionSub}>Based on your subscription plan</Text>
+                        <View>
+                            <Text style={styles.sectionTitle}>All Programs</Text>
+                            <Text style={styles.sectionSub}>Based on your subscription plan</Text>
+                        </View>
+                        {!loading && filteredPrograms.length > 0 && (
+                            <View style={styles.countBadge}>
+                                <Text style={styles.countBadgeText}>{filteredPrograms.length}</Text>
+                            </View>
+                        )}
                     </View>
 
                     {loading ? (
-                        <ActivityIndicator size="large" color={Colors.gradientStart} style={{ marginVertical: 40 }} />
+                        <View style={styles.loadingWrap}>
+                            <ActivityIndicator size="large" color={Colors.gradientStart} />
+                            <Text style={styles.loadingText}>Loading programs…</Text>
+                        </View>
                     ) : filteredPrograms.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Text style={styles.emptyEmoji}>📭</Text>
+                            <View style={styles.emptyIconWrap}>
+                                <Text style={styles.emptyEmoji}>📭</Text>
+                            </View>
                             <Text style={styles.emptyText}>
                                 {searchQuery ? 'No programs match your search' : 'No programs available'}
                             </Text>
@@ -268,73 +300,87 @@ const ProgramsListScreen = () => {
                                 const reqPlan = program.requiredPlan?.toLowerCase() || 'free';
                                 const reqPlanRank = planHierarchy.indexOf(reqPlan);
                                 const emoji = CAT_EMOJI[program.category] || '📋';
-                                // Robust access check: 
-                                // 1. Use backend 'locked' flag if present
-                                // 2. Otherwise check if currentPlan is in accessiblePlans
-                                // 3. Fallback to rank comparison
-                                const isLocked = program.locked !== undefined 
-                                    ? program.locked 
+                                const isLocked = program.locked !== undefined
+                                    ? program.locked
                                     : (program.accessiblePlans && program.accessiblePlans.length > 0)
                                         ? !program.accessiblePlans.map((p: string) => p.toLowerCase()).includes(currentPlan.toLowerCase())
                                         : userPlanRank < reqPlanRank;
+                                const diffColor = DIFFICULTY_COLOR[program.difficulty] || '#6366F1';
 
                                 return (
                                     <TouchableOpacity
                                         key={program._id}
-                                        style={[styles.programCard, isLocked && styles.programCardLocked]}
+                                        style={styles.programCard}
                                         onPress={() => navigation.navigate('ProgramDetails', { programId: program._id, program })}
                                         activeOpacity={0.85}
                                     >
-                                        {/* Lock Badge */}
-                                        {isLocked && (
-                                            <View style={styles.lockBadge}>
-                                                <Ionicons name="lock-closed" size={10} color="#FFF" />
-                                                <Text style={styles.lockBadgeText}>{reqPlan?.charAt(0).toUpperCase() + reqPlan?.slice(1)}+</Text>
-                                            </View>
-                                        )}
-
-                                        {/* Left Emoji Area */}
-                                        <View style={[styles.programEmoji, isLocked && { opacity: 0.4 }]}>
-                                            <Text style={{ fontSize: 32 }}>{emoji}</Text>
+                                        {/* Left colored accent + emoji/image */}
+                                        <View style={[styles.programThumbWrap, isLocked && { opacity: 0.5 }]}>
+                                            {program.image && program.image !== 'https://placehold.co/600x400' ? (
+                                                <Image
+                                                    source={{ uri: program.image }}
+                                                    style={styles.programThumb}
+                                                    contentFit="cover"
+                                                />
+                                            ) : (
+                                                <Text style={{ fontSize: 28 }}>{emoji}</Text>
+                                            )}
                                         </View>
 
                                         {/* Info */}
                                         <View style={styles.programInfo}>
-                                            <Text style={styles.programTitle} numberOfLines={1}>{program.title}</Text>
+                                            <View style={styles.programTitleRow}>
+                                                <Text style={[styles.programTitle, isLocked && { color: '#94A3B8' }]} numberOfLines={1}>
+                                                    {program.title}
+                                                </Text>
+                                                {isLocked && (
+                                                    <View style={styles.lockBadge}>
+                                                        <Ionicons name="lock-closed" size={9} color="#FFF" />
+                                                        <Text style={styles.lockBadgeText}>{reqPlan}</Text>
+                                                    </View>
+                                                )}
+                                            </View>
                                             <Text style={styles.programDesc} numberOfLines={1}>{program.description}</Text>
 
-                                            <View style={styles.programStatsRow}>
-                                                <View style={styles.statChip}>
-                                                    <Ionicons name="time-outline" size={10} color="#64748B" />
-                                                    <Text style={styles.statChipText}>{program.durationWeeks}w</Text>
+                                            <View style={styles.programMetaRow}>
+                                                <View style={styles.metaChip}>
+                                                    <Ionicons name="time-outline" size={10} color={Colors.textSecondary} />
+                                                    <Text style={styles.metaChipText}>{program.durationWeeks}w</Text>
                                                 </View>
-                                                <View style={styles.statChip}>
-                                                    <Ionicons name="book-outline" size={10} color="#64748B" />
-                                                    <Text style={styles.statChipText}>{program.totalSessions}s</Text>
+                                                <View style={styles.metaChip}>
+                                                    <Ionicons name="book-outline" size={10} color={Colors.textSecondary} />
+                                                    <Text style={styles.metaChipText}>{program.totalSessions} sessions</Text>
                                                 </View>
+                                                {program.difficulty && (
+                                                    <View style={[styles.diffChip, { backgroundColor: diffColor + '18' }]}>
+                                                        <Text style={[styles.diffChipText, { color: diffColor }]}>{program.difficulty}</Text>
+                                                    </View>
+                                                )}
                                                 {(program.averageRating || 0) > 0 && (
-                                                    <View style={styles.statChip}>
+                                                    <View style={styles.ratingChip}>
                                                         <Ionicons name="star" size={10} color="#EAB308" />
-                                                        <Text style={styles.statChipText}>{program.averageRating?.toFixed(1)}</Text>
+                                                        <Text style={styles.ratingText}>{program.averageRating?.toFixed(1)}</Text>
                                                     </View>
                                                 )}
                                             </View>
 
                                             {/* Plan badges */}
-                                            <View style={styles.planBadges}>
-                                                {(program.accessiblePlans || []).slice(0, 3).map((plan: string) => (
-                                                    <View key={plan} style={[styles.planBadge, { backgroundColor: PLAN_BADGE[plan]?.bg || '#F3F4F6' }]}>
-                                                        <Text style={[styles.planBadgeText, { color: PLAN_BADGE[plan]?.text || '#6B7280' }]}>{plan}</Text>
-                                                    </View>
-                                                ))}
-                                            </View>
+                                            {(program.accessiblePlans || []).length > 0 && (
+                                                <View style={styles.planBadges}>
+                                                    {(program.accessiblePlans as string[]).slice(0, 3).map((plan) => (
+                                                        <View key={plan} style={[styles.planBadge, { backgroundColor: PLAN_BADGE[plan]?.bg || '#F3F4F6' }]}>
+                                                            <Text style={[styles.planBadgeText, { color: PLAN_BADGE[plan]?.text || '#6B7280' }]}>{plan}</Text>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            )}
                                         </View>
 
-                                        {/* Action */}
+                                        {/* Right Action */}
                                         <View style={styles.programAction}>
                                             {isLocked ? (
                                                 <View style={styles.upgradeBtnSmall}>
-                                                    <Ionicons name="arrow-up-circle" size={18} color="#D97706" />
+                                                    <Ionicons name="arrow-up-circle" size={20} color="#D97706" />
                                                 </View>
                                             ) : program.enrollmentRequired && program.enrollmentStatus === 'not_enrolled' ? (
                                                 <TouchableOpacity
@@ -343,13 +389,15 @@ const ProgramsListScreen = () => {
                                                     disabled={enrollingId === program._id}
                                                 >
                                                     {enrollingId === program._id ? (
-                                                        <ActivityIndicator size="small" color="#7C3AED" />
+                                                        <ActivityIndicator size="small" color={Colors.gradientStart} />
                                                     ) : (
                                                         <Text style={styles.enrollBtnText}>Enroll</Text>
                                                     )}
                                                 </TouchableOpacity>
                                             ) : (
-                                                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+                                                <View style={styles.chevronWrap}>
+                                                    <Ionicons name="chevron-forward" size={16} color={Colors.gradientStart} />
+                                                </View>
                                             )}
                                         </View>
                                     </TouchableOpacity>
@@ -366,76 +414,98 @@ const ProgramsListScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
 
-    // ── Header ──
-    header: { paddingBottom: 24 },
-    headerContent: { paddingHorizontal: 20, marginTop: 12, marginBottom: 16 },
+    // Header
+    header: { paddingBottom: 20 },
+    headerContent: { paddingHorizontal: 20, marginTop: 10, marginBottom: 16 },
     headerTitle: { fontSize: 28, fontWeight: '800', color: '#FFF' },
     headerSub: { fontSize: 13, color: '#C7D2FE', fontWeight: '500', marginTop: 4 },
-    searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', marginHorizontal: 20, borderRadius: 14, paddingHorizontal: 14, height: 48, marginBottom: 16 },
+    searchBox: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.18)',
+        marginHorizontal: 20, borderRadius: 14,
+        paddingHorizontal: 14, height: 46, marginBottom: 14,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    },
     searchInput: { flex: 1, fontSize: 14, color: '#FFF', fontWeight: '500', marginLeft: 8 },
-    filterRow: { paddingHorizontal: 20, paddingBottom: 4 },
-    filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', marginRight: 10 },
+    filterRow: { paddingHorizontal: 20, paddingBottom: 2 },
+    filterChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.15)', marginRight: 8 },
     filterChipActive: { backgroundColor: '#FFF' },
     filterChipText: { fontSize: 12, fontWeight: '600', color: '#E0E7FF' },
     filterChipTextActive: { color: Colors.gradientStart },
 
-    // ── Section ──
-    section: { marginTop: 20 },
-    sectionHeader: { paddingHorizontal: 20, marginBottom: 14 },
-    sectionTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+    // Section
+    section: { marginTop: 22 },
+    sectionHeader: { paddingHorizontal: 20, marginBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    sectionTitle: { fontSize: 17, fontWeight: '800', color: '#0F172A' },
     sectionSub: { fontSize: 12, color: '#64748B', fontWeight: '500', marginTop: 2 },
+    freePill: { backgroundColor: '#DCFCE7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    freePillText: { fontSize: 10, fontWeight: '800', color: '#16A34A', letterSpacing: 0.5 },
+    countBadge: { backgroundColor: '#EEF2FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    countBadgeText: { fontSize: 11, fontWeight: '800', color: '#6366F1' },
 
-    // ── Recommended Cards ──
-    recCard: { borderRadius: 20, padding: 18, minHeight: 170 },
-    recCardInner: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-    recEmoji: { fontSize: 36, marginRight: 12 },
-    recTitle: { fontSize: 17, fontWeight: '800', color: '#FFF' },
-    recCat: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: 1 },
-    recDesc: { fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 17, marginBottom: 12 },
-    recMeta: { flexDirection: 'row', gap: 6, marginBottom: 12 },
-    recBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-    recBadgeText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
-    recFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    freeBadge: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-    freeBadgeText: { fontSize: 10, fontWeight: '700', color: '#FFF' },
-    viewSessions: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
+    // Recommended Cards
+    recCard: { borderRadius: 22, padding: 18, minHeight: 190 },
+    recCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+    recEmojiWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+    recEmoji: { fontSize: 26 },
+    recFreeTag: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+    recFreeTagText: { fontSize: 10, fontWeight: '800', color: '#FFF' },
+    recTitle: { fontSize: 18, fontWeight: '800', color: '#FFF', marginBottom: 2 },
+    recCat: { fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.6)', letterSpacing: 1.2, marginBottom: 8 },
+    recDesc: { fontSize: 12, color: 'rgba(255,255,255,0.82)', lineHeight: 17 },
+    recDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginVertical: 12 },
+    recFooter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    recMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    recMetaText: { fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
+    recArrow: { marginLeft: 'auto' as any, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
 
-    // ── Expanded Sessions ──
-    sessionsExpanded: { marginTop: 10, backgroundColor: '#FFF', borderRadius: 14, borderWidth: 1, borderColor: '#F1F5F9', overflow: 'hidden' },
-    sessionRow: { flexDirection: 'row', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
-    sessionNum: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-    sessionRowTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
-    sessionRowDur: { fontSize: 10, color: '#94A3B8', fontWeight: '500' },
+    // Loading / Empty
+    loadingWrap: { alignItems: 'center', paddingVertical: 50, gap: 12 },
+    loadingText: { fontSize: 13, color: Colors.textMuted, fontWeight: '500' },
+    emptyState: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
+    emptyIconWrap: { width: 72, height: 72, borderRadius: 36, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
+    emptyEmoji: { fontSize: 36 },
+    emptyText: { fontSize: 16, fontWeight: '800', color: '#1E293B', textAlign: 'center' },
+    emptySub: { fontSize: 13, color: '#94A3B8', marginTop: 6, textAlign: 'center', lineHeight: 19 },
+    emptyBtn: { marginTop: 20, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 12, backgroundColor: Colors.gradientStart },
+    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 
-    // ── API Program Cards ──
-    programCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'center' },
-    programCardLocked: { opacity: 0.7, borderColor: '#E5E7EB' },
-    lockBadge: { position: 'absolute', top: 8, right: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, gap: 3, zIndex: 2 },
-    lockBadgeText: { fontSize: 9, fontWeight: '700', color: '#FFF' },
-    programEmoji: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-    programInfo: { flex: 1, justifyContent: 'center' },
-    programTitle: { fontSize: 14, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
-    programDesc: { fontSize: 11, color: '#94A3B8', marginBottom: 6 },
-    programStatsRow: { flexDirection: 'row', gap: 6, marginBottom: 6 },
-    statChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F8FAFC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-    statChipText: { fontSize: 10, color: '#64748B', fontWeight: '600' },
+    // API Program Cards
+    programCard: {
+        flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 18,
+        padding: 14, marginBottom: 12, alignItems: 'center',
+        borderWidth: 1, borderColor: '#F1F5F9',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
+    },
+    programThumbWrap: {
+        width: 60, height: 60, borderRadius: 16,
+        backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center',
+        marginRight: 14, overflow: 'hidden',
+    },
+    programThumb: { width: 60, height: 60, borderRadius: 16 },
+    programInfo: { flex: 1 },
+    programTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
+    programTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: '#0F172A' },
+    programDesc: { fontSize: 11, color: '#94A3B8', marginBottom: 8 },
+    programMetaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginBottom: 6 },
+    metaChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F8FAFC', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+    metaChipText: { fontSize: 10, color: '#64748B', fontWeight: '600' },
+    diffChip: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+    diffChipText: { fontSize: 10, fontWeight: '700' },
+    ratingChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#FFFBEB', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+    ratingText: { fontSize: 10, color: '#D97706', fontWeight: '700' },
+    lockBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, gap: 3 },
+    lockBadgeText: { fontSize: 8, fontWeight: '700', color: '#FFF', textTransform: 'capitalize' },
     planBadges: { flexDirection: 'row', gap: 4 },
     planBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
     planBadgeText: { fontSize: 8, fontWeight: '800', textTransform: 'uppercase' },
     programAction: { marginLeft: 8, justifyContent: 'center', alignItems: 'center' },
-    upgradeBtnSmall: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center' },
-    enrollBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5, borderColor: '#7C3AED' },
-    enrollBtnText: { fontSize: 11, fontWeight: '700', color: '#7C3AED' },
-
-    // ── Empty ──
-    emptyState: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 32 },
-    emptyEmoji: { fontSize: 48, marginBottom: 12 },
-    emptyText: { fontSize: 16, fontWeight: '800', color: '#1E293B', textAlign: 'center' },
-    emptySub: { fontSize: 13, color: '#94A3B8', marginTop: 6, textAlign: 'center', lineHeight: 19 },
-    emptyBtn: { marginTop: 24, paddingHorizontal: 24, paddingVertical: 11, borderRadius: 12, backgroundColor: Colors.gradientStart },
-    emptyBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+    chevronWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center' },
+    upgradeBtnSmall: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center' },
+    enrollBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, borderWidth: 1.5, borderColor: Colors.gradientStart },
+    enrollBtnText: { fontSize: 11, fontWeight: '700', color: Colors.gradientStart },
 });
 
 export default ProgramsListScreen;

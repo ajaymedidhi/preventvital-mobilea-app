@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../auth/AuthContext';
 import { useConsent } from '../health/ConsentContext';
-import PremiumLoadingScreen from '../components/PremiumLoadingScreen';
 
 import ConsentScreen from '../screens/health/ConsentScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -117,7 +116,7 @@ export default function AppNavigator() {
     const { hasConsented, isLoadingConsent } = useConsent();
 
     if (isAuthLoading || isLoadingConsent) {
-        return <PremiumLoadingScreen />;
+        return null;
     }
 
     return (

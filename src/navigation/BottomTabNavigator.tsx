@@ -33,10 +33,9 @@ const TabIcon = ({ name, focused, color }: TabIconProps) => {
     const cfg = TAB_CONFIG[name];
     return (
         <View style={styles.iconWrap}>
-            {focused && <View style={styles.activePill} />}
             <Ionicons
                 name={focused ? cfg.active : cfg.inactive}
-                size={23}
+                size={26}
                 color={color}
             />
         </View>
@@ -58,7 +57,7 @@ const BottomTabNavigator = () => {
                         { height: tabBarHeight + bottomPad, paddingBottom: bottomPad },
                     ],
                     tabBarActiveTintColor: '#51A6CB',
-                    tabBarInactiveTintColor: '#94A3B8',
+                    tabBarInactiveTintColor: '#6B7280',
                     tabBarShowLabel: true,
                     tabBarLabelStyle: styles.label,
                     tabBarIcon: ({ focused, color }) => (
@@ -136,28 +135,20 @@ const BottomTabNavigator = () => {
 const styles = StyleSheet.create({
     tabBar: {
         backgroundColor: '#FFFFFF',
-        borderTopWidth: 0,
-        paddingTop: 6,
-        // Strong shadow to clearly separate from screen content
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.10,
-        shadowRadius: 16,
-        elevation: 24,
+        borderTopWidth: 1,
+        borderTopColor: '#E8E8E8',
+        paddingTop: 8,
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 12,
     },
     iconWrap: {
         alignItems: 'center',
         justifyContent: 'center',
         width: 44,
         height: 30,
-    },
-    activePill: {
-        position: 'absolute',
-        top: 0,
-        width: 28,
-        height: 3,
-        borderRadius: 2,
-        backgroundColor: '#51A6CB',
     },
     label: {
         fontSize: 10,

@@ -11,7 +11,7 @@ import { Image } from 'expo-image';
 import { getProducts } from '../../api/shopApi';
 import { useShop, Product } from '../../context/ShopContext';
 import { getImageUrl } from '../../utils/imageUtils';
-import { Colors } from '../../theme/colors';
+import { Colors, Gradients } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 52) / 2;
@@ -26,9 +26,9 @@ const CAT_CONFIG: Record<string, { icon: string; color: string; bg: string; labe
 };
 
 const FEATURE_BANNERS = [
-    { id: '1', title: 'Heart Health Bundle', sub: 'BP Monitor + Omega-3 + ECG Band', tag: '20% OFF', colors: ['#1D4ED8', '#2563EB'] as [string,string], icon: 'heart' },
-    { id: '2', title: 'Diabetes Care Kit',   sub: 'Glucometer + Test Strips + Log',  tag: 'NEW',     colors: ['#059669', '#10B981'] as [string,string], icon: 'fitness' },
-    { id: '3', title: 'Stress Relief Pack',  sub: 'Guided meditation + supplements', tag: 'POPULAR', colors: ['#7C3AED', '#8B5CF6'] as [string,string], icon: 'leaf' },
+    { id: '1', title: 'Heart Health Bundle', sub: 'BP Monitor + Omega-3 + ECG Band', tag: 'TOP PICK', colors: ['#1D4ED8', '#2563EB'] as [string,string], icon: 'heart', category: 'monitors' },
+    { id: '2', title: 'Diabetes Care Kit',   sub: 'Glucometer + Test Strips + Log',  tag: 'POPULAR', colors: ['#059669', '#10B981'] as [string,string], icon: 'fitness', category: 'test_kits' },
+    { id: '3', title: 'Stress Relief Pack',  sub: 'Supplements for daily wellness',   tag: 'NEW',     colors: ['#7C3AED', '#8B5CF6'] as [string,string], icon: 'leaf', category: 'supplements' },
 ];
 
 const getHealthBenefit = (category: string): { label: string; color: string; bg: string } => {
@@ -140,8 +140,9 @@ const ShopScreen = () => {
 
             {/* Header */}
             <LinearGradient
-                colors={['#1E40AF', '#2563EB', '#3B82F6']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                colors={Gradients.brandFade}
+                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                locations={[0, 0.6, 1]}
                 style={[styles.header, { paddingTop: insets.top + 12 }]}
             >
                 <View style={styles.headerTop}>
@@ -157,7 +158,7 @@ const ShopScreen = () => {
                     >
                         <Ionicons name="cart-outline" size={24} color="#FFF" />
                         {cart.length > 0 && (
-                            <View style={styles.badge}>
+                            <View style={[styles.badge, { borderColor: Colors.gradientStart }]}>
                                 <Text style={styles.badgeText}>{cart.length > 9 ? '9+' : cart.length}</Text>
                             </View>
                         )}
@@ -214,7 +215,7 @@ const ShopScreen = () => {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
                 >
                     {/* Feature Banners in empty state */}
-                    <FeaturedBanners />
+                    <FeaturedBanners onCategoryPress={setSelectedCategory} />
                     <View style={styles.emptyState}>
                         <View style={styles.emptyIconWrap}>
                             <Ionicons name="storefront-outline" size={40} color={Colors.gradientStart} />
@@ -245,7 +246,7 @@ const ShopScreen = () => {
                     numColumns={2}
                     contentContainerStyle={styles.productList}
                     showsVerticalScrollIndicator={false}
-                    ListHeaderComponent={<FeaturedBanners />}
+                    ListHeaderComponent={<FeaturedBanners onCategoryPress={setSelectedCategory} />}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />
                     }
@@ -256,32 +257,37 @@ const ShopScreen = () => {
     );
 };
 
-function FeaturedBanners() {
+function FeaturedBanners({ onCategoryPress }: { onCategoryPress: (cat: string) => void }) {
     return (
         <View style={styles.bannersSection}>
             <View style={styles.bannersSectionHeader}>
-                <Text style={styles.bannersSectionTitle}>Featured Bundles</Text>
+                <Text style={styles.bannersSectionTitle}>Featured Collections</Text>
                 <Ionicons name="sparkles" size={14} color="#F59E0B" />
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}>
                 {FEATURE_BANNERS.map(b => (
-                    <LinearGradient
+                    <TouchableOpacity
                         key={b.id}
-                        colors={b.colors}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                        style={styles.bannerCard}
+                        activeOpacity={0.88}
+                        onPress={() => onCategoryPress(b.category)}
                     >
-                        <View style={styles.bannerTagWrap}>
-                            <Text style={styles.bannerTag}>{b.tag}</Text>
-                        </View>
-                        <Ionicons name={b.icon as any} size={28} color="rgba(255,255,255,0.3)" style={styles.bannerBgIcon} />
-                        <Text style={styles.bannerTitle}>{b.title}</Text>
-                        <Text style={styles.bannerSub}>{b.sub}</Text>
-                        <TouchableOpacity style={styles.bannerBtn}>
-                            <Text style={styles.bannerBtnText}>Shop Now</Text>
-                            <Ionicons name="arrow-forward" size={12} color="#1E40AF" />
-                        </TouchableOpacity>
-                    </LinearGradient>
+                        <LinearGradient
+                            colors={b.colors}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                            style={styles.bannerCard}
+                        >
+                            <View style={styles.bannerTagWrap}>
+                                <Text style={styles.bannerTag}>{b.tag}</Text>
+                            </View>
+                            <Ionicons name={b.icon as any} size={28} color="rgba(255,255,255,0.3)" style={styles.bannerBgIcon} />
+                            <Text style={styles.bannerTitle}>{b.title}</Text>
+                            <Text style={styles.bannerSub}>{b.sub}</Text>
+                            <View style={styles.bannerBtn}>
+                                <Text style={styles.bannerBtnText}>Browse</Text>
+                                <Ionicons name="arrow-forward" size={12} color={b.colors[0]} />
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
                 ))}
             </ScrollView>
         </View>
@@ -300,12 +306,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, marginBottom: 14,
     },
     headerTitle: { fontSize: 26, fontWeight: '800', color: '#FFF' },
-    headerSub: { fontSize: 13, color: '#BFDBFE', fontWeight: '500', marginTop: 2 },
+    headerSub: { fontSize: 13, color: '#C7D2FE', fontWeight: '500', marginTop: 2 },
     cartBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'center', alignItems: 'center' },
     badge: {
         position: 'absolute', top: -2, right: -2,
         backgroundColor: '#EF4444', borderRadius: 9, minWidth: 18, height: 18,
-        justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#2563EB',
+        justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: Colors.gradientStart,
     },
     badgeText: { color: '#FFF', fontSize: 9, fontWeight: '800' },
     searchBox: {

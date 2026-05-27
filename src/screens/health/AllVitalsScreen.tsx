@@ -1,14 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Polyline } from 'react-native-svg';
 import client from '../../api/client';
+import { Colors, Gradients } from '../../theme/colors';
 
 const { width } = Dimensions.get('window');
 
 const TABS = ['Today', 'Week', 'Month', '3M', 'Year'];
+const TAB_DAYS: Record<string, number> = { Today: 1, Week: 7, Month: 30, '3M': 90, Year: 365 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -104,12 +107,19 @@ export default function AllVitalsScreen() {
     const [loading, setLoading] = useState(true);
     const [syncTime, setSyncTime] = useState<string>('');
 
-    const getSparkline = (vitalType: string): number[] =>
-        history
-            .filter(h => h.vitalType === vitalType && typeof h.value === 'number')
-            .slice(0, 10)
+    const getSparkline = (vitalType: string): number[] => {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - (TAB_DAYS[activeTab] ?? 7));
+        return history
+            .filter(h =>
+                h.vitalType === vitalType &&
+                typeof h.value === 'number' &&
+                new Date(h.recordedAt || h.createdAt) >= cutoff
+            )
+            .slice(0, 20)
             .map(h => h.value)
             .reverse();
+    };
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -147,35 +157,39 @@ export default function AllVitalsScreen() {
     const hasAnyData = !!(hr || spo2 || systolic || steps || calories);
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Go back" accessibilityRole="button">
-                    <Ionicons name="arrow-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
-                <View style={{ alignItems: 'center' }}>
-                    <Text style={styles.headerTitle}>All Vitals</Text>
-                    {syncTime ? <Text style={styles.syncSubtitle}>Synced {syncTime}</Text> : null}
-                </View>
-                <View style={{ width: 40 }}>
-                    {loading && <ActivityIndicator size="small" color="#8B5CF6" />}
-                </View>
-            </View>
-
-            <View style={styles.tabsContainer}>
-                <View style={styles.tabsWrapper}>
-                    {TABS.map(tab => (
-                        <TouchableOpacity
-                            key={tab}
-                            style={[styles.tab, activeTab === tab && styles.activeTab]}
-                            onPress={() => setActiveTab(tab)}
-                        >
-                            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+        <View style={styles.safeArea}>
+            <StatusBar barStyle="light-content" backgroundColor={Colors.gradientStart} />
+            <LinearGradient colors={Gradients.brandFade} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
+                <SafeAreaView edges={['top']}>
+                    <View style={styles.headerRow}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                            <Ionicons name="arrow-back" size={22} color="#FFF" />
                         </TouchableOpacity>
-                    ))}
-                </View>
-            </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.headerTitle}>All Vitals</Text>
+                            {syncTime ? <Text style={styles.syncSubtitle}>Synced {syncTime}</Text> : null}
+                        </View>
+                        <View style={{ width: 38, alignItems: 'center' }}>
+                            {loading && <ActivityIndicator size="small" color="#FFF" />}
+                        </View>
+                    </View>
 
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {/* Tab strip inside gradient */}
+                    <View style={styles.tabsWrapper}>
+                        {TABS.map(tab => (
+                            <TouchableOpacity
+                                key={tab}
+                                style={[styles.tab, activeTab === tab && styles.activeTab]}
+                                onPress={() => setActiveTab(tab)}
+                            >
+                                <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </SafeAreaView>
+            </LinearGradient>
+
+            <ScrollView style={styles.scrollView} contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 }]} showsVerticalScrollIndicator={false}>
 
                 {!loading && !hasAnyData && (
                     <TouchableOpacity style={styles.connectNudge} onPress={() => navigation.navigate('Devices')} activeOpacity={0.8}>
@@ -298,24 +312,24 @@ export default function AllVitalsScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#FAFAFA' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 },
-    iconButton: { padding: 4, width: 40 },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1E293B' },
-    syncSubtitle: { fontSize: 11, color: '#94A3B8', marginTop: 2 },
-    tabsContainer: { paddingHorizontal: 20, marginBottom: 20 },
-    tabsWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-    tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
-    activeTab: { backgroundColor: '#8B5CF6' },
-    tabText: { fontSize: 13, fontWeight: '500', color: '#64748B' },
-    activeTabText: { color: '#fff', fontWeight: '600' },
+    safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
+    header: { paddingBottom: 16 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginTop: 10, gap: 12, marginBottom: 14 },
+    backBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#FFF' },
+    syncSubtitle: { fontSize: 11, color: '#C7D2FE', marginTop: 2, fontWeight: '500' },
+    tabsWrapper: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 12, padding: 3 },
+    tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 9 },
+    activeTab: { backgroundColor: '#FFF' },
+    tabText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
+    activeTabText: { color: Colors.gradientStart, fontWeight: '700' },
     scrollView: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20 },
+    scrollContent: { paddingHorizontal: 20, paddingTop: 16 },
 
     connectNudge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF9FF', borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#BAE6FD' },
     connectNudgeTitle: { fontSize: 14, fontWeight: '700', color: '#0369A1', marginBottom: 2 },
