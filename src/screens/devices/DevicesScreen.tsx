@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, Dimensions, Alert, ActivityIndicator, Modal, Switch, Linking, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, Dimensions, Alert, ActivityIndicator, Modal, Switch, Linking, RefreshControl, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -163,23 +163,30 @@ const DevicesScreen = () => {
     const anyConnected = googleFitConnected || appleHealthConnected;
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
+            <LinearGradient
+                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                locations={[0, 0.28, 0.7, 1]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.headerGradient}
             >
-                {/* ── Header ──────────────────────────────────────── */}
-                <View style={styles.header}>
+                <SafeAreaView edges={['top']} style={styles.header}>
                     <View>
                         <Text style={styles.headerTitle}>Connected Devices</Text>
                         <Text style={styles.headerSub}>Sync health data from your wearables</Text>
                     </View>
                     <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh} accessibilityLabel="Refresh devices" accessibilityRole="button">
-                        <Ionicons name="refresh" size={20} color={Colors.gradientStart} />
+                        <Ionicons name="refresh" size={20} color="#FFF" />
                     </TouchableOpacity>
-                </View>
+                </SafeAreaView>
+            </LinearGradient>
 
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
+            >
                 {/* ── Live Stream Access ──────────────────────────────── */}
                 <TouchableOpacity
                     style={styles.liveAccessCard}
@@ -201,9 +208,10 @@ const DevicesScreen = () => {
 
                 {/* ── Status Hero ──────────────────────────────────── */}
                 <LinearGradient
-                    colors={anyConnected ? Gradients.brand : ['#64748B', '#94A3B8']}
+                    colors={anyConnected ? ['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3'] : ['#64748B', '#94A3B8']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
+                    locations={anyConnected ? [0, 0.28, 0.7, 1] : undefined}
                     style={styles.heroCard}
                 >
                     <View style={styles.heroContent}>
@@ -537,13 +545,13 @@ const DevicesScreen = () => {
                     )}
                 </SafeAreaView>
             </Modal >
-        </SafeAreaView >
+        </View >
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 20 },
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
+    scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 20 },
 
     // WebView Modal Header
     webviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: Platform.OS === 'ios' ? 60 : 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
@@ -551,15 +559,24 @@ const styles = StyleSheet.create({
     webviewClose: { fontSize: 16, color: '#3B82F6', fontWeight: '600' },
 
     // Header
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16 },
-    headerTitle: { fontSize: 24, fontWeight: '800', color: '#0F172A' },
-    headerSub: { fontSize: 12, color: '#64748B', fontWeight: '500', marginTop: 2 },
-    refreshBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#E0F2F9', justifyContent: 'center', alignItems: 'center' },
+    headerGradient: {
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8 },
+    headerTitle: { fontSize: 24, fontWeight: '800', color: '#FFF' },
+    headerSub: { fontSize: 12, color: '#E0F2FE', fontWeight: '600', marginTop: 2 },
+    refreshBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255, 255, 255, 0.2)', justifyContent: 'center', alignItems: 'center' },
     comingSoonToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, marginBottom: 4 },
     comingSoonToggleText: { fontSize: 13, fontWeight: '700', color: Colors.gradientStart },
 
     // Hero
-    liveAccessCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#FEE2E2', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
+    liveAccessCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 20, padding: 16, alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: '#FEE2E2', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 3 },
     liveAccessIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center', marginRight: 14, position: 'relative' },
     liveDot: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#FEF2F2' },
     liveAccessTitle: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginBottom: 2 },
@@ -576,7 +593,7 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: 14, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12, marginTop: 4 },
 
     // Device Cards
-    deviceCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+    deviceCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
     deviceCardConnected: { borderColor: '#86EFAC', backgroundColor: '#F0FDF4' },
     deviceRow: { flexDirection: 'row', alignItems: 'center' },
     deviceIconBox: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
@@ -594,14 +611,14 @@ const styles = StyleSheet.create({
 
     // Vitals Grid
     vitalsGrid: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-    vitalCard: { flex: 1, backgroundColor: '#FFF', borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
+    vitalCard: { flex: 1, backgroundColor: '#FFF', borderRadius: 20, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
     vitalIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
     vitalVal: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
     vitalUnit: { fontSize: 10, color: '#94A3B8', fontWeight: '500' },
     vitalLabel: { fontSize: 10, color: '#64748B', fontWeight: '600', marginTop: 4 },
 
     // Sync Log
-    logCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 16 },
+    logCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 16 },
     logTitle: { fontSize: 12, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
     logRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
     logDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },

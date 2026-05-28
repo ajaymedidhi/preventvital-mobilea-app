@@ -6,6 +6,8 @@ export interface Product {
     _id: string;
     name: string;
     description: string;
+    shortDescription?: string;
+    detailedDescription?: string;
     price: number;
     originalPrice?: number;
     discount?: number;
@@ -15,6 +17,9 @@ export interface Product {
     stock: number;
     averageRating?: number;
     reviewCount?: number;
+    benefits?: string[];
+    usageInstructions?: string[];
+    specs?: { label: string; value: string }[];
 }
 
 export interface CartItem extends Product {

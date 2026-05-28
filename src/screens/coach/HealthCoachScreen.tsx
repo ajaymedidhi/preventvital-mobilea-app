@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView,
-    TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
+    TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, StatusBar
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../auth/AuthContext';
 import client from '../../api/client';
@@ -17,6 +18,7 @@ const COACH_INTRO = {
 
 export default function HealthCoachScreen() {
     const navigation = useNavigation<any>();
+    const insets = useSafeAreaInsets();
     const { currentPlan } = useAuth();
     const scrollRef = useRef<ScrollView>(null);
     const [messages, setMessages] = useState<any[]>([]);
@@ -58,17 +60,26 @@ export default function HealthCoachScreen() {
 
     if (currentPlan !== 'family') {
         return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-                        <Ionicons name="chevron-back" size={24} color="#1E293B" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Health Coach</Text>
-                    <View style={{ width: 40 }} />
-                </View>
+            <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+                <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
+                <LinearGradient
+                    colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                    locations={[0, 0.28, 0.7, 1]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+                >
+                    <View style={styles.headerContent}>
+                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                            <Ionicons name="chevron-back" size={22} color="#FFF" />
+                        </TouchableOpacity>
+                        <Text style={styles.headerTitle}>Health Coach</Text>
+                        <View style={{ width: 36 }} />
+                    </View>
+                </LinearGradient>
+
                 <View style={styles.gateContainer}>
                     <View style={styles.coachAvatar}>
-                        <Ionicons name="person-circle-outline" size={64} color="#8B5CF6" />
+                        <Ionicons name="person-circle-outline" size={64} color="#9035A0" />
                     </View>
                     <Text style={styles.gateTitle}>Certified Health Coach</Text>
                     <Text style={styles.gateDesc}>
@@ -77,41 +88,56 @@ export default function HealthCoachScreen() {
                     <View style={styles.featureList}>
                         {['Personalized weekly health plans', 'Async messaging — reply within 24h', 'CVITAL score + vitals review', 'Diet & exercise guidance'].map((f, i) => (
                             <View key={i} style={styles.featureRow}>
-                                <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+                                <Ionicons name="checkmark-circle" size={16} color="#059669" />
                                 <Text style={styles.featureText}>{f}</Text>
                             </View>
                         ))}
                     </View>
                     <TouchableOpacity style={styles.upgradeBtn} onPress={() => navigation.navigate('Subscription')}>
-                        <Text style={styles.upgradeBtnText}>Upgrade to Family</Text>
+                        <LinearGradient
+                            colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                            locations={[0, 0.28, 0.7, 1]}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                            style={styles.upgradeBtnGradient}
+                        >
+                            <Text style={styles.upgradeBtnText}>Upgrade to Family</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
-                    <Ionicons name="chevron-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <View style={styles.coachAvatarSmall}>
-                        <Ionicons name="person-circle" size={32} color="#8B5CF6" />
+        <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
+            <LinearGradient
+                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                locations={[0, 0.28, 0.7, 1]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+            >
+                <View style={styles.headerContent}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                        <Ionicons name="chevron-back" size={22} color="#FFF" />
+                    </TouchableOpacity>
+                    <View style={styles.headerCenter}>
+                        <View style={styles.coachAvatarSmall}>
+                            <Ionicons name="person-circle" size={28} color="#9035A0" />
+                        </View>
+                        <View>
+                            <Text style={styles.headerTitle}>Health Coach</Text>
+                            <Text style={styles.headerSub}>Certified • Replies within 24h</Text>
+                        </View>
                     </View>
-                    <View>
-                        <Text style={styles.headerTitle}>Health Coach</Text>
-                        <Text style={styles.headerSub}>Certified • Replies within 24h</Text>
-                    </View>
+                    <View style={{ width: 36 }} />
                 </View>
-                <View style={{ width: 40 }} />
-            </View>
+            </LinearGradient>
 
             {loading ? (
-                <ActivityIndicator color="#8B5CF6" style={{ flex: 1 }} />
+                <ActivityIndicator color="#9035A0" style={{ flex: 1 }} />
             ) : (
-                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
+                <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
                     <ScrollView
                         ref={scrollRef}
                         contentContainerStyle={styles.chatContent}
@@ -123,27 +149,43 @@ export default function HealthCoachScreen() {
                                 <View key={i} style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleCoach]}>
                                     {!isUser && (
                                         <View style={styles.coachBubbleAvatar}>
-                                            <Ionicons name="person-circle" size={22} color="#8B5CF6" />
+                                            <Ionicons name="person-circle" size={22} color="#9035A0" />
                                         </View>
                                     )}
-                                    <View style={[styles.bubbleContent, isUser ? styles.bubbleContentUser : styles.bubbleContentCoach]}>
-                                        <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextCoach]}>
-                                            {m.text}
-                                        </Text>
-                                        <Text style={styles.bubbleTime}>
-                                            {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                                        </Text>
-                                    </View>
+                                    {isUser ? (
+                                        <LinearGradient
+                                            colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                                            locations={[0, 0.28, 0.7, 1]}
+                                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                                            style={[styles.bubbleContent, styles.bubbleContentUser]}
+                                        >
+                                            <Text style={[styles.bubbleText, styles.bubbleTextUser]}>
+                                                {m.text}
+                                            </Text>
+                                            <Text style={[styles.bubbleTime, { color: 'rgba(255,255,255,0.75)' }]}>
+                                                {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                            </Text>
+                                        </LinearGradient>
+                                    ) : (
+                                        <View style={[styles.bubbleContent, styles.bubbleContentCoach]}>
+                                            <Text style={[styles.bubbleText, styles.bubbleTextCoach]}>
+                                                {m.text}
+                                            </Text>
+                                            <Text style={styles.bubbleTime}>
+                                                {new Date(m.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                            </Text>
+                                        </View>
+                                    )}
                                 </View>
                             );
                         })}
                         {sending && (
                             <View style={[styles.bubble, styles.bubbleCoach]}>
                                 <View style={styles.coachBubbleAvatar}>
-                                    <Ionicons name="person-circle" size={22} color="#8B5CF6" />
+                                    <Ionicons name="person-circle" size={22} color="#9035A0" />
                                 </View>
                                 <View style={[styles.bubbleContent, styles.bubbleContentCoach]}>
-                                    <ActivityIndicator size="small" color="#8B5CF6" />
+                                    <ActivityIndicator size="small" color="#9035A0" />
                                 </View>
                             </View>
                         )}
@@ -164,46 +206,72 @@ export default function HealthCoachScreen() {
                             onPress={handleSend}
                             disabled={!text.trim() || sending}
                         >
-                            <Ionicons name="send" size={18} color="#fff" />
+                            <LinearGradient
+                                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                                locations={[0, 0.28, 0.7, 1]}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                                style={styles.sendBtnGradient}
+                            >
+                                <Ionicons name="paper-plane" size={16} color="#fff" />
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             )}
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8FAFC' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-    back: { width: 40, justifyContent: 'center' },
-    headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    headerTitle: { fontSize: 16, fontWeight: '700', color: '#1E293B' },
-    headerSub: { fontSize: 11, color: '#22C55E', fontWeight: '600' },
-    coachAvatarSmall: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center' },
-    gateContainer: { flex: 1, alignItems: 'center', padding: 32, paddingTop: 48, gap: 16 },
-    coachAvatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center' },
-    gateTitle: { fontSize: 22, fontWeight: '800', color: '#1E293B' },
-    gateDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22 },
-    featureList: { alignSelf: 'stretch', gap: 10 },
-    featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    featureText: { fontSize: 14, color: '#374151' },
-    upgradeBtn: { backgroundColor: '#8B5CF6', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 28, marginTop: 8 },
-    upgradeBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-    chatContent: { padding: 16, paddingBottom: 8, gap: 12 },
-    bubble: { flexDirection: 'row', alignItems: 'flex-end', gap: 6 },
+    container: { flex: 1, backgroundColor: '#F1F5F9' },
+    headerGradient: {
+        paddingBottom: 14,
+    },
+    headerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+    },
+    backBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    headerCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, marginLeft: 8 },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#FFF' },
+    headerSub: { fontSize: 11, color: '#A7F3D0', fontWeight: '700' },
+    coachAvatarSmall: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' },
+    
+    gateContainer: { flex: 1, alignItems: 'center', padding: 24, paddingTop: 40, gap: 18 },
+    coachAvatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#F3E8FF', justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#FFF', shadowColor: '#9035A0', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
+    gateTitle: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
+    gateDesc: { fontSize: 14, color: '#475569', textAlign: 'center', lineHeight: 22, marginBottom: 8 },
+    featureList: { alignSelf: 'stretch', gap: 12, backgroundColor: '#FFF', borderRadius: 20, padding: 18, borderWidth: 1, borderColor: '#E2E8F0' },
+    featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    featureText: { fontSize: 14, color: '#334155', fontWeight: '600' },
+    upgradeBtn: { width: '100%', height: 50, borderRadius: 16, overflow: 'hidden', marginTop: 12 },
+    upgradeBtnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    upgradeBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+
+    chatContent: { padding: 16, paddingBottom: 16, gap: 12 },
+    bubble: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
     bubbleUser: { justifyContent: 'flex-end' },
     bubbleCoach: { justifyContent: 'flex-start' },
-    coachBubbleAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EDE9FE', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-    bubbleContent: { maxWidth: '78%', borderRadius: 18, padding: 12, paddingBottom: 8 },
-    bubbleContentUser: { backgroundColor: '#6366F1', borderBottomRightRadius: 4 },
-    bubbleContentCoach: { backgroundColor: '#fff', borderBottomLeftRadius: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+    coachBubbleAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', flexShrink: 0, borderWidth: 1, borderColor: '#E2E8F0' },
+    bubbleContent: { maxWidth: '78%', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10 },
+    bubbleContentUser: { borderBottomRightRadius: 4 },
+    bubbleContentCoach: { backgroundColor: '#fff', borderBottomLeftRadius: 4, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 1, borderWidth: 1, borderColor: '#F1F5F9' },
     bubbleText: { fontSize: 14, lineHeight: 20 },
-    bubbleTextUser: { color: '#fff' },
-    bubbleTextCoach: { color: '#1E293B' },
-    bubbleTime: { fontSize: 10, color: 'rgba(148,163,184,0.9)', marginTop: 4, alignSelf: 'flex-end' },
-    inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F1F5F9', gap: 10 },
-    chatInput: { flex: 1, borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#1E293B', maxHeight: 100 },
-    sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#6366F1', justifyContent: 'center', alignItems: 'center' },
-    sendBtnDisabled: { opacity: 0.4 },
+    bubbleTextUser: { color: '#fff', fontWeight: '600' },
+    bubbleTextCoach: { color: '#0F172A', fontWeight: '500' },
+    bubbleTime: { fontSize: 10, color: '#94A3B8', marginTop: 4, alignSelf: 'flex-end', fontWeight: '500' },
+    inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F1F5F9', gap: 10 },
+    chatInput: { flex: 1, borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: '#0F172A', maxHeight: 100, backgroundColor: '#F8FAFC', fontWeight: '600' },
+    sendBtn: { width: 42, height: 42, borderRadius: 21, overflow: 'hidden' },
+    sendBtnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    sendBtnDisabled: { opacity: 0.5 },
 });

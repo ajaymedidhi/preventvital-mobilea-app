@@ -6,6 +6,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import client from '../api/client';
 
 const VIDA_INTRO_KEY = 'pv_vida_intro_shown';
@@ -89,7 +91,7 @@ export default function VIDAChatbot() {
                     }
                 ]}
                 onPress={() => { setOpen(true); setShowTooltip(false); }}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
             >
                 <Image 
                     source={require('../../assets/images/vita_bot.png')} 
@@ -104,30 +106,42 @@ export default function VIDAChatbot() {
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 
                     {/* Header */}
-                    <View style={styles.header}>
-                        <View style={styles.avatar}>
-                            <Image 
-                                source={require('../../assets/images/vita_bot.png')} 
-                                style={styles.headerImg} 
-                            />
+                    <LinearGradient
+                        colors={['#3A8AB5', '#51A6CB']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={[styles.headerGradient, { paddingTop: Platform.OS === 'ios' ? 30 : 16 }]}
+                    >
+                        <View style={styles.header}>
+                            <View style={styles.avatar}>
+                                <Image 
+                                    source={require('../../assets/images/vita_bot.png')} 
+                                    style={styles.headerImg} 
+                                />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.vitaName}>VITA AI</Text>
+                                <View style={styles.statusRow}>
+                                    <View style={styles.statusDot} />
+                                    <Text style={styles.vitaStatus}>Online · Gemini</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
+                                <Ionicons name="close" size={24} color="#FFF" />
+                            </TouchableOpacity>
                         </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.vitaName}>VITA AI</Text>
-                            <Text style={styles.vitaStatus}>● Online · Gemini</Text>
-                        </View>
-                        <TouchableOpacity style={styles.closeBtn} onPress={() => setOpen(false)}>
-                            <Text style={{ fontSize: 18, color: '#666' }}>✕</Text>
-                        </TouchableOpacity>
-                    </View>
+                    </LinearGradient>
 
                     {/* Suggestions */}
                     {msgs.length === 1 && (
-                        <View style={styles.suggestions}>
-                            {SUGGESTIONS.map((sug, i) => (
-                                <TouchableOpacity key={i} style={styles.sugChip} onPress={() => send(sug)}>
-                                    <Text style={styles.sugText}>{sug}</Text>
-                                </TouchableOpacity>
-                            ))}
+                        <View style={styles.suggestionsContainer}>
+                            <Text style={styles.suggestionsTitle}>Suggested Questions</Text>
+                            <View style={styles.suggestions}>
+                                {SUGGESTIONS.map((sug, i) => (
+                                    <TouchableOpacity key={i} style={styles.sugChip} onPress={() => send(sug)} activeOpacity={0.82}>
+                                        <Text style={styles.sugText}>{sug}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
                         </View>
                     )}
 
@@ -137,19 +151,42 @@ export default function VIDAChatbot() {
                         data={msgs}
                         keyExtractor={m => m.id}
                         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-                        contentContainerStyle={{ paddingBottom: 20 }}
+                        contentContainerStyle={{ padding: 16, paddingBottom: 30 }}
                         renderItem={({ item }) => (
                             <View style={[styles.msgRow, item.role === 'user' && styles.msgRowUser]}>
-                                <View style={[styles.bubble, item.role === 'user' ? styles.userBubble : styles.vitaBubble]}>
-                                    <Text style={item.role === 'user' ? styles.userText : styles.vitaText}>
-                                        {item.text}
-                                    </Text>
-                                </View>
+                                {item.role !== 'user' && (
+                                    <View style={styles.bubbleAvatar}>
+                                        <Image 
+                                            source={require('../../assets/images/vita_bot.png')} 
+                                            style={styles.bubbleAvatarImg} 
+                                        />
+                                    </View>
+                                )}
+                                {item.role === 'user' ? (
+                                    <LinearGradient
+                                        colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                                        style={[styles.bubble, styles.userBubble]}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        locations={[0, 0.28, 0.7, 1]}
+                                    >
+                                        <Text style={styles.userText}>{item.text}</Text>
+                                    </LinearGradient>
+                                ) : (
+                                    <View style={[styles.bubble, styles.vitaBubble]}>
+                                        <Text style={styles.vitaText}>{item.text}</Text>
+                                    </View>
+                                )}
                             </View>
                         )}
                     />
 
-                    {loading && <ActivityIndicator color="#3B82F6" style={{ padding: 8 }} />}
+                    {loading && (
+                        <View style={styles.loaderContainer}>
+                            <ActivityIndicator color="#3A8AB5" size="small" />
+                            <Text style={styles.loaderText}>VITA is typing...</Text>
+                        </View>
+                    )}
 
                     {/* Input */}
                     <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -158,10 +195,11 @@ export default function VIDAChatbot() {
                             value={input}
                             onChangeText={setInput}
                             placeholder="Ask VITA..."
+                            placeholderTextColor="#94A3B8"
                             onSubmitEditing={() => send()}
                         />
-                        <TouchableOpacity style={styles.sendBtn} onPress={() => send()}>
-                            <Text style={styles.sendIcon}>➤</Text>
+                        <TouchableOpacity style={styles.sendBtn} onPress={() => send()} activeOpacity={0.85}>
+                            <Ionicons name="paper-plane" size={16} color="#FFF" />
                         </TouchableOpacity>
                     </View>
 
@@ -175,54 +213,90 @@ const styles = StyleSheet.create({
     fab: {
         position: 'absolute',
         width: 60, height: 60, borderRadius: 30,
-        backgroundColor: '#3B82F6', justifyContent: 'center',
-        alignItems: 'center', shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 999,
+        backgroundColor: '#FFF', justifyContent: 'center',
+        alignItems: 'center', shadowColor: '#3A8AB5', shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.35, shadowRadius: 12, elevation: 10, zIndex: 999,
+        borderWidth: 2, borderColor: '#51A6CB',
         overflow: 'hidden'
     },
-    fabImg: { width: 60, height: 60 },
-    modal: { flex: 1, backgroundColor: '#fff' },
+    fabImg: { width: 56, height: 56 },
+    modal: { flex: 1, backgroundColor: '#F8FAFC' },
+    headerGradient: {
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 6,
+    },
     header: {
         flexDirection: 'row', alignItems: 'center', gap: 12,
-        padding: 16, paddingTop: Platform.OS === 'ios' ? 60 : 16,
-        borderBottomWidth: 1, borderColor: '#F3F4F6',
-        backgroundColor: '#fff'
+        padding: 16,
     },
     avatar: {
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: '#F3F4F6', overflow: 'hidden',
-        borderWidth: 1, borderColor: '#E5E7EB'
+        backgroundColor: 'rgba(255, 255, 255, 0.2)', overflow: 'hidden',
+        borderWidth: 1.5, borderColor: '#FFF'
     },
     headerImg: { width: 44, height: 44 },
-    vitaName: { fontWeight: '700', fontSize: 16, color: '#111827' },
-    vitaStatus: { fontSize: 12, color: '#10B981', marginTop: 2 },
+    vitaName: { fontWeight: '800', fontSize: 18, color: '#FFF' },
+    statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },
+    statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ADE80' },
+    vitaStatus: { fontSize: 12, color: '#E0F2FE', fontWeight: '600' },
     closeBtn: { padding: 8 },
-    suggestions: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 8, borderBottomWidth: 1, borderColor: '#F3F4F6' },
-    sugChip: { backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
-    sugText: { color: '#2563EB', fontSize: 12, fontWeight: '600' },
-    msgRow: { flexDirection: 'row', padding: 12, paddingBottom: 4 },
+    suggestionsContainer: {
+        padding: 16,
+        backgroundColor: '#FFF',
+        borderBottomWidth: 1,
+        borderColor: '#F1F5F9',
+    },
+    suggestionsTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#94A3B8',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 10,
+    },
+    suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    sugChip: { backgroundColor: '#F0FAFF', borderWidth: 1, borderColor: '#E0F2FE', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
+    sugText: { color: '#0284C7', fontSize: 13, fontWeight: '700' },
+    msgRow: { flexDirection: 'row', paddingBottom: 14, gap: 10, alignItems: 'flex-end' },
     msgRowUser: { justifyContent: 'flex-end' },
-    bubble: { maxWidth: '80%', padding: 14, borderRadius: 16 },
-    vitaBubble: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderBottomLeftRadius: 4 },
-    userBubble: { backgroundColor: '#3B82F6', borderBottomRightRadius: 4 },
-    vitaText: { color: '#374151', fontSize: 15, lineHeight: 22 },
-    userText: { color: '#fff', fontSize: 15, lineHeight: 22 },
+    bubbleAvatar: {
+        width: 28, height: 28, borderRadius: 14,
+        backgroundColor: '#E2E8F0', overflow: 'hidden',
+        borderWidth: 1, borderColor: '#CBD5E1',
+        marginBottom: 2,
+    },
+    bubbleAvatarImg: { width: 28, height: 28 },
+    bubble: { maxWidth: '78%', padding: 14, borderRadius: 20 },
+    vitaBubble: { backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F1F5F9', borderBottomLeftRadius: 4, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 8, elevation: 1 },
+    userBubble: { borderBottomRightRadius: 4 },
+    vitaText: { color: '#334155', fontSize: 14, lineHeight: 22, fontWeight: '500' },
+    userText: { color: '#FFF', fontSize: 14, lineHeight: 22, fontWeight: '600' },
+    loaderContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 54, paddingBottom: 16 },
+    loaderText: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
     inputRow: {
         flexDirection: 'row', padding: 12, gap: 10,
-        borderTopWidth: 1, borderColor: '#F3F4F6', backgroundColor: '#fff',
+        borderTopWidth: 1, borderColor: '#F1F5F9', backgroundColor: '#FFF',
+        alignItems: 'center',
     },
     input: {
-        flex: 1, backgroundColor: '#F9FAFB', borderRadius: 22,
+        flex: 1, backgroundColor: '#F8FAFC', borderRadius: 22,
         paddingHorizontal: 16, paddingVertical: 12,
-        borderWidth: 1, borderColor: '#E5E7EB', fontSize: 15
+        borderWidth: 1, borderColor: '#E2E8F0', fontSize: 15,
+        color: '#0F172A', fontWeight: '600',
     },
     sendBtn: {
         width: 44, height: 44, borderRadius: 22,
-        backgroundColor: '#3B82F6', justifyContent: 'center',
-        alignItems: 'center'
+        backgroundColor: '#3A8AB5', justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#3A8AB5', shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
     },
-    sendIcon: { color: '#fff', fontSize: 18 },
     tooltip: { position: 'absolute', right: 16, backgroundColor: '#0F172A', borderRadius: 12, padding: 12, maxWidth: 220, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 },
-    tooltipText: { color: '#fff', fontSize: 13, fontWeight: '600', lineHeight: 18 },
+    tooltipText: { color: '#FFF', fontSize: 13, fontWeight: '600', lineHeight: 18 },
     tooltipArrow: { position: 'absolute', bottom: -7, right: 22, width: 14, height: 14, backgroundColor: '#0F172A', transform: [{ rotate: '45deg' }] },
 });

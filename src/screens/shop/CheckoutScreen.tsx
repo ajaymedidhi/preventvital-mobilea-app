@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform
+    TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StatusBar
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import { createOrder } from '../../api/shopApi';
 
 const CheckoutScreen = () => {
     const navigation = useNavigation<any>();
+    const insets = useSafeAreaInsets();
     const { cart, totalAmount } = useShop();
     
     const [loading, setLoading] = useState(false);
@@ -39,10 +40,6 @@ const CheckoutScreen = () => {
             });
 
             // TODO: Integrate native Razorpay SDK before going live.
-            // orderRes.order contains the Razorpay order_id needed for checkout.
-            // Install: npm install react-native-razorpay
-            // Then open the Razorpay checkout with the order details and on success call verifyPayment.
-            // The signature MUST be verified server-side — never bypass in production.
             Alert.alert(
                 'Payment Not Configured',
                 'Native Razorpay integration is required for production payments. Please integrate the react-native-razorpay SDK before releasing.',
@@ -61,26 +58,57 @@ const CheckoutScreen = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <SafeAreaView style={styles.header} edges={['top']}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Checkout</Text>
-                <View style={{ width: 40 }} />
-            </SafeAreaView>
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
+            <LinearGradient
+                colors={['#3A8AB5', '#51A6CB']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+            >
+                <View style={styles.headerContent}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                        <Ionicons name="chevron-back" size={22} color="#FFF" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Checkout</Text>
+                    <View style={{ width: 40 }} />
+                </View>
+            </LinearGradient>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                {/* Stepper */}
+                <View style={styles.stepperContainer}>
+                    <View style={styles.step}>
+                        <View style={[styles.stepDot, styles.stepDotCompleted]}>
+                            <Ionicons name="checkmark" size={12} color="#FFF" />
+                        </View>
+                        <Text style={[styles.stepLabel, styles.stepLabelCompleted]}>Cart</Text>
+                    </View>
+                    <View style={styles.stepLineActive} />
+                    <View style={styles.step}>
+                        <View style={[styles.stepDot, styles.stepDotActive]}>
+                            <Text style={styles.stepDotTextActive}>2</Text>
+                        </View>
+                        <Text style={[styles.stepLabel, styles.stepLabelActive]}>Shipping</Text>
+                    </View>
+                    <View style={styles.stepLine} />
+                    <View style={styles.step}>
+                        <View style={styles.stepDot}>
+                            <Text style={styles.stepDotText}>3</Text>
+                        </View>
+                        <Text style={styles.stepLabel}>Payment</Text>
+                    </View>
+                </View>
+
                 {/* Order Summary */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Order Summary</Text>
                     <View style={styles.summaryCard}>
                         {cart.map(item => (
                             <View key={item._id} style={styles.summaryItem}>
-                                <Text style={styles.summaryName}>{item.quantity}x {item.name}</Text>
+                                <Text style={styles.summaryName} numberOfLines={1}>{item.quantity}x {item.name}</Text>
                                 <Text style={styles.summaryPrice}>₹{item.price * item.quantity}</Text>
                             </View>
                         ))}
-                        <View style={styles.divider} />
+                        <View style={styles.dashedDivider} />
                         <View style={styles.summaryRow}>
                             <Text style={styles.totalLabel}>Total Amount</Text>
                             <Text style={styles.totalValue}>₹{totalAmount}</Text>
@@ -92,40 +120,55 @@ const CheckoutScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Shipping Address</Text>
                     <View style={styles.formCard}>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Street Address"
-                            value={address.street}
-                            onChangeText={text => setAddress({ ...address, street: text })}
-                        />
-                        <View style={styles.inputRow}>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.inputLabel}>Street Address</Text>
                             <TextInput
-                                style={[styles.input, { flex: 1, marginRight: 10 }]}
-                                placeholder="City"
-                                value={address.city}
-                                onChangeText={text => setAddress({ ...address, city: text })}
-                            />
-                            <TextInput
-                                style={[styles.input, { flex: 1 }]}
-                                placeholder="State"
-                                value={address.state}
-                                onChangeText={text => setAddress({ ...address, state: text })}
+                                style={styles.input}
+                                placeholder="Street Address"
+                                value={address.street}
+                                onChangeText={text => setAddress({ ...address, street: text })}
                             />
                         </View>
                         <View style={styles.inputRow}>
-                            <TextInput
-                                style={[styles.input, { flex: 1, marginRight: 10 }]}
-                                placeholder="Postal Code"
-                                keyboardType="numeric"
-                                value={address.postalCode}
-                                onChangeText={text => setAddress({ ...address, postalCode: text })}
-                            />
-                            <TextInput
-                                style={[styles.input, { flex: 1, backgroundColor: '#F1F5F9' }]}
-                                placeholder="Country"
-                                value={address.country}
-                                editable={false}
-                            />
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                                <Text style={styles.inputLabel}>City</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="City"
+                                    value={address.city}
+                                    onChangeText={text => setAddress({ ...address, city: text })}
+                                />
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.inputLabel}>State</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="State"
+                                    value={address.state}
+                                    onChangeText={text => setAddress({ ...address, state: text })}
+                                />
+                            </View>
+                        </View>
+                        <View style={styles.inputRow}>
+                            <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+                                <Text style={styles.inputLabel}>Postal Code</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Postal Code"
+                                    keyboardType="numeric"
+                                    value={address.postalCode}
+                                    onChangeText={text => setAddress({ ...address, postalCode: text })}
+                                />
+                            </View>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <Text style={styles.inputLabel}>Country</Text>
+                                <TextInput
+                                    style={[styles.input, { backgroundColor: '#F1F5F9' }]}
+                                    placeholder="Country"
+                                    value={address.country}
+                                    editable={false}
+                                />
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -145,12 +188,14 @@ const CheckoutScreen = () => {
                     style={[styles.payBtn, loading && styles.disabledBtn]}
                     onPress={handlePlaceOrder}
                     disabled={loading}
+                    activeOpacity={0.9}
                 >
                     <LinearGradient
-                        colors={['#3B82F6', '#2563EB']}
+                        colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
                         style={styles.btnGradient}
                         start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        locations={[0, 0.28, 0.7, 1]}
                     >
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
@@ -165,73 +210,174 @@ const CheckoutScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FAFAFA' },
-    header: {
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
+    headerGradient: {
+        paddingBottom: 16,
+    },
+    headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 15,
-        backgroundColor: '#FFF',
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F1F5F9',
     },
     backBtn: { padding: 5 },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
-    scrollContent: { padding: 20 },
-    section: { marginBottom: 25 },
-    sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1E293B', marginBottom: 12 },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#FFF' },
+    scrollContent: { padding: 16 },
+    
+    // Stepper
+    stepperContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    step: {
+        alignItems: 'center',
+        flex: 1,
+    },
+    stepDot: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#E2E8F0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    stepDotActive: {
+        backgroundColor: '#3A8AB5',
+    },
+    stepDotCompleted: {
+        backgroundColor: '#10B981',
+    },
+    stepDotText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#64748B',
+    },
+    stepDotTextActive: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#FFF',
+    },
+    stepLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#64748B',
+    },
+    stepLabelActive: {
+        color: '#3A8AB5',
+        fontWeight: '800',
+    },
+    stepLabelCompleted: {
+        color: '#10B981',
+        fontWeight: '700',
+    },
+    stepLine: {
+        height: 2,
+        backgroundColor: '#E2E8F0',
+        flex: 1,
+        marginHorizontal: -10,
+        marginTop: -16,
+    },
+    stepLineActive: {
+        height: 2,
+        backgroundColor: '#10B981',
+        flex: 1,
+        marginHorizontal: -10,
+        marginTop: -16,
+    },
+
+    section: { marginBottom: 20 },
+    sectionTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 12 },
     summaryCard: {
         backgroundColor: '#FFF',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 16,
         borderWidth: 1,
         borderColor: '#F1F5F9',
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    summaryItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    summaryName: { fontSize: 14, color: '#475569' },
-    summaryPrice: { fontSize: 14, fontWeight: '600', color: '#1E293B' },
-    divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 12 },
+    summaryItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    summaryName: { fontSize: 14, color: '#475569', fontWeight: '500', flex: 1, marginRight: 10 },
+    summaryPrice: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+    dashedDivider: {
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        borderStyle: 'dashed',
+        borderRadius: 1,
+        marginVertical: 12,
+    },
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    totalLabel: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-    totalValue: { fontSize: 18, fontWeight: '800', color: '#2563EB' },
+    totalLabel: { fontSize: 15, fontWeight: '800', color: '#0F172A' },
+    totalValue: { fontSize: 18, fontWeight: '900', color: '#1E40AF' },
     formCard: {
         backgroundColor: '#FFF',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: 16,
         borderWidth: 1,
         borderColor: '#F1F5F9',
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 2,
         gap: 12,
+    },
+    inputGroup: {
+        gap: 6,
+    },
+    inputLabel: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#64748B',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     input: {
         backgroundColor: '#F8FAFC',
-        borderRadius: 10,
+        borderRadius: 12,
         padding: 12,
         fontSize: 14,
-        color: '#1E293B',
+        color: '#0F172A',
         borderWidth: 1,
         borderColor: '#E2E8F0',
+        fontWeight: '600',
     },
     inputRow: { flexDirection: 'row' },
     infoAlert: {
         flexDirection: 'row',
         backgroundColor: '#EFF6FF',
-        padding: 12,
-        borderRadius: 12,
+        padding: 14,
+        borderRadius: 16,
         alignItems: 'center',
         gap: 10,
     },
-    infoAlertText: { flex: 1, fontSize: 12, color: '#1E40AF', fontWeight: '500' },
+    infoAlertText: { flex: 1, fontSize: 12, color: '#1E40AF', fontWeight: '600', lineHeight: 18 },
     footer: {
         padding: 20,
         backgroundColor: '#FFF',
         borderTopWidth: 1,
         borderTopColor: '#F1F5F9',
     },
-    payBtn: { height: 56, borderRadius: 16, overflow: 'hidden' },
+    payBtn: { height: 52, borderRadius: 16, overflow: 'hidden' },
     disabledBtn: { opacity: 0.7 },
     btnGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+    btnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 });
 
 export default CheckoutScreen;

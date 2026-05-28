@@ -1,5 +1,4 @@
 import { API_URL } from '../api/client';
-import { getLocalProductImage } from './productAssets';
 
 export const getImageUrl = (imagePath: string | undefined, images: string[] | undefined): any => {
     // 1. Determine the path to use
@@ -12,18 +11,12 @@ export const getImageUrl = (imagePath: string | undefined, images: string[] | un
         return { uri: 'https://via.placeholder.com/300' }; // Fallback
     }
 
-    // 2. Try to find a local bundled asset first
-    const localAsset = getLocalProductImage(path);
-    if (localAsset) {
-        return localAsset; // Returns the local require()
-    }
-
-    // 3. Check if it's already a full URL
+    // 2. Check if it's already a full URL
     if (path.startsWith('http')) {
         return { uri: path };
     }
 
-    // 4. Prepend API_URL for relative paths
+    // 3. Prepend API_URL for relative paths
     // Ensure path starts with a slash
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 

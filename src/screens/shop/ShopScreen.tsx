@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
     FlatList, Dimensions, StatusBar, ActivityIndicator, RefreshControl,
+    Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { Image } from 'expo-image';
 import { getProducts } from '../../api/shopApi';
 import { useShop, Product } from '../../context/ShopContext';
 import { getImageUrl } from '../../utils/imageUtils';
@@ -86,7 +86,7 @@ const ShopScreen = () => {
                     <Image
                         source={getImageUrl(item.image, item.images)}
                         style={styles.productImage}
-                        contentFit="contain"
+                        resizeMode="contain"
                     />
                     {item.discount && (
                         <View style={styles.discountBadge}>
@@ -136,13 +136,13 @@ const ShopScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={Colors.gradientStart} />
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
 
             {/* Header */}
             <LinearGradient
-                colors={Gradients.brandFade}
-                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-                locations={[0, 0.6, 1]}
+                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                locations={[0, 0.28, 0.7, 1]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 12 }]}
             >
                 <View style={styles.headerTop}>
@@ -186,8 +186,10 @@ const ShopScreen = () => {
                 {/* Category chips */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
                     {categories.map(cat => {
-                        const cfg = CAT_CONFIG[cat] || CAT_CONFIG['All'];
+                        const matchedKey = Object.keys(CAT_CONFIG).find(k => k.toLowerCase() === cat.toLowerCase());
+                        const cfg = matchedKey ? CAT_CONFIG[matchedKey] : CAT_CONFIG['All'];
                         const active = selectedCategory === cat;
+                        const displayLabel = matchedKey ? cfg.label : (cat.charAt(0).toUpperCase() + cat.slice(1));
                         return (
                             <TouchableOpacity
                                 key={cat}
@@ -196,7 +198,7 @@ const ShopScreen = () => {
                             >
                                 <Ionicons name={cfg.icon as any} size={12} color={active ? Colors.gradientStart : 'rgba(255,255,255,0.8)'} />
                                 <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                                    {cfg.label || cat}
+                                    {displayLabel}
                                 </Text>
                             </TouchableOpacity>
                         );
@@ -215,7 +217,7 @@ const ShopScreen = () => {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
                 >
                     {/* Feature Banners in empty state */}
-                    <FeaturedBanners onCategoryPress={setSelectedCategory} />
+                    {/* <FeaturedBanners onCategoryPress={setSelectedCategory} /> */}
                     <View style={styles.emptyState}>
                         <View style={styles.emptyIconWrap}>
                             <Ionicons name="storefront-outline" size={40} color={Colors.gradientStart} />
@@ -246,7 +248,7 @@ const ShopScreen = () => {
                     numColumns={2}
                     contentContainerStyle={styles.productList}
                     showsVerticalScrollIndicator={false}
-                    ListHeaderComponent={<FeaturedBanners onCategoryPress={setSelectedCategory} />}
+                    /* ListHeaderComponent={<FeaturedBanners onCategoryPress={setSelectedCategory} />} */
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />
                     }

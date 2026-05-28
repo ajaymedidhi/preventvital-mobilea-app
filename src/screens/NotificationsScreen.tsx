@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -112,6 +112,7 @@ const buildNotifications = (score: number): Notif[] => {
             body: 'You\'re in the Good range. Consistent exercise and regular re-assessments will push you to Excellent.',
             time: 'Tip',
             priority: 'info',
+            action: { label: 'View Programs', screen: 'Programs' },
         };
     } else {
         scoreBadge = {
@@ -140,9 +141,11 @@ export default function NotificationsScreen() {
 
     return (
         <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
             {/* Gradient header */}
             <LinearGradient
-                colors={['#1E293B', '#334155', '#475569']}
+                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                locations={[0, 0.28, 0.7, 1]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={[styles.header, { paddingTop: insets.top + 8 }]}
             >

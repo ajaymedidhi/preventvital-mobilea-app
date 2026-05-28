@@ -3,10 +3,9 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert,
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../auth/AuthContext';
-import { Colors, Gradients } from '../../theme/colors';
 import client from '../../api/client';
 
 const PLAN_COLORS: Record<string, string[]> = {
@@ -17,12 +16,12 @@ const PLAN_COLORS: Record<string, string[]> = {
     trial: ['#34D399', '#059669'],
     standard: ['#60A5FA', '#2563EB'],
     growth: ['#A78BFA', '#7C3AED'],
-    premium: ['#F472B6', '#DB2777'],
     enterprise: ['#38BDF8', '#0284C7']
 };
 
 const ProfileDetailsScreen = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
     const { user, subscription, currentPlan, setAuthToken, userToken } = useAuth();
 
     // Mock user details populated from backend/state
@@ -134,18 +133,19 @@ const ProfileDetailsScreen = () => {
 
     return (
         <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
             <LinearGradient
-                colors={['#8A88E1', '#8551C7']}
-                style={styles.headerGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
+                colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                locations={[0, 0.28, 0.7, 1]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
             >
                 <View style={styles.headerTop}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
+                        <Ionicons name="chevron-back" size={22} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Personal Information</Text>
-                    <View style={{ width: 40 }} />
+                    <View style={{ width: 36 }} />
                 </View>
 
                 <View style={styles.avatarSection}>
@@ -228,7 +228,7 @@ const ProfileDetailsScreen = () => {
                 <View style={styles.formCard}>
                     {/* Section: Identity */}
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="person-circle-outline" size={20} color="#8B5CF6" />
+                        <Ionicons name="person-circle-outline" size={20} color="#9035A0" />
                         <Text style={styles.sectionTitle}>Identity</Text>
                     </View>
 
@@ -248,7 +248,7 @@ const ProfileDetailsScreen = () => {
 
                     {/* Section: Body Metrics */}
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="fitness-outline" size={20} color="#8B5CF6" />
+                        <Ionicons name="fitness-outline" size={20} color="#9035A0" />
                         <Text style={styles.sectionTitle}>Body Metrics</Text>
                     </View>
 
@@ -316,7 +316,7 @@ const ProfileDetailsScreen = () => {
 
                     {/* Section: Location */}
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="location-outline" size={20} color="#8B5CF6" />
+                        <Ionicons name="location-outline" size={20} color="#9035A0" />
                         <Text style={styles.sectionTitle}>Location</Text>
                     </View>
 
@@ -331,8 +331,9 @@ const ProfileDetailsScreen = () => {
 
                     <TouchableOpacity onPress={handleSave} disabled={isSaving} style={{ marginTop: 24 }}>
                         <LinearGradient
-                            colors={['#6366F1', '#A855F7']}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                            locations={[0, 0.28, 0.7, 1]}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                             style={[styles.saveButton, isSaving && { opacity: 0.7 }]}
                         >
                             <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
@@ -347,12 +348,11 @@ const ProfileDetailsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8FAFC',
+        backgroundColor: '#F1F5F9',
     },
     headerGradient: {
-        paddingTop: 60, // Account for status bar without SafeAreaView blocking color
-        paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingHorizontal: 16,
+        paddingBottom: 20,
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
     },
@@ -362,31 +362,31 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#fff',
+        fontWeight: '800',
+        color: '#FFF',
     },
     scrollContent: {
-        padding: 20,
-        paddingTop: 24,
+        padding: 16,
+        paddingTop: 16,
     },
     subCard: {
         borderRadius: 20,
         padding: 20,
-        marginBottom: 20,
-        shadowColor: '#000',
+        marginBottom: 16,
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
-        elevation: 5,
+        elevation: 4,
     },
     subCardTop: {
         flexDirection: 'row',
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     subCardLabel: {
-        color: 'rgba(255,255,255,0.8)',
+        color: 'rgba(255,255,255,0.85)',
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 1,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     subCardPlanName: {
         color: '#FFF',
         fontSize: 22,
-        fontWeight: 'bold',
+        fontWeight: '900',
         textTransform: 'capitalize',
     },
     subCardOrgName: {
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     subCardBottomLabel: {
-        color: 'rgba(255,255,255,0.7)',
+        color: 'rgba(255,255,255,0.75)',
         fontSize: 11,
         fontWeight: '500',
         marginBottom: 2,
@@ -433,15 +433,15 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
     formCard: {
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 24,
-        shadowColor: '#000',
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        padding: 20,
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
-        shadowRadius: 10,
+        shadowRadius: 12,
         elevation: 3,
-        marginBottom: 40,
+        marginBottom: 32,
     },
     row: {
         flexDirection: 'row',
@@ -457,8 +457,8 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1E293B',
+        fontWeight: '800',
+        color: '#0F172A',
     },
     sectionDivider: {
         height: 1,
@@ -466,10 +466,12 @@ const styles = StyleSheet.create({
         marginVertical: 20,
     },
     label: {
-        fontSize: 13,
+        fontSize: 12,
+        fontWeight: '700',
         color: '#64748B',
-        marginBottom: 8,
-        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 6,
     },
     inputWrapperField: {
         flexDirection: 'row',
@@ -479,17 +481,18 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 16,
         height: 52,
-        backgroundColor: '#fff',
+        backgroundColor: '#F8FAFC',
     },
     textInput: {
         flex: 1,
         fontSize: 15,
-        color: '#1E293B',
+        color: '#0F172A',
         height: '100%',
+        fontWeight: '600',
     },
     inputDisabled: {
-        backgroundColor: '#F8FAFC',
-        borderColor: '#F1F5F9',
+        backgroundColor: '#F1F5F9',
+        borderColor: '#E2E8F0',
     },
     inputWrapper: {
         marginBottom: 0,
@@ -512,8 +515,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     chipActive: {
-        backgroundColor: '#8B5CF6',
-        borderColor: '#8B5CF6',
+        backgroundColor: '#9035A0',
+        borderColor: '#9035A0',
     },
     bloodChip: {
         paddingHorizontal: 8,
@@ -528,8 +531,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     bloodChipActive: {
-        backgroundColor: '#8B5CF6',
-        borderColor: '#8B5CF6',
+        backgroundColor: '#9035A0',
+        borderColor: '#9035A0',
     },
     chipText: {
         fontSize: 12,
@@ -541,27 +544,29 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: 15,
-        color: '#1E293B',
+        color: '#0F172A',
+        fontWeight: '600',
     },
     saveButton: {
-        height: 56,
+        height: 52,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#6366F1',
+        shadowColor: '#9035A0',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.15,
         shadowRadius: 8,
         elevation: 4,
+        overflow: 'hidden',
     },
     saveButtonText: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '800',
     },
     avatarSection: {
         alignItems: 'center',
-        paddingTop: 20,
+        paddingTop: 16,
         paddingBottom: 8,
     },
     avatarTouchable: {
@@ -596,7 +601,7 @@ const styles = StyleSheet.create({
         width: 26,
         height: 26,
         borderRadius: 13,
-        backgroundColor: '#6366F1',
+        backgroundColor: '#9035A0',
         borderWidth: 2,
         borderColor: '#fff',
         justifyContent: 'center',
@@ -604,13 +609,13 @@ const styles = StyleSheet.create({
     },
     avatarName: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '800',
         color: '#fff',
         marginBottom: 2,
     },
     avatarHint: {
         fontSize: 11,
-        color: 'rgba(255,255,255,0.65)',
+        color: 'rgba(255,255,255,0.75)',
         fontWeight: '500',
     },
 });

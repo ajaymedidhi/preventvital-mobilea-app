@@ -132,14 +132,19 @@ const ProgramsListScreen = () => {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor={Colors.gradientStart} />
+            <StatusBar barStyle="light-content" backgroundColor="#3A8AB5" />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 bounces={true}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.gradientStart} />}
             >
                 {/* ── Gradient Header ──────────────────────────────── */}
-                <LinearGradient colors={Gradients.brandFade} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} locations={[0, 0.55, 1]}>
+                <LinearGradient
+                    colors={['#3A8AB5', '#51A6CB', '#9035A0', '#BF40A3']}
+                    locations={[0, 0.28, 0.7, 1]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={styles.header}
+                >
                     <SafeAreaView edges={['top']}>
                         <View style={styles.headerContent}>
                             <Text style={styles.headerTitle}>Wellness Programs</Text>
