@@ -55,7 +55,7 @@ export default function ConsentScreen() {
                     <Text style={styles.link} onPress={() => (navigation as any).navigate('TermsAndConditions')}>Terms & Conditions</Text>
                     {' '}and{' '}
                     <Text style={styles.link} onPress={() => (navigation as any).navigate('PrivacyOverview')}>Privacy Policy</Text>
-                    , and grant PreventalVital permission to read your health data from Google Fit/Apple Health.
+                    , and grant PreventVital permission to read your health data from Google Fit/Apple Health.
                 </Text>
 
                 <View style={styles.buttonContainer}>

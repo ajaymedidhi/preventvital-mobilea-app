@@ -116,7 +116,7 @@ export default function PrivacyPolicyLandingScreen() {
 
                     <View style={styles.noticeCard}>
                         <Text style={styles.noticeText}>
-                            <Text style={styles.bold}>Important Notice:</Text> This Privacy Policy describes how PreventalVital Health Technologies ("PreventalVital", "we", "us", "our") collects, uses, shares, and protects your personal and health information when you use our mobile application, web platform, and associated services. By using PreventalVital, you consent to the practices described in this policy.
+                            <Text style={styles.bold}>Important Notice:</Text> This Privacy Policy describes how PreventVital Health Technologies ("PreventVital", "we", "us", "our") collects, uses, shares, and protects your personal and health information when you use our mobile application, web platform, and associated services. By using PreventVital, you consent to the practices described in this policy.
                         </Text>
                     </View>
 

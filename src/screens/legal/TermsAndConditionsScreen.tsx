@@ -46,7 +46,7 @@ export default function TermsAndConditionsScreen() {
                     <View style={styles.iconWrapper}>
                         <Ionicons name="document-text" size={32} color="#818CF8" />
                     </View>
-                    <Text style={styles.title}>PreventalVital</Text>
+                    <Text style={styles.title}>PreventVital</Text>
                     <Text style={styles.subtitle}>(gruentzig.ai Private Limited)</Text>
                     <View style={styles.badgeContainer}>
                         <Text style={styles.badgeText}>LEGAL DOCUMENT</Text>
@@ -59,12 +59,12 @@ export default function TermsAndConditionsScreen() {
 
                 <SectionCard>
                     <Text style={styles.paragraph}>
-                        <Text style={styles.bold}>Please Read Carefully:</Text> These Terms and Conditions ("Terms") govern your access to and use of the PreventalVital application, website, and related services. By creating an account or using our services, you agree to be bound by these Terms. If you do not agree, do not use PreventalVital.
+                        <Text style={styles.bold}>Please Read Carefully:</Text> These Terms and Conditions ("Terms") govern your access to and use of the PreventVital application, website, and related services. By creating an account or using our services, you agree to be bound by these Terms. If you do not agree, do not use PreventVital.
                     </Text>
                 </SectionCard>
 
                 <SectionCard title="1. Acceptance of Terms" icon="checkbox-outline">
-                    <Text style={styles.paragraph}>By downloading, installing, or using PreventalVital, you represent that:</Text>
+                    <Text style={styles.paragraph}>By downloading, installing, or using PreventVital, you represent that:</Text>
                     <Text style={styles.listItem}>• You are at least 18 years of age</Text>
                     <Text style={styles.listItem}>• You have read, understood, and agree to these Terms</Text>
                     <Text style={styles.listItem}>• You have the legal capacity to enter into an agreement</Text>
@@ -73,7 +73,7 @@ export default function TermsAndConditionsScreen() {
                 </SectionCard>
 
                 <SectionCard title="2. Description of Services" icon="apps-outline">
-                    <Text style={styles.paragraph}>PreventalVital provides the following wellness services:</Text>
+                    <Text style={styles.paragraph}>PreventVital provides the following wellness services:</Text>
                     <Text style={styles.subSectionTitle}>2.1 CVITAL Score™ & 2.2 ASCVD Risk</Text>
                     <Text style={styles.paragraph}>Proprietary cardiovascular risk scoring system and ACC/AHA 10-year risk estimation (informational tools only).</Text>
                     <Text style={styles.subSectionTitle}>2.3 Wellness Programs & 2.4 Wearables</Text>
@@ -88,7 +88,7 @@ export default function TermsAndConditionsScreen() {
                         <Text style={styles.alertTextBold}>NOT MEDICAL ADVICE</Text>
                     </View>
                     <Text style={styles.paragraph}>
-                        PreventalVital is a health information platform. It is NOT a medical device, does NOT provide medical advice, and is NOT a substitute for professional medical care.
+                        PreventVital is a health information platform. It is NOT a medical device, does NOT provide medical advice, and is NOT a substitute for professional medical care.
                     </Text>
                     <Text style={styles.listItem}>• Do not use as a substitute for consulting a doctor.</Text>
                     <Text style={styles.listItem}>• Delaying emergency care based on app data is strictly prohibited.</Text>
@@ -152,7 +152,7 @@ export default function TermsAndConditionsScreen() {
 
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>
-                        By using PreventalVital, you acknowledge that you agree to be bound by these Terms and Conditions.{"\n"}
+                        By using PreventVital, you acknowledge that you agree to be bound by these Terms and Conditions.{"\n"}
                         Effective Date: March 1, 2026 | Version 1.0
                     </Text>
                 </View>

@@ -18,10 +18,12 @@
         "NSHealthShareUsageDescription": "We need access to your health data to track your daily activity vitals.",
         "NSHealthUpdateUsageDescription": "We need access to update your health data."
       },
-      "bundleIdentifier": "com.preventvital.app"
+      "bundleIdentifier": "com.preventvital.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.preventvital.app",
+      "versionCode": 1,
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.BODY_SENSORS",
