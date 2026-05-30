@@ -188,6 +188,13 @@ export default function VIDAChatbot() {
                         </View>
                     )}
 
+                    {/* Disclaimer */}
+                    <View style={styles.disclaimerContainer}>
+                        <Text style={styles.disclaimerText}>
+                            VITA AI provides educational wellness information and is not a substitute for professional medical advice.
+                        </Text>
+                    </View>
+
                     {/* Input */}
                     <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                         <TextInput
@@ -299,4 +306,18 @@ const styles = StyleSheet.create({
     tooltip: { position: 'absolute', right: 16, backgroundColor: '#0F172A', borderRadius: 12, padding: 12, maxWidth: 220, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8 },
     tooltipText: { color: '#FFF', fontSize: 13, fontWeight: '600', lineHeight: 18 },
     tooltipArrow: { position: 'absolute', bottom: -7, right: 22, width: 14, height: 14, backgroundColor: '#0F172A', transform: [{ rotate: '45deg' }] },
+    disclaimerContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        backgroundColor: '#F1F5F9',
+        borderTopWidth: 1,
+        borderColor: '#E2E8F0',
+    },
+    disclaimerText: {
+        fontSize: 11,
+        color: '#64748B',
+        textAlign: 'center',
+        fontWeight: '500',
+        lineHeight: 15,
+    },
 });

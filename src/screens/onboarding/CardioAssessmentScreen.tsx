@@ -82,7 +82,7 @@ export default function CardioAssessmentScreen() {
         age: '',
         sex: '',
         menopause: '',
-        race: '',
+        race: 'white',
         country: '',
 
         height: '',
@@ -155,7 +155,7 @@ export default function CardioAssessmentScreen() {
     const validateStep = () => {
         switch (currentStep) {
             case 0:
-                if (!formData.age || !formData.sex || !formData.race) {
+                if (!formData.age || !formData.sex) {
                     Alert.alert('Missing Information', 'Please fill out all required fields marked with * before continuing.');
                     return false;
                 }
@@ -369,12 +369,6 @@ export default function CardioAssessmentScreen() {
                                 {renderOption('menopause', 'Post-menopausal', 'post', 'Increases cardiovascular risk')}
                             </View>
                         )}
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Ethnicity <Text style={styles.req}>*</Text></Text>
-                            {renderOption('race', 'White / South Asian / Other', 'white')}
-                            {renderOption('race', 'African / Afro-Caribbean', 'black')}
-                        </View>
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Country of Residence</Text>
