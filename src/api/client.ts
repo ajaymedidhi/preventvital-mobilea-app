@@ -1,7 +1,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getToken, deleteToken } from './storage';
 
-export const API_URL = 'https://preventvital-api-988713182018.asia-south1.run.app';
+// Local backend URL (using local IP 192.168.31.86 and port 5001 to work on both simulators/emulators and physical devices)
+export const API_URL = 'http://192.168.31.86:5001';
+// For iOS simulator only, you can also use:
+// export const API_URL = 'http://localhost:5001';
+// Production URL:
+// export const API_URL = 'https://preventvital-api-988713182018.asia-south1.run.app';
 
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 500;

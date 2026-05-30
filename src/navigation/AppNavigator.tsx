@@ -9,6 +9,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import SignUpScreen from '../screens/auth/SignUpScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import ProfileSetupScreen from '../screens/auth/ProfileSetupScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 import CardioAssessmentScreen from '../screens/onboarding/CardioAssessmentScreen';
 import AssessmentResultsScreen from '../screens/onboarding/AssessmentResultsScreen';
@@ -52,6 +53,7 @@ function AuthStack() {
         <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
             <Stack.Screen name="Welcome" component={WelcomeScreen} />
             <Stack.Screen name="SignIn" component={LoginScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
             <Stack.Screen name="CardioAssessment" component={CardioAssessmentScreen} />
