@@ -8,20 +8,20 @@ export const preWarmBackend = async (): Promise<void> => {
     }
 };
 
-export const login = async (email: string, password: string): Promise<{ token: string; user: unknown }> => {
+export const login = async (email: string, password: string): Promise<{ token: string; refreshToken: string; user: unknown }> => {
     try {
         const response = await client.post('/api/auth/login', { email, password });
-        return { token: response.data.token, user: response.data.data.user };
+        return { token: response.data.token, refreshToken: response.data.refreshToken, user: response.data.data.user };
     } catch (error: unknown) {
         const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Login failed');
     }
 };
 
-export const signup = async (userData: unknown): Promise<{ token: string; user: unknown }> => {
+export const signup = async (userData: unknown): Promise<{ token: string; refreshToken: string; user: unknown }> => {
     try {
         const response = await client.post('/api/auth/signup', userData);
-        return { token: response.data.token, user: response.data.data.user };
+        return { token: response.data.token, refreshToken: response.data.refreshToken, user: response.data.data.user };
     } catch (error: unknown) {
         const msg = (error as any)?.response?.data?.message || (error as Error)?.message;
         throw new Error(msg || 'Signup failed');

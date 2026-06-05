@@ -13,7 +13,7 @@ interface AuthContextType {
     signIn: (email: string, password?: string) => Promise<void>;
     signUp: (userData: any) => Promise<void>;
     signOut: () => Promise<void>;
-    setAuthToken: (token: string, user?: any, isNewReg?: boolean) => Promise<void>;
+    setAuthToken: (token: string, user?: any, isNewReg?: boolean, refreshToken?: string) => Promise<void>;
     refreshSubscription: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } catch {
                 token = null;
                 await deleteToken('userToken');
+                await deleteToken('refreshToken');
             }
             setUserToken(token);
             setIsLoading(false);
@@ -66,23 +67,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signIn = async (email: string, password?: string) => {
         if (!password) throw new Error('Password required');
-        const { token, user: loggedInUser } = await login(email, password);
+        const { token, refreshToken, user: loggedInUser } = await login(email, password);
         await setToken('userToken', token);
+        await setToken('refreshToken', refreshToken);
         setUserToken(token);
         setUser(loggedInUser);
         await refreshSubscription();
     };
 
     const signUp = async (userData: any) => {
-        const { token, user: signedUpUser } = await signup(userData);
+        const { token, refreshToken, user: signedUpUser } = await signup(userData);
         await setToken('userToken', token);
+        await setToken('refreshToken', refreshToken);
         setUserToken(token);
         setUser(signedUpUser);
         await refreshSubscription();
     };
 
-    const setAuthToken = async (token: string, fetchedUser?: any, isNewReg = false) => {
+    const setAuthToken = async (token: string, fetchedUser?: any, isNewReg = false, refreshToken?: string) => {
         await setToken('userToken', token);
+        if (refreshToken) {
+            await setToken('refreshToken', refreshToken);
+        }
         setUserToken(token);
         if (fetchedUser) setUser(fetchedUser);
         setIsNewRegistration(isNewReg);
@@ -91,6 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signOut = async () => {
         await deleteToken('userToken');
+        await deleteToken('refreshToken');
         setUserToken(null);
         setUser(null);
         setIsNewRegistration(false);

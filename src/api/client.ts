@@ -14,6 +14,7 @@ const BASE_RETRY_DELAY_MS = 500;
 declare module 'axios' {
     interface InternalAxiosRequestConfig {
         _retryCount?: number;
+        _isRetry?: boolean;
     }
 }
 
@@ -72,9 +73,38 @@ client.interceptors.response.use(
             _networkStatusCallback?.(true);
         }
 
-        // Auto-logout on 401 (expired / invalid token)
-        if (error.response?.status === 401) {
+        // Auto-refresh JWT on 401 (expired access token)
+        if (error.response?.status === 401 && config && !config._isRetry) {
+            config._isRetry = true;
+            try {
+                const refresh = await getToken('refreshToken');
+                if (refresh) {
+                    // Make direct POST to avoid interceptor recursion loop
+                    const refreshResponse = await axios.post(`${API_URL}/api/auth/refresh-token`, {
+                        refreshToken: refresh
+                    });
+                    
+                    if (refreshResponse.data && refreshResponse.data.token) {
+                        const newAccessToken = refreshResponse.data.token;
+                        const newRefreshToken = refreshResponse.data.refreshToken || refresh;
+                        
+                        await setToken('userToken', newAccessToken);
+                        await setToken('refreshToken', newRefreshToken);
+                        
+                        config.headers.Authorization = `Bearer ${newAccessToken}`;
+                        return client(config);
+                    }
+                }
+            } catch (refreshErr) {
+                // If refresh call itself fails, clean up and propagate error
+                await deleteToken('userToken');
+                await deleteToken('refreshToken');
+                return Promise.reject(refreshErr);
+            }
+            
+            // If no refresh token exists, delete legacy credentials and reject
             await deleteToken('userToken');
+            await deleteToken('refreshToken');
             return Promise.reject(error);
         }
 
