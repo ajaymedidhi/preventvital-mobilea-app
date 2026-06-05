@@ -8,6 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../auth/AuthContext';
+import { useConsent } from '../../health/ConsentContext';
+import client from '../../api/client';
 
 // ─── Plan config ────────────────────────────────────────────────────────────
 const PLAN_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ComponentProps<typeof Ionicons>['name'] }> = {
@@ -71,6 +73,7 @@ const UserProfileScreen = () => {
     const nav = useNavigation<any>();
     const insets = useSafeAreaInsets();
     const { user, currentPlan, signOut } = useAuth();
+    const { revokeConsent } = useConsent();
 
     const displayName = user?.profile?.firstName
         ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim()
@@ -89,11 +92,48 @@ const UserProfileScreen = () => {
             { text: 'Sign Out', style: 'destructive', onPress: signOut },
         ]);
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to permanently delete your account? This will erase all of your CVITAL scores and health data.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        Alert.alert(
+                            "Confirm Permanent Deletion",
+                            "This action is irreversible. Confirm account deletion?",
+                            [
+                                { text: "Cancel", style: "cancel" },
+                                {
+                                    text: "Delete Permanently",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                        try {
+                                            await client.delete('/api/users/deleteMe');
+                                            Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+                                            await signOut();
+                                        } catch (error: any) {
+                                            Alert.alert('Error', error.response?.data?.message || 'Failed to delete account');
+                                        }
+                                    }
+                                }
+                            ]
+                        );
+                    }
+                }
+            ]
+        );
+    };
+
     const accountRows: Omit<MenuRowProps, 'last'>[] = [
         { icon: 'person-outline',       iconBg: '#EFF6FF', iconColor: '#3B82F6', label: 'Personal Information',   onPress: () => nav.navigate('ProfileDetails') },
         { icon: 'time-outline',          iconBg: '#F0FDF4', iconColor: '#22C55E', label: 'Assessment History',      onPress: () => nav.navigate('AssessmentHistory') },
         { icon: 'receipt-outline',       iconBg: '#FFF7ED', iconColor: '#F97316', label: 'My Orders',               onPress: () => nav.navigate('OrderHistory') },
         { icon: 'notifications-outline', iconBg: '#FFF1F2', iconColor: '#F43F5E', label: 'Notifications',           onPress: () => nav.navigate('Notifications') },
+        { icon: 'trash-outline',         iconBg: '#FEE2E2', iconColor: '#EF4444', label: 'Delete Account',           onPress: handleDeleteAccount },
     ];
 
     const healthRows: Omit<MenuRowProps, 'last'>[] = [
@@ -117,6 +157,29 @@ const UserProfileScreen = () => {
         { icon: 'shield-checkmark-outline', iconBg: '#F0FDF4', iconColor: '#22C55E', label: 'Privacy & Security',   onPress: () => nav.navigate('PrivacyOverview') },
         { icon: 'document-text-outline',    iconBg: '#EFF6FF', iconColor: '#3B82F6', label: 'Terms & Conditions',   onPress: () => nav.navigate('TermsAndConditions') },
         { icon: 'help-circle-outline',      iconBg: '#FFF7ED', iconColor: '#F97316', label: 'Help & Support',       onPress: () => nav.navigate('ContactUs') },
+        {
+            icon: 'remove-circle-outline',
+            iconBg: '#FEE2E2',
+            iconColor: '#EF4444',
+            label: 'Revoke Health Data Consent',
+            onPress: () => {
+                Alert.alert(
+                    "Revoke Consent",
+                    "Are you sure you want to revoke consent to access your health data? This will log you out, and you will not be able to use PreventVital without re-granting consent.",
+                    [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                            text: "Revoke & Log Out",
+                            style: "destructive",
+                            onPress: async () => {
+                                await revokeConsent();
+                                await signOut();
+                            }
+                        }
+                    ]
+                );
+            }
+        },
     ];
 
     return (

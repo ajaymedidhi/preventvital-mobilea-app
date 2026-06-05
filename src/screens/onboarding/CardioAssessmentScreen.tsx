@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getEncryptedItem, setEncryptedItem, deleteEncryptedItem } from '../../api/storage';
 import { calculateAssessmentScore, updateOnboarding } from '../../api/authApi';
 import { useAuth } from '../../auth/AuthContext';
 
@@ -40,7 +40,7 @@ export default function CardioAssessmentScreen() {
 
     // Load saved draft on mount
     useEffect(() => {
-        AsyncStorage.getItem(DRAFT_KEY).then(saved => {
+        getEncryptedItem(DRAFT_KEY).then(saved => {
             if (!saved) return;
             try {
                 const { formData: savedForm, currentStep: savedStep } = JSON.parse(saved);
@@ -48,7 +48,7 @@ export default function CardioAssessmentScreen() {
                     'Resume Assessment',
                     `You have an unfinished assessment (Section ${savedStep + 1} of ${SECTIONS.length}). Continue where you left off?`,
                     [
-                        { text: 'Start Fresh', style: 'destructive', onPress: () => AsyncStorage.removeItem(DRAFT_KEY) },
+                        { text: 'Start Fresh', style: 'destructive', onPress: () => deleteEncryptedItem(DRAFT_KEY) },
                         { text: 'Continue', onPress: () => { setFormData(savedForm); setCurrentStep(savedStep); } },
                     ]
                 );
@@ -57,10 +57,10 @@ export default function CardioAssessmentScreen() {
     }, []);
 
     const saveDraft = (step: number, data: typeof formData) => {
-        AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({ formData: data, currentStep: step })).catch(() => {});
+        setEncryptedItem(DRAFT_KEY, JSON.stringify({ formData: data, currentStep: step })).catch(() => {});
     };
 
-    const clearDraft = () => AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+    const clearDraft = () => deleteEncryptedItem(DRAFT_KEY).catch(() => {});
 
     const saveAndExit = async () => {
         saveDraft(currentStep, formData);

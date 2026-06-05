@@ -1,5 +1,5 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getEncryptedItem, setEncryptedItem, deleteEncryptedItem } from './storage';
 import client from './client';
 
 const { CVitalHealthKitBridge } = NativeModules;
@@ -53,20 +53,20 @@ export class WearableSDK {
             const response = await client.post('/api/wearables/ingest', { vitals });
             return response.data;
         } catch {
-            const cached = await AsyncStorage.getItem('@cvital_offline');
+            const cached = await getEncryptedItem('@cvital_offline');
             const parsed = cached ? JSON.parse(cached) : [];
-            await AsyncStorage.setItem('@cvital_offline', JSON.stringify([...parsed, ...vitals]));
+            await setEncryptedItem('@cvital_offline', JSON.stringify([...parsed, ...vitals]));
         }
     }
 
     static async syncOfflineData() {
-        const cached = await AsyncStorage.getItem('@cvital_offline');
+        const cached = await getEncryptedItem('@cvital_offline');
         if (!cached) return;
         const vitals = JSON.parse(cached);
         if (vitals.length > 0) {
             try {
                 await client.post('/api/wearables/ingest', { vitals });
-                await AsyncStorage.removeItem('@cvital_offline');
+                await deleteEncryptedItem('@cvital_offline');
             } catch {
                 // Will retry on next sync
             }

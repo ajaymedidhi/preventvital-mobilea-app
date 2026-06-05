@@ -27,6 +27,7 @@ const DevicesScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [googleAuthUrl, setGoogleAuthUrl] = useState<string | null>(null);
+    const [showGoogleDisclosure, setShowGoogleDisclosure] = useState(false);
 
     // Health data from backend
     const [latestVitals, setLatestVitals] = useState<any>(null);
@@ -269,7 +270,10 @@ const DevicesScreen = () => {
                                 <Text style={styles.disconnectText}>Disconnect</Text>
                             </TouchableOpacity>
                         ) : (
-                            <TouchableOpacity style={styles.connectBtn} onPress={connectGoogleFit}>
+                            <TouchableOpacity style={styles.connectBtn} onPress={() => {
+                                setConnectingGoogle(true);
+                                setShowGoogleDisclosure(true);
+                            }}>
                                 <LinearGradient colors={Gradients.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.connectBtnInner}>
                                     <Ionicons name="link" size={14} color="#FFF" />
                                     <Text style={styles.connectBtnText}>Connect</Text>
@@ -487,6 +491,60 @@ const DevicesScreen = () => {
                 <View style={{ height: 100 }} />
             </ScrollView >
 
+            {/* Google Fit Prominent Disclosure Modal */}
+            <Modal visible={showGoogleDisclosure} transparent animationType="fade">
+                <View style={styles.disclosureOverlay}>
+                    <View style={styles.disclosureCard}>
+                        <View style={styles.disclosureIconContainer}>
+                            <Ionicons name="shield-checkmark" size={32} color="#3A8AB5" />
+                        </View>
+                        <Text style={styles.disclosureTitle}>Vitals Access Disclosure</Text>
+                        
+                        <ScrollView style={styles.disclosureScroll} showsVerticalScrollIndicator={false}>
+                            <Text style={styles.disclosureText}>
+                                PreventVital requires access to your physical activity and body sensor metrics to function.
+                            </Text>
+                            
+                            <Text style={styles.disclosureSectionTitle}>What we collect:</Text>
+                            <Text style={styles.disclosureBullet}>• Heart Rate: To monitor cardiovascular strain and heart rate trends.</Text>
+                            <Text style={styles.disclosureBullet}>• SpO₂: To track blood oxygen levels.</Text>
+                            <Text style={styles.disclosureBullet}>• Steps & Activity: To track physical exercise achievements.</Text>
+                            <Text style={styles.disclosureBullet}>• Blood Pressure: For arterial pressure recording.</Text>
+
+                            <Text style={styles.disclosureSectionTitle}>Why we need it:</Text>
+                            <Text style={styles.disclosureText}>
+                                This biometric data is sync'd securely with our cloud servers (even when the app is backgrounded or closed) to generate cardiovascular alerts, recommend target physical wellness modules, and calculate your daily CVITAL™ health score.
+                            </Text>
+
+                            <Text style={styles.disclosureText}>
+                                Your health data is securely encrypted at rest (AES-256) and in transit (TLS 1.3). We never sell your health metrics.
+                            </Text>
+                        </ScrollView>
+
+                        <View style={styles.disclosureButtonContainer}>
+                            <TouchableOpacity 
+                                style={styles.disclosureAgreeButton}
+                                onPress={() => {
+                                    setShowGoogleDisclosure(false);
+                                    connectGoogleFit();
+                                }}
+                            >
+                                <Text style={styles.disclosureAgreeButtonText}>Agree & Connect</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={styles.disclosureDeclineButton}
+                                onPress={() => {
+                                    setShowGoogleDisclosure(false);
+                                    setConnectingGoogle(false);
+                                }}
+                            >
+                                <Text style={styles.disclosureDeclineButtonText}>Decline</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Isolated WebView for Google Auth */}
             < Modal visible={!!googleAuthUrl} animationType="slide" presentationStyle="pageSheet" >
                 <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF' }}>
@@ -633,6 +691,93 @@ const styles = StyleSheet.create({
     // Info
     infoCard: { flexDirection: 'row', backgroundColor: '#EEF2FF', borderRadius: 14, padding: 14, gap: 10, marginTop: 8 },
     infoText: { flex: 1, fontSize: 11, color: '#4338CA', lineHeight: 17, fontWeight: '500' },
+    disclosureOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    disclosureCard: {
+        width: '100%',
+        maxHeight: '80%',
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
+        elevation: 10,
+    },
+    disclosureIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        backgroundColor: '#EFF6FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        marginBottom: 16,
+    },
+    disclosureTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#1E293B',
+        textAlign: 'center',
+        marginBottom: 16,
+    },
+    disclosureScroll: {
+        marginBottom: 20,
+    },
+    disclosureSectionTitle: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#475569',
+        marginTop: 16,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    disclosureText: {
+        fontSize: 14,
+        color: '#475569',
+        lineHeight: 22,
+        marginBottom: 8,
+    },
+    disclosureBullet: {
+        fontSize: 13,
+        color: '#475569',
+        lineHeight: 20,
+        marginBottom: 6,
+        paddingLeft: 4,
+    },
+    disclosureButtonContainer: {
+        gap: 10,
+    },
+    disclosureAgreeButton: {
+        backgroundColor: '#4F46E5',
+        height: 50,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    disclosureAgreeButtonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    disclosureDeclineButton: {
+        height: 44,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    disclosureDeclineButtonText: {
+        color: '#94A3B8',
+        fontSize: 14,
+        fontWeight: '600',
+    },
 });
 
 export default DevicesScreen;

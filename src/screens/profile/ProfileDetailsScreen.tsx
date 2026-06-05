@@ -22,7 +22,7 @@ const PLAN_COLORS: Record<string, string[]> = {
 const ProfileDetailsScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
-    const { user, subscription, currentPlan, setAuthToken, userToken } = useAuth();
+    const { user, subscription, currentPlan, setAuthToken, userToken, signOut } = useAuth();
 
     // Mock user details populated from backend/state
     const [firstName, setFirstName] = useState(user?.profile?.firstName || user?.name?.split(' ')[0] || '');
@@ -111,6 +111,45 @@ const ProfileDetailsScreen = () => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            "Delete Account",
+            "Are you sure you want to permanently delete your account? This will erase all of your CVITAL scores and health data.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        Alert.alert(
+                            "Confirm Permanent Deletion",
+                            "This action is irreversible. Confirm account deletion?",
+                            [
+                                { text: "Cancel", style: "cancel" },
+                                {
+                                    text: "Delete Permanently",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                        setIsSaving(true);
+                                        try {
+                                            await client.delete('/api/users/deleteMe');
+                                            Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+                                            await signOut();
+                                        } catch (error: any) {
+                                            Alert.alert('Error', error.response?.data?.message || 'Failed to delete account');
+                                        } finally {
+                                            setIsSaving(false);
+                                        }
+                                    }
+                                }
+                            ]
+                        );
+                    }
+                }
+            ]
+        );
     };
 
     const InputField = ({ label, value, onChangeText, keyboardType = 'default', editable = true, icon }: any) => (
@@ -338,6 +377,10 @@ const ProfileDetailsScreen = () => {
                         >
                             <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
                         </LinearGradient>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={handleDeleteAccount} disabled={isSaving} style={styles.deleteButton} activeOpacity={0.8}>
+                        <Text style={styles.deleteButtonText}>Delete Account</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -617,6 +660,26 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: 'rgba(255,255,255,0.75)',
         fontWeight: '500',
+    },
+    deleteButton: {
+        height: 52,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#FEE2E2',
+        backgroundColor: '#FFF',
+        marginTop: 12,
+        shadowColor: '#EF4444',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    deleteButtonText: {
+        color: '#EF4444',
+        fontSize: 16,
+        fontWeight: '800',
     },
 });
 
