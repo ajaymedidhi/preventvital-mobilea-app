@@ -47,7 +47,7 @@ export default function TermsAndConditionsScreen() {
                         <Ionicons name="document-text" size={32} color="#818CF8" />
                     </View>
                     <Text style={styles.title}>PreventVital</Text>
-                    <Text style={styles.subtitle}>(gruentzig.ai Private Limited)</Text>
+                    <Text style={styles.subtitle}>(GRUENTZIGAI PRIVATE LIMITED)</Text>
                     <View style={styles.badgeContainer}>
                         <Text style={styles.badgeText}>LEGAL DOCUMENT</Text>
                     </View>
@@ -109,7 +109,7 @@ export default function TermsAndConditionsScreen() {
                 </SectionCard>
 
                 <SectionCard title="6. Intellectual Property" icon="color-palette-outline">
-                    <Text style={styles.paragraph}>All content, features, and algorithms are the property of gruentzig.ai Private Limited.</Text>
+                    <Text style={styles.paragraph}>All content, features, and algorithms are the property of GRUENTZIGAI PRIVATE LIMITED.</Text>
                     <Text style={styles.listItem}>• You may not reverse engineer the CVITAL Score™.</Text>
                     <Text style={styles.listItem}>• You own your data, but grant us a license to process it.</Text>
                     <Text style={styles.listItem}>• Scraping or commercially exploiting platform content is prohibited.</Text>
@@ -147,7 +147,7 @@ export default function TermsAndConditionsScreen() {
                 <SectionCard title="Contact Information" icon="mail-outline">
                     <Text style={styles.paragraph}>For any questions about these Terms, please contact:</Text>
                     <Text style={styles.listItem}><Text style={styles.bold}>Email:</Text> info@preventvital.com</Text>
-                    <Text style={styles.listItem}><Text style={styles.bold}>Company:</Text> gruentzig.ai Private Limited</Text>
+                    <Text style={styles.listItem}><Text style={styles.bold}>Company:</Text> GRUENTZIGAI PRIVATE LIMITED</Text>
                 </SectionCard>
 
                 <View style={styles.footer}>

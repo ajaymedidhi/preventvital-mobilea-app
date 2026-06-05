@@ -111,7 +111,7 @@ export default function PrivacyPolicyLandingScreen() {
                             <Text style={styles.versionBadgeText}>v1.0 Mar 2026</Text>
                         </View>
                     </View>
-                    <Text style={styles.entityName}>(gruentzig.ai Private Limited)</Text>
+                    <Text style={styles.entityName}>(GRUENTZIGAI PRIVATE LIMITED)</Text>
                     <Text style={styles.location}>Hyderabad India</Text>
 
                     <View style={styles.noticeCard}>
@@ -136,7 +136,7 @@ export default function PrivacyPolicyLandingScreen() {
 
                 <View style={styles.questionsContainer}>
                     <Text style={styles.questionText}>Questions? <Text style={styles.emailText}>info@preventvital.com</Text></Text>
-                    <Text style={styles.complianceText}>Complies with DPDPA Act 2023 (India) - gruentzig.ai Private Limited</Text>
+                    <Text style={styles.complianceText}>Complies with DPDPA Act 2023 (India) - GRUENTZIGAI PRIVATE LIMITED</Text>
                 </View>
                 
                 <View style={{ height: 40 }} />
