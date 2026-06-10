@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { getToken, deleteToken } from './storage';
+import { getToken, deleteToken, setToken } from './storage';
 
 // Local backend URL (using local IP 192.168.31.86 and port 5001 to work on both simulators/emulators and physical devices)
 // Production URL: https://preventvital-api-988713182018.asia-south1.run.app
