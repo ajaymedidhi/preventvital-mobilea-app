@@ -16,7 +16,8 @@
       },
       "infoPlist": {
         "NSHealthShareUsageDescription": "We need access to your health data to track your daily activity vitals.",
-        "NSHealthUpdateUsageDescription": "We need access to update your health data."
+        "NSHealthUpdateUsageDescription": "We need access to update your health data.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.preventvital.app",
       "buildNumber": "2"
